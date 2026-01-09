@@ -1,0 +1,19 @@
+{
+	"name": "Ubuntu",
+	"image": "mcr.microsoft.com/devcontainers/base:noble",
+	"features": {
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/devcontainers/features/azure-cli:latest": {},
+		"ghcr.io/devcontainers/features/docker-outside-of-docker": {}
+	},
+	"postCreateCommand": "./.devcontainer/install-prerequisites.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"oven.bun-vscode",
+				"ms-azuretools.vscode-docker",
+				"SanjulaGanepola.github-local-actions"
+			]
+		}
+	}
+}
