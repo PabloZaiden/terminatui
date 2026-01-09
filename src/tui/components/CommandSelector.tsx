@@ -146,9 +146,16 @@ export function CommandSelector({
 }
 
 /**
- * Get mode indicator for a command (e.g., "[cli]", "[tui]", "[cli/tui]").
+ * Get mode indicator for a command (e.g., "[cli]", "[tui]", "→" for subcommands).
  */
 function getModeIndicator(command: Command): string {
+    // Show navigation indicator for container commands with navigable subcommands
+    // (excluding commands that don't support TUI)
+    const navigableSubCommands = command.subCommands?.filter((sub) => sub.supportsTui()) ?? [];
+    if (navigableSubCommands.length > 0) {
+        return "→";
+    }
+    
     const cli = command.supportsCli();
     const tui = command.supportsTui();
     

@@ -91,6 +91,7 @@ function TuiAppContent({
     const [selectedCommand, setSelectedCommand] = useState<AnyCommand | null>(null);
     const [commandPath, setCommandPath] = useState<string[]>([]);
     const [commandSelectorIndex, setCommandSelectorIndex] = useState(0);
+    const [selectorIndexStack, setSelectorIndexStack] = useState<number[]>([]);
     const [selectedFieldIndex, setSelectedFieldIndex] = useState(0);
     const [editingField, setEditingField] = useState<string | null>(null);
     const [focusedSection, setFocusedSection] = useState<FocusedSection>(FocusedSection.Config);
@@ -178,10 +179,22 @@ function TuiAppContent({
         setConfigValues(merged);
     }, [customFields, name]);
 
+    /**
+     * Check if a command has navigable subcommands (excluding commands that don't support TUI).
+     */
+    const hasNavigableSubCommands = useCallback((cmd: AnyCommand): boolean => {
+        if (!cmd.subCommands || cmd.subCommands.length === 0) return false;
+        // Filter out commands that don't support TUI
+        const navigable = cmd.subCommands.filter((sub) => sub.supportsTui());
+        return navigable.length > 0;
+    }, []);
+
     // Handlers
     const handleCommandSelect = useCallback((cmd: AnyCommand) => {
-        // Check if command has subcommands to navigate into
-        if (cmd.subCommands && cmd.subCommands.length > 0 && !cmd.supportsTui() && !cmd.supportsCli()) {
+        // Check if command has navigable subcommands (container commands)
+        if (hasNavigableSubCommands(cmd)) {
+            // Push current selection index to stack before navigating
+            setSelectorIndexStack((prev) => [...prev, commandSelectorIndex]);
             // Navigate into subcommands
             setCommandPath((prev) => [...prev, cmd.name]);
             setCommandSelectorIndex(0);
@@ -201,7 +214,7 @@ function TuiAppContent({
         } else {
             setMode(Mode.Config);
         }
-    }, [initializeConfigValues]);
+    }, [initializeConfigValues, hasNavigableSubCommands, commandSelectorIndex]);
 
     const handleBack = useCallback(() => {
         if (mode === Mode.Running) {
@@ -242,12 +255,15 @@ function TuiAppContent({
             }
             resetExecutor();
         } else if (mode === Mode.CommandSelect && commandPath.length > 0) {
+            // Pop from selector index stack to restore previous selection
+            const previousIndex = selectorIndexStack[selectorIndexStack.length - 1] ?? 0;
+            setSelectorIndexStack((prev) => prev.slice(0, -1));
+            setCommandSelectorIndex(previousIndex);
             setCommandPath((prev) => prev.slice(0, -1));
-            setCommandSelectorIndex(0);
         } else {
             onExit();
         }
-    }, [mode, commandPath, selectedCommand, cancel, onExit, resetExecutor]);
+    }, [mode, commandPath, selectedCommand, selectorIndexStack, cancel, onExit, resetExecutor]);
 
     const handleRunCommand = useCallback(async (cmd?: AnyCommand) => {
         const cmdToRun = cmd ?? selectedCommand;
@@ -413,18 +429,21 @@ function TuiAppContent({
         { enabled: !editingField && !cliModalVisible }
     );
 
-    // Get current commands for selector
+    // Get current commands for selector (excluding commands that don't support TUI)
     const currentCommands = useMemo(() => {
         if (commandPath.length === 0) {
             return commands;
         }
 
-        // Navigate to current path
+        // Navigate through the full path to find current level's subcommands
         let current: AnyCommand[] = commands;
-        for (const pathPart of commandPath.slice(0, -1)) {
+        for (const pathPart of commandPath) {
             const found = current.find((c) => c.name === pathPart);
             if (found?.subCommands) {
-                current = found.subCommands;
+                // Filter out commands that don't support TUI
+                current = found.subCommands.filter((sub) => sub.supportsTui());
+            } else {
+                break; // Path invalid or command has no subcommands
             }
         }
         return current;
