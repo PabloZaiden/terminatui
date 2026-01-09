@@ -12,12 +12,14 @@ const statusOptions = {
         description: "Show detailed status",
         default: false,
         label: "Detailed",
+        alias: "d",
         order: 1,
     },
 } as const satisfies OptionSchema;
 
 export class StatusCommand extends Command<typeof statusOptions> {
-    readonly name = "Application Status";
+    readonly name = "status";
+    override displayName = "Status";
     readonly description = "Show application status";
     readonly options = statusOptions;
 
