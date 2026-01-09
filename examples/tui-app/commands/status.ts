@@ -17,7 +17,7 @@ const statusOptions = {
 } as const satisfies OptionSchema;
 
 export class StatusCommand extends Command<typeof statusOptions> {
-    readonly name = "status";
+    readonly name = "Application Status";
     readonly description = "Show application status";
     readonly options = statusOptions;
 

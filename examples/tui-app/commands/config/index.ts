@@ -7,7 +7,7 @@ import { UserConfigCommand } from "./user/index.ts";
 import { AppConfigCommand } from "./app/index.ts";
 
 export class ConfigCommand extends Command {
-    readonly name = "config";
+    readonly name = "Config";
     readonly description = "Manage configuration (user and app settings)";
     readonly options = {};
 

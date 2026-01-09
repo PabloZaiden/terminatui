@@ -36,7 +36,7 @@ const greetOptions = {
 } as const satisfies OptionSchema;
 
 export class GreetCommand extends Command<typeof greetOptions> {
-    readonly name = "greet";
+    readonly name = "Greet";
     readonly description = "Greet someone with a friendly message";
     readonly options = greetOptions;
 

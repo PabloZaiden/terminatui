@@ -43,7 +43,7 @@ const mathOptions = {
 } as const satisfies OptionSchema;
 
 export class MathCommand extends Command<typeof mathOptions> {
-    readonly name = "math";
+    readonly name = "Math Operations";
     readonly description = "Perform basic math operations";
     readonly options = mathOptions;
 
