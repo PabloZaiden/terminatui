@@ -519,10 +519,6 @@ console.log(bulletList(["Item 1", "Item 2", "Item 3"]));
 console.log(keyValueList({ name: "Test", count: 42 }));
 ```
 
-## Examples
-
-See the [compass](../compass) package for a complete example application using terminatui.
-
 ## License
 
 MIT

@@ -13,7 +13,7 @@ function escapeArg(arg: string): string {
 /**
  * Build a CLI command string from values and schema.
  * 
- * @param appName - The application name (e.g., "compass", "./myapp")
+ * @param appName - The application name (e.g., "myapp")
  * @param commandPath - The command path (e.g., ["run"], ["db", "migrate"])
  * @param schema - The option schema
  * @param values - The current option values
@@ -21,8 +21,8 @@ function escapeArg(arg: string): string {
  * 
  * @example
  * ```typescript
- * const cmd = buildCliCommand("compass", ["run"], runOptions, config);
- * // Returns: "compass run --agent opencode --fixture test.json"
+ * const cmd = buildCliCommand("myapp", ["run"], runOptions, config);
+ * // Returns: "myapp run --agent opencode --fixture test.json"
  * ```
  */
 export function buildCliCommand<T extends OptionSchema>(
