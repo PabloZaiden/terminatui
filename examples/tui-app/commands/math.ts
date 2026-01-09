@@ -44,6 +44,7 @@ const mathOptions = {
 
 export class MathCommand extends Command<typeof mathOptions> {
     readonly name = "math";
+    override displayName = "Math Operations";
     readonly description = "Perform basic math operations";
     readonly options = mathOptions;
 

@@ -13,7 +13,7 @@
  */
 
 import { TuiApplication } from "../../src/index.ts";
-import { GreetCommand, MathCommand, StatusCommand } from "./commands/index.ts";
+import { GreetCommand, MathCommand, StatusCommand, ConfigCommand } from "./commands/index.ts";
 
 class ExampleApp extends TuiApplication {
     constructor() {
@@ -24,6 +24,7 @@ class ExampleApp extends TuiApplication {
                 new GreetCommand(),
                 new MathCommand(),
                 new StatusCommand(),
+                new ConfigCommand(),
             ],
             enableTui: true,
         });

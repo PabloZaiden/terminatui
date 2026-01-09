@@ -33,6 +33,13 @@ export class HelpCommand extends Command<OptionSchema> {
     this.appVersion = config.appVersion;
   }
 
+  /**
+   * Help command is CLI-only (auto-injected for CLI use, not shown in TUI).
+   */
+  override supportsTui(): boolean {
+    return false;
+  }
+
   override async execute(_ctx: AppContext): Promise<void> {
     let helpText: string;
 

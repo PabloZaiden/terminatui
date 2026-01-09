@@ -12,12 +12,14 @@ const statusOptions = {
         description: "Show detailed status",
         default: false,
         label: "Detailed",
+        alias: "d",
         order: 1,
     },
 } as const satisfies OptionSchema;
 
 export class StatusCommand extends Command<typeof statusOptions> {
     readonly name = "status";
+    override displayName = "Status";
     readonly description = "Show application status";
     readonly options = statusOptions;
 
@@ -39,7 +41,7 @@ export class StatusCommand extends Command<typeof statusOptions> {
             `  Uptime:   ${data.uptime}`,
             `  Memory:   ${data.memory}`,
             `  Platform: ${data.platform}`,
-            `  Node:     ${data.version}`,
+            `  Bun:      ${data.version}`,
         ].join("\n");
     }
 
