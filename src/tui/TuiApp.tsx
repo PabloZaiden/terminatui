@@ -134,9 +134,27 @@ function TuiAppContent({
         return buildCliCommand(name, commandPath, selectedCommand.options, configValues as OptionValues<OptionSchema>);
     }, [name, commandPath, selectedCommand, configValues]);
 
+    // Build breadcrumb with display names by traversing the command path
     const breadcrumb = useMemo(() => {
-        return commandPath.length > 0 ? commandPath : undefined;
-    }, [commandPath]);
+        if (commandPath.length === 0) return undefined;
+        
+        const displayNames: string[] = [];
+        let current: AnyCommand[] = commands;
+        
+        for (const pathPart of commandPath) {
+            const found = current.find((c) => c.name === pathPart);
+            if (found) {
+                displayNames.push(found.displayName ?? found.name);
+                if (found.subCommands) {
+                    current = found.subCommands;
+                }
+            } else {
+                displayNames.push(pathPart);
+            }
+        }
+        
+        return displayNames;
+    }, [commandPath, commands]);
 
     // Initialize config values when command changes
     const initializeConfigValues = useCallback((cmd: AnyCommand) => {
@@ -496,7 +514,7 @@ function TuiAppContent({
                         onSelectionChange={setCommandSelectorIndex}
                         onSelect={handleCommandSelect}
                         onExit={handleBack}
-                        breadcrumb={commandPath.length > 0 ? commandPath : undefined}
+                        breadcrumb={breadcrumb}
                     />
                 );
 
@@ -505,7 +523,7 @@ function TuiAppContent({
                 return (
                     <box flexDirection="column" flexGrow={1}>
                         <ConfigForm
-                            title={`Configure: ${selectedCommand.name}`}
+                            title={`Configure: ${selectedCommand.displayName ?? selectedCommand.name}`}
                             fieldConfigs={fieldConfigs}
                             values={configValues}
                             selectedIndex={selectedFieldIndex}
