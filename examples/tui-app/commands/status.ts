@@ -39,7 +39,7 @@ export class StatusCommand extends Command<typeof statusOptions> {
             `  Uptime:   ${data.uptime}`,
             `  Memory:   ${data.memory}`,
             `  Platform: ${data.platform}`,
-            `  Node:     ${data.version}`,
+            `  Bun:     ${data.version}`,
         ].join("\n");
     }
 
