@@ -20,6 +20,7 @@ const options = {
 
 export class UserGetCommand extends Command<typeof options> {
     readonly name = "get";
+    override displayName = "Get User Config";
     readonly description = "Get a user configuration value";
     readonly options = options;
 

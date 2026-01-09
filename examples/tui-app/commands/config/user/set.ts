@@ -29,6 +29,7 @@ const options = {
 
 export class UserSetCommand extends Command<typeof options> {
     readonly name = "set";
+    override displayName = "Set User Config";
     readonly description = "Set a user configuration value";
     readonly options = options;
 

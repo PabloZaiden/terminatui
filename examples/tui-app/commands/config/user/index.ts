@@ -8,6 +8,7 @@ import { UserSetCommand } from "./set.ts";
 
 export class UserConfigCommand extends Command {
     readonly name = "user";
+    override displayName = "User Settings";
     readonly description = "Manage user configuration";
     readonly options = {};
 

@@ -38,6 +38,7 @@ const options = {
 
 export class AppSetCommand extends Command<typeof options> {
     readonly name = "set";
+    override displayName = "Set App Config";
     readonly description = "Set an application configuration value";
     readonly options = options;
 

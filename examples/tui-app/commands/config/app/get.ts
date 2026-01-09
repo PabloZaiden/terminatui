@@ -20,6 +20,7 @@ const options = {
 
 export class AppGetCommand extends Command<typeof options> {
     readonly name = "get";
+    override displayName = "Get App Config";
     readonly description = "Get an application configuration value";
     readonly options = options;
 
