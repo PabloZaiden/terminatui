@@ -11,7 +11,7 @@ on:
 
 jobs:
   publish:
-    name: Publish to GitHub Packages
+    name: Publish Package
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -72,7 +72,7 @@ jobs:
       - name: Build package
         run: bun run build
 
-      - name: Publish to GitHub Packages
+      - name: Publish Package
         run: bun publish --no-build
         env:
           BUN_PUBLISH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
