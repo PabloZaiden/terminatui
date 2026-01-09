@@ -432,7 +432,7 @@ function TuiAppContent({
     // Get current commands for selector (excluding commands that don't support TUI)
     const currentCommands = useMemo(() => {
         if (commandPath.length === 0) {
-            return commands;
+            return commands.filter((cmd) => cmd.supportsTui());
         }
 
         // Navigate through the full path to find current level's subcommands
