@@ -149,8 +149,6 @@ export class NotificationService {
 Create `src/commands/add.ts`:
 
 ```typescript
-import React from "react";
-import { Text, Box } from "ink";
 import {
   Command,
   ConfigValidationError,
@@ -231,49 +229,12 @@ export class AddCommand extends Command<typeof options, AddConfig> {
       message: `Created task: ${task.title} (${task.id})`,
     };
   }
-
-  override renderResult(result: CommandResult): React.ReactNode {
-    if (!result.success) {
-      return <Text color="red">✗ {result.message}</Text>;
-    }
-
-    const task = result.data as Task;
-    const priorityColor = {
-      high: "red",
-      medium: "yellow",
-      low: "green",
-    }[task.priority] as "red" | "yellow" | "green";
-
-    return (
-      <Box flexDirection="column" gap={1}>
-        <Text color="green">✓ Task Created</Text>
-        <Box>
-          <Text dimColor>ID: </Text>
-          <Text>{task.id}</Text>
-        </Box>
-        <Box>
-          <Text dimColor>Title: </Text>
-          <Text>{task.title}</Text>
-        </Box>
-        <Box>
-          <Text dimColor>Priority: </Text>
-          <Text color={priorityColor}>{task.priority}</Text>
-        </Box>
-      </Box>
-    );
-  }
-
-  override getClipboardContent(result: CommandResult): string | undefined {
-    return result.data?.id;
-  }
 }
 ```
 
 Create `src/commands/list.ts`:
 
 ```typescript
-import React from "react";
-import { Text, Box } from "ink";
 import {
   Command,
   type AppContext,
@@ -344,45 +305,12 @@ export class ListCommand extends Command<typeof options, ListConfig> {
       message: `Found ${tasks.length} tasks`,
     };
   }
-
-  override renderResult(result: CommandResult): React.ReactNode {
-    const tasks = (result.data as Task[]) ?? [];
-
-    if (tasks.length === 0) {
-      return <Text dimColor>No tasks found</Text>;
-    }
-
-    const priorityColor = (p: string) =>
-      ({ high: "red", medium: "yellow", low: "green" })[p] as "red" | "yellow" | "green";
-
-    return (
-      <Box flexDirection="column" gap={1}>
-        <Text bold>Tasks ({tasks.length})</Text>
-        {tasks.map((task) => (
-          <Box key={task.id} gap={2}>
-            <Text dimColor>[{task.id}]</Text>
-            <Text color={task.status === "completed" ? "gray" : undefined}>
-              {task.status === "completed" ? "✓" : "○"} {task.title}
-            </Text>
-            <Text color={priorityColor(task.priority)}>{task.priority}</Text>
-          </Box>
-        ))}
-      </Box>
-    );
-  }
-
-  override getClipboardContent(result: CommandResult): string | undefined {
-    const tasks = result.data as Task[];
-    return tasks?.map((t) => `${t.id}: ${t.title}`).join("\n");
-  }
 }
 ```
 
 Create `src/commands/complete.ts`:
 
 ```typescript
-import React from "react";
-import { Text, Box } from "ink";
 import {
   Command,
   ConfigValidationError,
@@ -451,31 +379,12 @@ export class CompleteCommand extends Command<typeof options, CompleteConfig> {
       message: `Completed: ${task.title}`,
     };
   }
-
-  override renderResult(result: CommandResult): React.ReactNode {
-    if (!result.success) {
-      return <Text color="red">✗ {result.message}</Text>;
-    }
-
-    const task = result.data as Task;
-    return (
-      <Box flexDirection="column">
-        <Text color="green">✓ Task Completed</Text>
-        <Text>{task.title}</Text>
-        <Text dimColor>
-          Completed at: {task.completedAt?.toLocaleString()}
-        </Text>
-      </Box>
-    );
-  }
 }
 ```
 
 Create `src/commands/stats.ts`:
 
 ```typescript
-import React from "react";
-import { Text, Box } from "ink";
 import {
   Command,
   type AppContext,
@@ -509,50 +418,6 @@ export class StatsCommand extends Command<typeof options> {
       data: stats,
       message: `Total: ${stats.total}, Pending: ${stats.pending}, Completed: ${stats.completed}`,
     };
-  }
-
-  override renderResult(result: CommandResult): React.ReactNode {
-    const stats = result.data as TaskStats;
-
-    const completionRate = stats.total > 0
-      ? Math.round((stats.completed / stats.total) * 100)
-      : 0;
-
-    return (
-      <Box flexDirection="column" gap={1}>
-        <Text bold>📊 Task Statistics</Text>
-        
-        <Box flexDirection="column">
-          <Box gap={2}>
-            <Text dimColor>Total:</Text>
-            <Text>{stats.total}</Text>
-          </Box>
-          <Box gap={2}>
-            <Text dimColor>Pending:</Text>
-            <Text color="yellow">{stats.pending}</Text>
-          </Box>
-          <Box gap={2}>
-            <Text dimColor>Completed:</Text>
-            <Text color="green">{stats.completed}</Text>
-          </Box>
-          <Box gap={2}>
-            <Text dimColor>Completion Rate:</Text>
-            <Text color={completionRate >= 50 ? "green" : "yellow"}>
-              {completionRate}%
-            </Text>
-          </Box>
-        </Box>
-
-        <Box flexDirection="column" marginTop={1}>
-          <Text bold>By Priority:</Text>
-          <Box gap={2}>
-            <Text color="red">High: {stats.byPriority.high}</Text>
-            <Text color="yellow">Medium: {stats.byPriority.medium}</Text>
-            <Text color="green">Low: {stats.byPriority.low}</Text>
-          </Box>
-        </Box>
-      </Box>
-    );
   }
 }
 ```
@@ -647,7 +512,6 @@ bun start --verbose add "Debug task" --priority low
 | Display Names | `displayName = "Add Task"` |
 | Action Labels | `actionLabel = "Create Task"` |
 | Immediate Execution | `immediateExecution = true` |
-| Custom Results | `renderResult()` |
 | Clipboard Support | `getClipboardContent()` |
 
 ## What You Learned
@@ -655,7 +519,7 @@ bun start --verbose add "Debug task" --priority low
 - **Project Structure**: Organize code into commands, services, types
 - **Shared Services**: Database and notification services
 - **Command Groups**: Organize commands in TUI sidebar
-- **Full TUI Integration**: Custom rendering, clipboard, immediate execution
+- **Full TUI Integration**: Clipboard, immediate execution
 - **Lifecycle Hooks**: `onBeforeRun` and `onAfterRun`
 - **Production Patterns**: Error handling, validation, logging
 
