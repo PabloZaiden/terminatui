@@ -246,58 +246,7 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
 }
 ```
 
-## Step 4: Add Result Rendering
-
-```typescript
-import React from "react";
-import { Text, Box } from "ink";
-
-export class DownloadCommand extends Command<typeof options, DownloadConfig> {
-  // ... previous code ...
-
-  /**
-   * Custom TUI result display
-   */
-  override renderResult(result: CommandResult): React.ReactNode {
-    if (!result.success && result.data?.cancelled) {
-      return (
-        <Box flexDirection="column">
-          <Text color="yellow">⚠ Download Cancelled</Text>
-          {result.data?.downloadedBytes > 0 && (
-            <Text dimColor>
-              Partial: {(result.data.downloadedBytes / 1024 / 1024).toFixed(2)} MB
-            </Text>
-          )}
-        </Box>
-      );
-    }
-
-    if (!result.success) {
-      return <Text color="red">✗ {result.message}</Text>;
-    }
-
-    return (
-      <Box flexDirection="column">
-        <Text color="green">✓ Download Complete</Text>
-        <Text>File: {result.data?.file}</Text>
-        <Text>Size: {(result.data?.size / 1024 / 1024).toFixed(2)} MB</Text>
-      </Box>
-    );
-  }
-
-  /**
-   * Copy file path to clipboard
-   */
-  override getClipboardContent(result: CommandResult): string | undefined {
-    if (result.success && result.data?.file) {
-      return result.data.file;
-    }
-    return undefined;
-  }
-}
-```
-
-## Step 5: Create the Application
+## Step 4: Create the Application
 
 Create `src/index.ts`:
 
@@ -381,7 +330,6 @@ try {
 - Pass signal to `fetch` and other async APIs
 - Clean up resources on cancellation
 - Return meaningful results for cancelled operations
-- Render different UI for cancelled vs success vs error
 
 ## Next Steps
 
