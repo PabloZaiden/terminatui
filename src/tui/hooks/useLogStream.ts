@@ -28,6 +28,7 @@ export interface LogEntry {
 export interface LogEvent {
     level: LogLevel;
     message: string;
+    timestamp?: Date | string;
 }
 
 /**
@@ -67,8 +68,13 @@ export function useLogStream(source?: LogSource): UseLogStreamResult {
 
         const unsubscribe = source.subscribe((event: LogEvent) => {
             setLogs((prev) => {
+                const ts = event.timestamp instanceof Date
+                    ? event.timestamp
+                    : event.timestamp
+                        ? new Date(event.timestamp)
+                        : new Date();
                 const newEntry: LogEntry = {
-                    timestamp: new Date(),
+                    timestamp: ts,
                     level: event.level,
                     message: event.message,
                 };

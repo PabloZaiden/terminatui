@@ -45,6 +45,7 @@ export {
     Header,
     StatusBar,
     LogsPanel,
+    DebugLogStrip,
     ResultsPanel,
     ConfigForm,
     EditorModal,

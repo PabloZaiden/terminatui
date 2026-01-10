@@ -75,13 +75,13 @@ export class Logger {
 
           const output = this.detailed ? baseLine : simpleLine;
 
-          if (this.tuiMode) {
-            this.eventEmitter.emit("log", {
-              message: output,
-              level: levelFromMeta,
-              timestamp: new Date(),
-            } satisfies LogEvent);
-          } else {
+          this.eventEmitter.emit("log", {
+            message: output,
+            level: levelFromMeta,
+            timestamp: new Date(),
+          } satisfies LogEvent);
+
+          if (!this.tuiMode) {
             process.stderr.write(output + "\n");
           }
         },
