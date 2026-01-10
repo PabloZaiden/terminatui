@@ -105,6 +105,8 @@ export class Application {
     this.context = new AppContext(appConfig, config.logger);
     AppContext.setCurrent(this.context);
 
+    this.context.logger.silly(`Application initialized: ${this.name} v${this.version}`);
+
     // Create registry and register commands
     this.registry = new CommandRegistry();
     this.registerCommands(config.commands);

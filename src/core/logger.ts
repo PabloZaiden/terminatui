@@ -128,32 +128,45 @@ export class Logger {
 
   // Logging methods
   silly(...args: unknown[]): void {
-    this.tsLogger.silly(...args);
+    this.tsLogger.silly(...asStringArray(args));
   }
 
   trace(...args: unknown[]): void {
-    this.tsLogger.trace(...args);
+    this.tsLogger.trace(...asStringArray(args));
   }
 
   debug(...args: unknown[]): void {
-    this.tsLogger.debug(...args);
+    this.tsLogger.debug(...asStringArray(args));
   }
 
   info(...args: unknown[]): void {
-    this.tsLogger.info(...args);
+    this.tsLogger.info(...asStringArray(args));
   }
 
   warn(...args: unknown[]): void {
-    this.tsLogger.warn(...args);
+    this.tsLogger.warn(...asStringArray(args));
   }
 
   error(...args: unknown[]): void {
-    this.tsLogger.error(...args);
+    this.tsLogger.error(...asStringArray(args));
   }
 
   fatal(...args: unknown[]): void {
-    this.tsLogger.fatal(...args);
+    this.tsLogger.fatal(...asStringArray(args));
   }
+}
+
+function asStringArray(args: unknown[]): string[] {
+  return args.map(arg => {
+    if (typeof arg === "string") {
+      return arg;
+    }
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return String(arg);
+    }
+  });
 }
 
 /**
