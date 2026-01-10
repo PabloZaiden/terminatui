@@ -8,35 +8,38 @@ This directory contains the complete migration plan and task breakdown for migra
 
 ## 📚 Documentation
 
-### [Migration Evaluation](./migration-evaluation.md) (~50 KB)
-**Complete analysis and decision documentation**
+### [Phase 0: Architecture Improvements](./phase-0/README.md)
+**Core architecture refactoring (MUST DO FIRST)**
+
+Contains:
+- [Problem Analysis](./phase-0/problem-analysis.md) - Current issues
+- [Phase 0A: Stack-Based Navigation](./phase-0/phase-0a-navigation.md) - 5 tasks
+- [Phase 0B: Component-Chain Keyboard](./phase-0/phase-0b-keyboard.md) - 6 tasks
+- [Implementation Order](./phase-0/implementation-order.md) - Sequencing & success criteria
+
+**Start here** - Complete Phase 0A and 0B before proceeding to rendering migration.
+
+### [Migration Evaluation](./evaluation/README.md)
+**Analysis and decision documentation**
 
 Contains:
 - Problem statement and requirements
-- Current state analysis (coupling points, primitives used)
-- Proposed 3-layer architecture (semantic components + adapters)
-- Risk analysis and mitigation strategies
-- Alternative approaches considered
+- Current state analysis
+- Proposed 3-layer architecture
+- Migration strategy overview
 - Decision context and rationale
-- Ink capability validation
-- Post-migration benefits
-- **Re-evaluation corrections** (Ink v6, titled borders, etc.)
 
-**Read this first** to understand why we're migrating and how the solution was designed.
+**Read this second** to understand why we're migrating and the solution design.
 
-### [Migration Tasks](./migration-tasks.md) (~35 KB)
-**Detailed task breakdown for implementation**
+### Phase-Specific Documentation
+**Detailed task breakdowns organized by phase**
 
-Contains:
-- Complete task breakdown for all 4 phases
-- 60+ actionable tasks with checkboxes
-- **Task 3.0: Proof-of-concept validation** (validates Ink v6 + React 19 before full implementation)
-- Validation criteria for each task
-- Phase dependencies and deliverables
-- Task tracking tables
-- Success criteria checklist
+- [Phase 1: Semantic Component Library](./phase-1/README.md) - 11 tasks
+- [Phase 2: Refactor to Semantic Layer](./phase-2/README.md) - 11 tasks
+- [Phase 3: Ink Adapter Implementation](./phase-3/README.md) - 13 tasks
+- [Phase 4: Migration Cutover](./phase-4/README.md) - 12 tasks
 
-**Use this** during implementation to track progress.
+**Use during implementation** to track progress through each phase.
 
 ## 🎯 Quick Summary
 
@@ -45,6 +48,9 @@ Contains:
 **Solution:** Migrate to Ink (mature, battle-tested) with semantic component abstraction layer.
 
 **Approach:** 
+0. **Phase 0 (Architecture):** Fix navigation and keyboard handling
+   - 0A: Stack-based navigation
+   - 0B: Component-chain keyboard bubbling
 1. Build semantic components (Panel, Field, ScrollView, etc.)
 2. Implement OpenTUI adapter for semantic components
 3. Refactor existing code to use semantic layer
@@ -62,6 +68,8 @@ Contains:
 
 | Phase | Goal | Status |
 |-------|------|--------|
+| **Phase 0A** | Stack-based navigation (architecture improvement) | Not Started |
+| **Phase 0B** | Component-chain keyboard handling (architecture improvement) | Not Started |
 | **Phase 1** | Create semantic component library (OpenTUI impl) | Not Started |
 | **Phase 2** | Refactor existing components to use semantic layer | Not Started |
 | **Phase 3** | Implement Ink adapter | Not Started |
@@ -114,18 +122,28 @@ Each component abstracts rendering details so adapters can implement them differ
 - [ ] Implementation not started
 
 **Next Steps:**
-1. Review and approve evaluation
-2. Build proof-of-concept (2-3 components in both renderers)
-3. Begin Phase 1 implementation
+1. Review and approve architecture improvements plan
+2. **Complete Phase 0A: Stack-based navigation** ([tasks](./phase-0/phase-0a-navigation.md))
+3. **Complete Phase 0B: Component-chain keyboard handling** ([tasks](./phase-0/phase-0b-keyboard.md))
+4. Review and approve rendering migration evaluation
+5. Begin Phase 1 implementation ([tasks](./phase-1/tasks.md))
 
-## 🔍 Key Files to Understand
+**Current Focus:** [Phase 0A - Stack-Based Navigation](./phase-0/phase-0a-navigation.md)
 
-| File | Purpose | Read When |
-|------|---------|-----------|
-| `migration-evaluation.md` | Complete analysis and design | Before starting |
-| `migration-tasks.md` | Task breakdown and tracking | During implementation |
-| `src/tui/TuiApplication.tsx` | Current renderer integration | Understanding coupling |
-| `src/tui/components/*` | Components to refactor | Phase 2 planning |
+## 🔍 Key Documents to Read (In Order)
+
+| Document | Purpose | Read When |
+|----------|---------|-----------|
+| [phase-0/README.md](./phase-0/README.md) | Phase 0 overview | **Before starting** |
+| [phase-0/problem-analysis.md](./phase-0/problem-analysis.md) | Current architecture problems | Understanding issues |
+| [phase-0/phase-0a-navigation.md](./phase-0/phase-0a-navigation.md) | Stack navigation tasks | Implementing Phase 0A |
+| [phase-0/phase-0b-keyboard.md](./phase-0/phase-0b-keyboard.md) | Keyboard handling tasks | Implementing Phase 0B |
+| [evaluation/README.md](./evaluation/README.md) | Migration evaluation overview | Before Phase 1 |
+| [phase-1/README.md](./phase-1/README.md) | Semantic components overview | Implementing Phase 1 |
+| [phase-1/tasks.md](./phase-1/tasks.md) | Semantic components tasks | During Phase 1 |
+| [phase-2/README.md](./phase-2/README.md) | Refactoring overview | Implementing Phase 2 |
+| [phase-3/README.md](./phase-3/README.md) | Ink adapter overview | Implementing Phase 3 |
+| [phase-4/README.md](./phase-4/README.md) | Cutover overview | Implementing Phase 4 |
 
 ## 📝 Decision History
 
