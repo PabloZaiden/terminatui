@@ -73,4 +73,4 @@ After Phase 2 completion:
 **Related:**
 - [Phase 1](../phase-1/README.md)
 - [Phase 3](../phase-3/README.md)
-- [Main Migration Plan](../MIGRATION.md)
+- [Main Migration Plan](../README.md)

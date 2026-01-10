@@ -99,5 +99,5 @@ After Phase 4 completion:
 
 **Related:**
 - [Phase 3](../phase-3/README.md)
-- [Main Migration Plan](../MIGRATION.md)
+- [Main Migration Plan](../README.md)
 - [Evaluation](../evaluation/README.md)

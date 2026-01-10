@@ -123,6 +123,6 @@ Migrate to Ink (mature, battle-tested) with semantic component abstraction layer
 ---
 
 **Related Documents:**
-- [Main Migration Plan](../MIGRATION.md)
+- [Main Migration Plan](../README.md)
 - [Phase 0: Architecture Improvements](../phase-0/README.md)
 - [Migration Tasks](../tasks/README.md)

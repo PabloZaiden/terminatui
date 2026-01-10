@@ -194,7 +194,7 @@ Once Phase 0A and 0B are complete and validated:
 3. **Reference Phase 0** - Use screen types and keyboard patterns in Phase 1
 
 See:
-- [Main Migration Plan](../MIGRATION.md)
+- [Main Migration Plan](../README.md)
 - [Phase 1 Tasks](../tasks/phase-1-tasks.md)
 
 ---
