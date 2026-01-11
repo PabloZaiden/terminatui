@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { Logger as TsLogger } from "tslog";
+import { Logger as TsLogger, type IMeta } from "tslog";
 
 /**
  * Log levels from least to most severe.
@@ -18,6 +18,7 @@ export enum LogLevel {
  * Event emitted when a log message is written.
  */
 export interface LogEvent {
+  rawMessage: string;
   message: string;
   level: LogLevel;
   timestamp: Date;
@@ -42,12 +43,10 @@ export interface LoggerConfig {
 export class Logger {
   private tsLogger: TsLogger<unknown>;
   private readonly eventEmitter = new EventEmitter();
-  private tuiMode: boolean;
   private detailed: boolean;
   private minLevel: LogLevel;
 
   constructor(config: LoggerConfig = {}) {
-    this.tuiMode = config.tuiMode ?? false;
     this.detailed = config.detailed ?? false;
     this.minLevel = config.minLevel ?? LogLevel.Info;
 
@@ -63,27 +62,19 @@ export class Logger {
           logMetaMarkup: string,
           logArgs: unknown[],
           logErrors: string[],
-          logMeta: unknown
+          logMeta?: IMeta
         ) => {
           const baseLine = `${logMetaMarkup}${(logArgs as string[]).join(" ")}${logErrors.join("")}`;
           const simpleLine = `${(logArgs as string[]).join(" ")}${logErrors.join("")}`;
-          const meta = logMeta as Record<string, unknown>;
-          const levelFromMeta =
-            typeof meta?.["logLevelId"] === "number"
-              ? (meta["logLevelId"] as LogLevel)
-              : LogLevel.Info;
-
+          const level = logMeta?.logLevelId as LogLevel ?? LogLevel.Info;
           const output = this.detailed ? baseLine : simpleLine;
 
           this.eventEmitter.emit("log", {
             message: output,
-            level: levelFromMeta,
+            rawMessage: simpleLine,
+            level: level,
             timestamp: new Date(),
           } satisfies LogEvent);
-
-          if (!this.tuiMode) {
-            process.stderr.write(output + "\n");
-          }
         },
       },
     });
@@ -95,13 +86,6 @@ export class Logger {
   onLogEvent(listener: (event: LogEvent) => void): () => void {
     this.eventEmitter.on("log", listener);
     return () => this.eventEmitter.off("log", listener);
-  }
-
-  /**
-   * Enable or disable TUI mode.
-   */
-  setTuiMode(enabled: boolean): void {
-    this.tuiMode = enabled;
   }
 
   /**
@@ -127,7 +111,7 @@ export class Logger {
   }
 
   // Logging methods
-  silly(...args: unknown[]): void {
+    silly(...args: unknown[]): void {
     this.tsLogger.silly(...asStringArray(args));
   }
 

@@ -1,10 +1,11 @@
 import { Theme } from "../theme.ts";
-import type { LogEntry } from "../hooks/useLogStream.ts";
 import { LogColors } from "./logColors.ts";
+import { AppContext } from "../../core/context.ts";
+import type { LogEvent } from "../../core/logger.ts";
 
 interface LogsPanelProps {
     /** Log entries to display */
-    logs: LogEntry[];
+    logs: LogEvent[];
     /** Whether the panel is visible */
     visible: boolean;
     /** Whether the panel is focused */
@@ -25,6 +26,8 @@ export function LogsPanel({
     if (!visible) {
         return null;
     }
+
+    AppContext.current.logger
 
     const borderColor = focused ? Theme.borderFocused : Theme.border;
     const title = `Logs - ${logs.length}`;
@@ -53,11 +56,9 @@ export function LogsPanel({
             >
                 <box flexDirection="column" gap={0}>
                     {logs.map((log, idx) => {
+                        log
                         const color = LogColors[log.level] ?? Theme.statusText;
-                        // Strip ANSI codes but preserve line breaks
-                        const sanitized = typeof Bun !== "undefined"
-                            ? Bun.stripANSI(log.message).trim()
-                            : log.message.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, "").trim();
+                        const sanitized = Bun.stripANSI(log.message).trim();
 
                         return (
                             <text key={`${log.timestamp.getTime()}-${idx}`} fg={color}>

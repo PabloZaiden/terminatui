@@ -12,7 +12,7 @@
  *   bun examples/tui-app/index.ts greet --name "World" --loud
  */
 
-import { TuiApplication } from "../../src/index.ts";
+import { TuiApplication } from "../../src/tui/TuiApplication.tsx";
 import { GreetCommand, MathCommand, StatusCommand, ConfigCommand } from "./commands/index.ts";
 
 class ExampleApp extends TuiApplication {

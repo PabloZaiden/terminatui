@@ -1,8 +1,9 @@
-import { describe, test, expect, afterEach } from "bun:test";
+import { describe, test, expect } from "bun:test";
 import { Application } from "../core/application.ts";
 import { Command } from "../core/command.ts";
 import { AppContext } from "../core/context.ts";
 import type { OptionSchema, OptionValues, OptionDef } from "../types/command.ts";
+import { LogLevel } from "../core/logger.ts";
 
 // Define a proper option schema
 const testOptions = {
@@ -41,10 +42,6 @@ class TuiCommand extends Command<OptionSchema> {
 }
 
 describe("Application", () => {
-  afterEach(() => {
-    AppContext.clearCurrent();
-  });
-
   describe("constructor", () => {
     test("creates application with name and version", () => {
       const app = new Application({
@@ -56,14 +53,16 @@ describe("Application", () => {
       expect(app.version).toBe("1.0.0");
     });
 
-    test("creates context and sets as current", () => {
-      const app = new Application({
+    test("creates context as side effect of creating application", () => {
+      // side effect of creating an application is setting the current context
+      new Application({
         name: "test-app",
         version: "1.0.0",
         commands: [],
       });
-      expect(AppContext.hasCurrent()).toBe(true);
-      expect(app.context).toBe(AppContext.current);
+      
+      expect(AppContext.current.config.name).toBe("test-app");
+      expect(AppContext.current.config.version).toBe("1.0.0");
     });
 
     test("registers provided commands", () => {
@@ -104,17 +103,6 @@ describe("Application", () => {
       });
       expect(cmd.subCommands).toBeDefined();
       expect(cmd.subCommands?.some((c) => c.name === "help")).toBe(true);
-    });
-  });
-
-  describe("getContext", () => {
-    test("returns the application context", () => {
-      const app = new Application({
-        name: "test-app",
-        version: "1.0.0",
-        commands: [],
-      });
-      expect(app.getContext()).toBe(app.context);
     });
   });
 
@@ -375,13 +363,13 @@ describe("Application", () => {
       
       // All of these should work (case-insensitive)
       await app.run(["--log-level", "debug", "test"]);
-      expect(app.context.logger.getMinLevel()).toBe(2); // Debug = 2
+      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.Debug);
       
       await app.run(["--log-level", "Debug", "test"]);
-      expect(app.context.logger.getMinLevel()).toBe(2);
+      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.Debug);
       
       await app.run(["--log-level", "DEBUG", "test"]);
-      expect(app.context.logger.getMinLevel()).toBe(2);
+      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.Debug);
     });
 
     test("parses --detailed-logs flag", async () => {
@@ -419,7 +407,7 @@ describe("Application", () => {
       });
       
       await app.run(["--log-level=warn", "test"]);
-      expect(app.context.logger.getMinLevel()).toBe(4); // Warn = 4
+      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.Warn);
     });
   });
 });

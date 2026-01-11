@@ -1,29 +1,24 @@
 import { useState, useCallback, useMemo } from "react";
-import { KeyboardProvider } from "./context/index.ts";
-import {
-    Header,
-    StatusBar,
-    CommandSelector,
-    ConfigForm,
-    EditorModal,
-    CliModal,
-    LogsPanel,
-    ResultsPanel,
-    ActionButton,
-} from "./components/index.ts";
-import {
-    useKeyboardHandler,
-    KeyboardPriority,
-    useClipboard,
-    useLogStream,
-    useCommandExecutor,
-    type LogSource,
-} from "./hooks/index.ts";
-import { schemaToFieldConfigs, getFieldDisplayValue, buildCliCommand, loadPersistedParameters, savePersistedParameters } from "./utils/index.ts";
 import type { AnyCommand } from "../core/command.ts";
-import type { AppContext } from "../core/context.ts";
+import { AppContext } from "../core/context.ts";
 import type { OptionValues, OptionSchema, OptionDef } from "../types/command.ts";
 import type { CustomField } from "./TuiApplication.tsx";
+import { useClipboard } from "./hooks/useClipboard.ts";
+import { KeyboardPriority, KeyboardProvider } from "./context/KeyboardContext.tsx";
+import { useCommandExecutor } from "./hooks/useCommandExecutor.ts";
+import { useKeyboardHandler } from "./hooks/useKeyboardHandler.ts";
+import { CommandSelector } from "./components/CommandSelector.tsx";
+import { ConfigForm } from "./components/ConfigForm.tsx";
+import { ActionButton } from "./components/ActionButton.tsx";
+import { LogsPanel } from "./components/LogsPanel.tsx";
+import { ResultsPanel } from "./components/ResultsPanel.tsx";
+import { getFieldDisplayValue, schemaToFieldConfigs } from "./utils/schemaToFields.ts";
+import { buildCliCommand } from "./utils/buildCliCommand.ts";
+import { loadPersistedParameters, savePersistedParameters } from "./utils/parameterPersistence.ts";
+import { Header } from "./components/Header.tsx";
+import { StatusBar } from "./components/StatusBar.tsx";
+import { EditorModal } from "./components/EditorModal.tsx";
+import { CliModal } from "./components/CliModal.tsx";
 
 /**
  * TUI application mode.
@@ -54,10 +49,6 @@ interface TuiAppProps {
     version: string;
     /** Available commands */
     commands: AnyCommand[];
-    /** Application context */
-    context: AppContext;
-    /** Log source for log panel */
-    logSource?: LogSource;
     /** Custom fields to add to the TUI form */
     customFields?: CustomField[];
     /** Called when user wants to exit */
@@ -81,8 +72,6 @@ function TuiAppContent({
     displayName,
     version,
     commands,
-    context,
-    logSource,
     customFields,
     onExit,
 }: TuiAppProps) {
@@ -100,7 +89,6 @@ function TuiAppContent({
     const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
 
     // Hooks
-    const { logs, clearLogs } = useLogStream(logSource);
     const { copyWithMessage, lastAction } = useClipboard();
     
     // Command executor
@@ -108,11 +96,11 @@ function TuiAppContent({
         // If the command provides buildConfig, build and validate before executing
         let configOrValues: unknown = values;
         if (cmd.buildConfig) {
-            configOrValues = await cmd.buildConfig(context, values as OptionValues<OptionSchema>);
+            configOrValues = await cmd.buildConfig(AppContext.current, values as OptionValues<OptionSchema>);
         }
 
-        return await cmd.execute(context, configOrValues as OptionValues<OptionSchema>, { signal });
-    }, [context]);
+        return await cmd.execute(AppContext.current, configOrValues as OptionValues<OptionSchema>, { signal });
+    }, [AppContext.current]);
 
     const { isExecuting, result, error, execute, cancel, reset: resetExecutor } = useCommandExecutor(
         (cmd: unknown, values: unknown, signal: unknown) => executeCommand(cmd as AnyCommand, values as Record<string, unknown>, signal as AbortSignal)
@@ -292,7 +280,6 @@ function TuiAppContent({
 
         // Set up for running
         setMode(Mode.Running);
-        clearLogs();
         setLogsVisible(true);
         setFocusedSection(FocusedSection.Logs);
 
@@ -311,7 +298,7 @@ function TuiAppContent({
             setMode(Mode.Error);
         }
         setFocusedSection(FocusedSection.Results);
-    }, [selectedCommand, configValues, clearLogs, execute, name]);
+    }, [selectedCommand, configValues, execute, name]);
 
     const handleEditField = useCallback((fieldKey: string) => {
         setEditingField(fieldKey);
@@ -345,21 +332,8 @@ function TuiAppContent({
         copyWithMessage(content, label);
     }, [copyWithMessage]);
 
-    /**
-     * Get clipboard content based on current mode and focused section.
-     * Returns { content, label } or null if nothing to copy.
-     */
     const getClipboardContent = useCallback((): { content: string; label: string } | null => {
-        // In Running mode or when logs are focused, copy logs
-        if (mode === Mode.Running || (logsVisible && focusedSection === FocusedSection.Logs)) {
-            if (logs.length > 0) {
-                const content = logs
-                    .map((log) => `[${log.level}] ${log.timestamp.toISOString()} ${log.message}`)
-                    .join("\n");
-                return { content, label: "Logs" };
-            }
-            return null;
-        }
+        // TODO: If the log panel is in focus, ask it for the logs content and return that
 
         // In Results/Error mode with results focused
         if ((mode === Mode.Results || mode === Mode.Error) && focusedSection === FocusedSection.Results) {
@@ -385,7 +359,7 @@ function TuiAppContent({
         }
 
         return null;
-    }, [mode, focusedSection, logsVisible, logs, error, result, configValues, selectedCommand]);
+    }, [mode, focusedSection, error, result, configValues, selectedCommand]);
 
     const cycleFocusedSection = useCallback(() => {
         const sections: FocusedSection[] = [];
@@ -541,7 +515,7 @@ function TuiAppContent({
                         />
                         {logsVisible && (
                             <LogsPanel
-                                logs={logs}
+                                logs={AppContext.current.logHistory}
                                 visible={true}
                                 focused={focusedSection === FocusedSection.Logs}
                             />
@@ -552,7 +526,7 @@ function TuiAppContent({
             case Mode.Running:
                 return (
                     <LogsPanel
-                        logs={logs}
+                        logs={AppContext.current.logHistory}
                         visible={true}
                         focused={true}
                         expanded={true}
@@ -571,7 +545,7 @@ function TuiAppContent({
                         />
                         {logsVisible && (
                             <LogsPanel
-                                logs={logs}
+                                logs={AppContext.current.logHistory}
                                 visible={true}
                                 focused={focusedSection === FocusedSection.Logs}
                             />

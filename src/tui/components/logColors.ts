@@ -1,4 +1,4 @@
-import { LogLevel } from "../hooks/useLogStream.ts";
+import { LogLevel } from "../../core/logger";
 
 // Shared colors for log levels used across debug views.
 export const LogColors: Record<LogLevel, string> = {

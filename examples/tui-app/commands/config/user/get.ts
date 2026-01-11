@@ -1,10 +1,6 @@
-import { 
-    Command, 
-    type AppContext, 
-    type OptionSchema, 
-    type OptionValues,
-    type CommandResult 
-} from "../../../../../src/index.ts";
+import { Command, type CommandResult } from "../../../../../src/core/command";
+import type { AppContext } from "../../../../../src/core/context";
+import type { OptionSchema, OptionValues } from "../../../../../src/types/command";
 
 const options = {
     key: {

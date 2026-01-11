@@ -86,6 +86,3 @@ export function useKeyboardHandler(
         };
     }, [id, priority, enabled, register, unregister]);
 }
-
-export { KeyboardPriority };
-export type { KeyboardEvent };

@@ -2,7 +2,8 @@ import { useRef, useEffect, type ReactNode } from "react";
 import type { ScrollBoxRenderable } from "@opentui/core";
 import { Theme } from "../theme.ts";
 import { FieldRow } from "./FieldRow.tsx";
-import { useKeyboardHandler, KeyboardPriority } from "../hooks/useKeyboardHandler.ts";
+import { useKeyboardHandler } from "../hooks/useKeyboardHandler.ts";
+import { KeyboardPriority } from "../context/KeyboardContext.tsx";
 import type { FieldConfig } from "./types.ts";
 
 interface ConfigFormProps {

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import type { SelectOption } from "@opentui/core";
 import { Theme } from "../theme.ts";
-import { useKeyboardHandler, KeyboardPriority } from "../hooks/useKeyboardHandler.ts";
+import { useKeyboardHandler } from "../hooks/useKeyboardHandler.ts";
 import type { FieldConfig } from "./types.ts";
+import { KeyboardPriority } from "../context/KeyboardContext.tsx";
 
 interface EditorModalProps {
     /** The key of the field being edited */
