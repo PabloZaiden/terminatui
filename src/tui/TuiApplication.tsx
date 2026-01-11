@@ -71,7 +71,7 @@ export class TuiApplication extends Application {
         this.enableTui = config.enableTui ?? true;
         this.logSource = config.logSource;
         this.customFields = config.customFields;
-        const envDebug = Bun.env["COMPASS_DEBUG"] === "true";
+        const envDebug = Bun.env["TERMINATUI_DEBUG"] === "true";
         this.debugMode = envDebug || (config.debug ?? false);
 
         if (this.debugMode) {
