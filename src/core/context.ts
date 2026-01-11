@@ -1,4 +1,4 @@
-import { Logger, createLogger, type LoggerConfig } from "./logger.ts";
+import { type Logger, createLogger, type LoggerConfig } from "./logger.ts";
 
 /**
  * Application configuration stored in context.
@@ -40,10 +40,8 @@ export class AppContext {
    */
   static get current(): AppContext {
     if (!AppContext._current) {
-      throw new Error(
-        "AppContext.current accessed before initialization. " +
-        "Ensure Application.run() has been called."
-      );
+      // return a fake context to avoid optional chaining everywhere
+      return new AppContext({ name: "unknown", version: "0.0.0" });
     }
     return AppContext._current;
   }
