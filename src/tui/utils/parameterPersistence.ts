@@ -47,6 +47,7 @@ export function loadPersistedParameters(
             return JSON.parse(content) as Record<string, unknown>;
         }
     } catch (error) {
+        
         // Silently ignore errors - just return empty object
         console.error(`Failed to load persisted parameters: ${error}`);
     }

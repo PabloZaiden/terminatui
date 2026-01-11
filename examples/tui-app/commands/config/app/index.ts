@@ -1,8 +1,5 @@
-import { 
-    Command, 
-    type AppContext,
-    type CommandResult 
-} from "../../../../../src/index.ts";
+import { Command, type CommandResult } from "../../../../../src/core/command.ts";
+import type { AppContext } from "../../../../../src/core/context.ts";
 import { AppGetCommand } from "./get.ts";
 import { AppSetCommand } from "./set.ts";
 

@@ -1,10 +1,7 @@
-import { 
-    Command, 
-    type AppContext,
-    type CommandResult 
-} from "../../../../src/index.ts";
 import { UserConfigCommand } from "./user/index.ts";
 import { AppConfigCommand } from "./app/index.ts";
+import { Command, type CommandResult } from "../../../../src/core/command.ts";
+import type { AppContext } from "../../../../src/core/context.ts";
 
 export class ConfigCommand extends Command {
     readonly name = "config";

@@ -1,5 +1,6 @@
 import { Theme } from "../theme.ts";
-import { useKeyboardHandler, KeyboardPriority } from "../hooks/useKeyboardHandler.ts";
+import { useKeyboardHandler } from "../hooks/useKeyboardHandler.ts";
+import { KeyboardPriority } from "../context/KeyboardContext.tsx";
 import type { Command } from "../../core/command.ts";
 
 interface CommandItem {

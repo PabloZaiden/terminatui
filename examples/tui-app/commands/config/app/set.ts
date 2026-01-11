@@ -1,10 +1,6 @@
-import { 
-    Command, 
-    type AppContext, 
-    type OptionSchema, 
-    type OptionValues,
-    type CommandResult 
-} from "../../../../../src/index.ts";
+import { Command, type CommandResult } from "../../../../../src/core/command";
+import type { AppContext } from "../../../../../src/core/context";
+import type { OptionSchema, OptionValues } from "../../../../../src/types/command";
 
 const options = {
     key: {
@@ -68,8 +64,19 @@ export class AppSetCommand extends Command<typeof options> {
 
         ctx.logger.info(`Setting app.${opts.key} = ${JSON.stringify(parsedValue)}`);
         
-        // Simulate setting the value
-        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Simulate setting the value on the 5th iteration
+        await new Promise(resolve => {
+            let count = 0;
+            let interval = setInterval(() => {
+                count++;
+                ctx.logger.info(`Applying configuration... (${count}/5)`);
+                if (count >= 5) {
+                    clearInterval(interval);
+                    resolve(undefined);
+                }
+            }, 1000);
+        });
         
         ctx.logger.info(`Successfully updated application configuration`);
         return {

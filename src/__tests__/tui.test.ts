@@ -1,7 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import {
-    KeyboardPriority,
-} from "../tui/index.ts";
+import { KeyboardPriority } from "../tui/context/KeyboardContext";
 
 describe("TUI", () => {
     describe("KeyboardPriority", () => {

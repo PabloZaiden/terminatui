@@ -2,6 +2,8 @@ ignore
 .cache
 .artifacts
 
+*.log
+
 # dependencies (bun install)
 node_modules
 

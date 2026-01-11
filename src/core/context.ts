@@ -1,4 +1,5 @@
-import { Logger, createLogger, type LoggerConfig } from "./logger.ts";
+import { type Logger, createLogger, type LoggerConfig, type LogEvent } from "./logger.ts";
+import { appendFileSync } from "fs";
 
 /**
  * Application configuration stored in context.
@@ -8,9 +9,13 @@ export interface AppConfig {
   name: string;
   /** Application version */
   version: string;
+  /** Log target */
+  logTarget?: LogTarget[];
   /** Additional configuration values */
   [key: string]: unknown;
 }
+
+export type LogTarget = "memory" | "file" | "none";
 
 /**
  * AppContext is the central container for application-wide services and state.
@@ -22,6 +27,7 @@ export interface AppConfig {
 export class AppContext {
   private static _current: AppContext | null = null;
   private readonly services = new Map<string, unknown>();
+  private readonly startTime = Date.now();
 
   /** The application logger */
   public readonly logger: Logger;
@@ -29,9 +35,27 @@ export class AppContext {
   /** The application configuration */
   public readonly config: AppConfig;
 
+  public logTarget: LogTarget[] = [];
+
+  public readonly logHistory: LogEvent[] = [];
+
   constructor(config: AppConfig, loggerConfig?: LoggerConfig) {
     this.config = config;
     this.logger = createLogger(loggerConfig);
+    this.logTarget = config.logTarget ?? ["none"];
+
+    this.logger.onLogEvent((event) => {
+      if (this.logTarget.includes("memory")) {
+        this.logHistory.push(event);
+      }
+
+      if (this.logTarget.includes("file")) {
+        const logFileName = `${this.config.name}-${this.startTime}.log`;
+        const logLine = event.message + "\n";
+
+        appendFileSync(logFileName, logLine);
+      }
+    });
   }
 
   /**
@@ -40,19 +64,10 @@ export class AppContext {
    */
   static get current(): AppContext {
     if (!AppContext._current) {
-      throw new Error(
-        "AppContext.current accessed before initialization. " +
-        "Ensure Application.run() has been called."
-      );
+      // return a fake context to avoid optional chaining everywhere
+      return new AppContext({ name: "unknown", version: "0.0.0" });
     }
     return AppContext._current;
-  }
-
-  /**
-   * Check if a current context exists.
-   */
-  static hasCurrent(): boolean {
-    return AppContext._current !== null;
   }
 
   /**
@@ -60,15 +75,11 @@ export class AppContext {
    * Called internally by Application.
    */
   static setCurrent(context: AppContext): void {
-    AppContext._current = context;
-  }
+    if (!context) {
+      throw new Error("Cannot set null or undefined context");
+    }
 
-  /**
-   * Clear the current context.
-   * Useful for testing.
-   */
-  static clearCurrent(): void {
-    AppContext._current = null;
+    AppContext._current = context;
   }
 
   /**
