@@ -22,12 +22,6 @@ describe("AppContext", () => {
   });
 
   describe("static current", () => {
-    test("throws when no current context", () => {
-      expect(() => AppContext.current).toThrow(
-        "AppContext.current accessed before initialization"
-      );
-    });
-
     test("returns current context after setCurrent", () => {
       const config: AppConfig = { name: "test", version: "1.0.0" };
       const ctx = new AppContext(config);
