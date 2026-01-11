@@ -5,13 +5,13 @@ import { Logger as TsLogger, type IMeta } from "tslog";
  * Log levels from least to most severe.
  */
 export enum LogLevel {
-  Silly = 0,
-  Trace = 1,
-  Debug = 2,
-  Info = 3,
-  Warn = 4,
-  Error = 5,
-  Fatal = 6,
+  silly = 0,
+  trace = 1,
+  debug = 2,
+  info = 3,
+  warn = 4,
+  error = 5,
+  fatal = 6,
 }
 
 /**
@@ -48,7 +48,7 @@ export class Logger {
 
   constructor(config: LoggerConfig = {}) {
     this.detailed = config.detailed ?? false;
-    this.minLevel = config.minLevel ?? LogLevel.Info;
+    this.minLevel = config.minLevel ?? LogLevel.info;
 
     this.tsLogger = this.createTsLogger(this.minLevel);
   }
@@ -66,7 +66,7 @@ export class Logger {
         ) => {
           const baseLine = `${logMetaMarkup}${(logArgs as string[]).join(" ")}${logErrors.join("")}`;
           const simpleLine = `${(logArgs as string[]).join(" ")}${logErrors.join("")}`;
-          const level = logMeta?.logLevelId as LogLevel ?? LogLevel.Info;
+          const level = logMeta?.logLevelId as LogLevel ?? LogLevel.info;
           const output = this.detailed ? baseLine : simpleLine;
 
           this.eventEmitter.emit("log", {

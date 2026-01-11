@@ -1,5 +1,5 @@
 import { Command, type CommandResult } from "../../../src/core/command";
-import type { AppContext } from "../../../src/core/context";
+import { AppContext } from "../../../src/core/context";
 import type { OptionSchema, OptionValues } from "../../../src/types/command";
 
 const statusOptions = {
@@ -45,7 +45,17 @@ export class StatusCommand extends Command<typeof statusOptions> {
         const detailed = opts.detailed as boolean;
         
         // Simulate some async work
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise(resolve => {
+            let count = 0;
+            let interval = setInterval(() => {
+                count++;
+                AppContext.current.logger.info(`Applying configuration... (${count}/5)`);
+                if (count >= 5) {
+                    clearInterval(interval);
+                    resolve(undefined);
+                }
+            }, 1000);
+        });
 
         const memMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
         const uptimeSec = Math.round(process.uptime());

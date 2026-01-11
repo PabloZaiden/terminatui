@@ -4,7 +4,7 @@ import { Application, type ApplicationConfig } from "../core/application.ts";
 import type { AnyCommand } from "../core/command.ts";
 import { TuiApp } from "./TuiApp.tsx";
 import { Theme } from "./theme.ts";
-import { LogLevel } from "../core/logger.ts";
+import { LogLevel, type LogEvent } from "../core/logger.ts";
 import type { FieldConfig } from "./components/types.ts";
 import { createSettingsCommand } from "../builtins/settings.ts";
 import { loadPersistedParameters } from "./utils/parameterPersistence.ts";
@@ -107,6 +107,16 @@ export class TuiApplication extends Application {
                 resolve();
             };
 
+            let tuiLogEventHandler : (event: LogEvent) => void = (_) => {};
+            
+            AppContext.current.logger.onLogEvent((event) => {
+                tuiLogEventHandler(event);
+            });
+
+            const setLogEventHandler = (handler: (event: LogEvent) => void) => {
+                tuiLogEventHandler = handler;
+            }
+
             const root = createRoot(renderer);
             root.render(
                 <TuiApp
@@ -115,6 +125,7 @@ export class TuiApplication extends Application {
                     version={this.version}
                     commands={commands}
                     onExit={handleExit}
+                    setLogEventHandler={setLogEventHandler}
                 />
             );
 

@@ -15,7 +15,7 @@ export interface AppConfig {
   [key: string]: unknown;
 }
 
-export type LogTarget = "memory" | "file";
+export type LogTarget = "memory" | "file" | "none";
 
 /**
  * AppContext is the central container for application-wide services and state.
@@ -42,7 +42,7 @@ export class AppContext {
   constructor(config: AppConfig, loggerConfig?: LoggerConfig) {
     this.config = config;
     this.logger = createLogger(loggerConfig);
-    this.logTarget = config.logTarget ?? ["memory"];
+    this.logTarget = config.logTarget ?? ["none"];
 
     this.logger.onLogEvent((event) => {
       if (this.logTarget.includes("memory")) {
@@ -50,8 +50,7 @@ export class AppContext {
       }
 
       if (this.logTarget.includes("file")) {
-        // {appName}-{process-start-timestamp}.log
-        const logFileName = `{this.config.name}-${this.startTime}.log`;
+        const logFileName = `${this.config.name}-${this.startTime}.log`;
         const logLine = event.message + "\n";
 
         appendFileSync(logFileName, logLine);

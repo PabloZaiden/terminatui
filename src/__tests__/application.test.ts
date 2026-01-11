@@ -363,13 +363,13 @@ describe("Application", () => {
       
       // All of these should work (case-insensitive)
       await app.run(["--log-level", "debug", "test"]);
-      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.Debug);
+      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.debug);
       
       await app.run(["--log-level", "Debug", "test"]);
-      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.Debug);
+      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.debug);
       
       await app.run(["--log-level", "DEBUG", "test"]);
-      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.Debug);
+      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.debug);
     });
 
     test("parses --detailed-logs flag", async () => {
@@ -407,7 +407,7 @@ describe("Application", () => {
       });
       
       await app.run(["--log-level=warn", "test"]);
-      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.Warn);
+      expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.warn);
     });
   });
 });
