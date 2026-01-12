@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import type { AnyCommand } from "../core/command.ts";
 import { AppContext } from "../core/context.ts";
 import type { OptionValues, OptionSchema, OptionDef } from "../types/command.ts";
@@ -55,8 +55,6 @@ interface TuiAppProps {
     customFields?: CustomField[];
     /** Called when user wants to exit */
     onExit: () => void;
-    /** Register log event handler to receive log events */
-    setLogEventHandler(handler: (event: LogEvent) => void): void;
 }
 
 /**
@@ -77,8 +75,7 @@ function TuiAppContent({
     version,
     commands,
     customFields,
-    onExit,
-    setLogEventHandler,
+    onExit
 }: TuiAppProps) {
     // State
     const [mode, setMode] = useState<Mode>(Mode.CommandSelect);
@@ -94,9 +91,12 @@ function TuiAppContent({
     const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
     const [logHistory, setLogHistory] = useState<LogEvent[]>([]);
 
-    setLogEventHandler((event: LogEvent) => {
-        setLogHistory((prev) => [...prev, event]);
-    });
+    // Register log event handler
+    useEffect(() => {
+        AppContext.current.logger.onLogEvent((event: LogEvent) => {
+            setLogHistory((prev) => [...prev, event]);
+        });
+    }, []);
 
     // Hooks
     const { copyWithMessage, lastAction } = useClipboard();

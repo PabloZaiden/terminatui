@@ -57,8 +57,8 @@ export function LogsModal({
         <box
             title={title}
             position="absolute"
-            top={3}
-            bottom={3}
+            top={4}
+            bottom={4}
             left={4}
             right={4}
             backgroundColor={Theme.overlay}
