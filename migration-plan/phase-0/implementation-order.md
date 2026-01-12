@@ -6,7 +6,7 @@
 
 ## Implementation Order
 
-The two phases must be completed **sequentially**:
+The two phases must be completed **sequentially**, with a storyboard checkpoint between them:
 
 ### Phase 0A First: Stack-Based Navigation (completed)
 **Document:** [phase-0a-navigation.md](./phase-0a-navigation.md)
@@ -17,16 +17,25 @@ The two phases must be completed **sequentially**:
 - Screen components provide natural boundaries for keyboard handlers
 - Easier to validate navigation independently
 
+### Storyboard Checkpoint (after Phase 0A, before Phase 0B)
+**Document:** [storyboard.md](./storyboard.md)
+- Capture screen/modal flows, global behaviors, copy/back rules, and data providers so TuiApp can become screen-agnostic.
+- Must be validated before Phase 0B.
+
+### Navigation Refactor (post-storyboard, pre-0B)
+- Refactor TuiApp to be screen-driven: screens/modals declare transitions and data providers (e.g., clipboard content); TuiApp handles only global concerns (back, logs toggle, global copy) and orchestrates navigation without per-screen branching.
+- Outcome: removes hardcoded per-route logic from TuiApp; enables Phase 0B focus-tree work.
+
 ### Phase 0B Second: Component-Chain Keyboard (next up)
 **Document:** [phase-0b-keyboard.md](./phase-0b-keyboard.md)
 
 **Rationale:**
-- Depends on screen components from Phase 0A
+- Depends on screen components from Phase 0A, validated storyboard, and navigation refactor
 - Screen hierarchy makes focus tree clearer
 - Can reference screen types instead of mode enum
 - Benefits from simplified state management
 
-**⚠️ Next:** Implement focus-tree bubbling per Phase 0B plan.
+**⚠️ Next:** Validate storyboard, refactor navigation per storyboard, then implement focus-tree bubbling per Phase 0B plan.
 
 ---
 

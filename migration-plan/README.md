@@ -68,8 +68,8 @@ Contains:
 
 | Phase | Goal | Status |
 |-------|------|--------|
-| **Phase 0A** | Stack-based navigation (architecture improvement) | In Progress (navigation context, screens, back handling, modal stack done; live log copy/global shortcuts working) |
-| **Phase 0B** | Component-chain keyboard handling (architecture improvement) | Not Started |
+| **Phase 0A** | Stack-based navigation (architecture improvement) | In Progress (navigation context, screens, back handling, modal stack done; live log copy/global shortcuts working; storyboard drafted) |
+| **Phase 0B** | Component-chain keyboard handling (architecture improvement) | Not Started (requires storyboard validation) |
 | **Phase 1** | Create semantic component library (OpenTUI impl) | Not Started |
 | **Phase 2** | Refactor existing components to use semantic layer | Not Started |
 | **Phase 3** | Implement Ink adapter | Not Started |
@@ -119,14 +119,16 @@ Each component abstracts rendering details so adapters can implement them differ
 - [x] Requirements documented
 - [x] Architecture designed
 - [x] Tasks broken down
-- [ ] Implementation started: Phase 0A navigation & modal/back handling in progress (stack, modals, global copy/logs)
+- [ ] Implementation started: Phase 0A navigation & modal/back handling in progress (stack, modals, global copy/logs, storyboard drafted)
 
 **Next Steps:**
 1. Review and approve architecture improvements plan
 2. **Complete Phase 0A: Stack-based navigation** ([tasks](./phase-0/phase-0a-navigation.md))
-3. **Complete Phase 0B: Component-chain keyboard handling** ([tasks](./phase-0/phase-0b-keyboard.md))
-4. Review and approve rendering migration evaluation
-5. Begin Phase 1 implementation ([tasks](./phase-1/tasks.md))
+3. **Validate storyboard** ([phase-0/storyboard.md](./phase-0/storyboard.md)) capturing screen/modal flows, global behaviors, copy/back rules
+4. **Refactor navigation to be screen-driven per storyboard** (screens/modals declare transitions and data providers; TuiApp stays global-only)
+5. **Complete Phase 0B: Component-chain keyboard handling** ([tasks](./phase-0/phase-0b-keyboard.md))
+6. Review and approve rendering migration evaluation
+7. Begin Phase 1 implementation ([tasks](./phase-1/tasks.md))
 
 **Current Focus:** [Phase 0A - Stack-Based Navigation](./phase-0/phase-0a-navigation.md)
 

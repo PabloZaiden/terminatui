@@ -1,6 +1,6 @@
 
 **Last Updated:** 2026-01-12  
-**Status:** In Progress (navigation stack, screens, modal stack, back handling complete; live logs copy via global shortcut)
+**Status:** In Progress (navigation stack, screens, modal stack, back handling complete; live logs copy via global shortcut; storyboard drafted)
 
 ---
 
@@ -199,4 +199,5 @@ openModal({ id: 'logs', params: { source: 'app' } });
 - Navigation module no longer exports legacy `Screen` union; tests now validate generic API and typed entries.
 - Modal overlays share `ModalBase` for consistent styling (used by editor/cli/logs).
 - Completed: typed screens, TuiApp navigation + modal stack, modal-first back handling, global shortcuts (Esc back, Y copy) honoring active modal, live log copy uses logHistory.
-- Remaining: proceed to Phase 0B keyboard bubbling redesign per plan.
+- Storyboard: drafted in `migration-plan/phase-0/storyboard.md` for validation (captures screens, modals, global behaviors, copy/back rules).
+- Remaining: validate storyboard, then refactor navigation to be screen-driven (screens/modals declare their transitions & data providers; TuiApp only orchestrates globals), then proceed to Phase 0B keyboard bubbling redesign per plan.
