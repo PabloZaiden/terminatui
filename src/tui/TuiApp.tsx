@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import type { AnyCommand } from "../core/command.ts";
 import { AppContext } from "../core/context.ts";
 import type { OptionValues, OptionSchema, OptionDef } from "../types/command.ts";
-import type { CustomField } from "./TuiApplication.tsx";
 import { useClipboard } from "./hooks/useClipboard.ts";
 import { KeyboardPriority, KeyboardProvider } from "./context/KeyboardContext.tsx";
 import { useCommandExecutor } from "./hooks/useCommandExecutor.ts";
@@ -51,8 +50,6 @@ interface TuiAppProps {
     version: string;
     /** Available commands */
     commands: AnyCommand[];
-    /** Custom fields to add to the TUI form */
-    customFields?: CustomField[];
     /** Called when user wants to exit */
     onExit: () => void;
 }
@@ -74,7 +71,6 @@ function TuiAppContent({
     displayName,
     version,
     commands,
-    customFields,
     onExit
 }: TuiAppProps) {
     // State
@@ -120,12 +116,8 @@ function TuiAppContent({
     const fieldConfigs = useMemo(() => {
         if (!selectedCommand) return [];
         const commandFields = schemaToFieldConfigs(selectedCommand.options);
-        // Merge custom fields if provided
-        if (customFields && customFields.length > 0) {
-            return [...commandFields, ...customFields];
-        }
         return commandFields;
-    }, [selectedCommand, customFields]);
+    }, [selectedCommand]);
 
     const cliCommand = useMemo(() => {
         if (!selectedCommand) return "";
@@ -179,21 +171,13 @@ function TuiAppContent({
                 }
             }
         }
-        // Initialize custom field defaults
-        if (customFields) {
-            for (const field of customFields) {
-                if (field.default !== undefined) {
-                    defaults[field.key] = field.default;
-                }
-            }
-        }
-
+        
         // Load persisted parameters and merge with defaults
         const persisted = loadPersistedParameters(name, cmd.name);
         const merged = { ...defaults, ...persisted };
 
         setConfigValues(merged);
-    }, [customFields, name]);
+    }, [name]);
 
     /**
      * Check if a command has navigable subcommands (excluding commands that don't support TUI).
@@ -324,16 +308,11 @@ function TuiAppContent({
                     }
                 }
 
-                // Call custom field onChange if applicable
-                const customField = customFields?.find((f) => f.key === editingField);
-                if (customField?.onChange) {
-                    customField.onChange(value, newValues);
-                }
                 return newValues;
             });
         }
         setEditingField(null);
-    }, [editingField, customFields, selectedCommand]);
+    }, [editingField, selectedCommand]);
 
     const handleCopy = useCallback((content: string, label: string) => {
         copyWithMessage(content, label);

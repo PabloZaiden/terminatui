@@ -5,21 +5,9 @@ import type { AnyCommand } from "../core/command.ts";
 import { TuiApp } from "./TuiApp.tsx";
 import { Theme } from "./theme.ts";
 import { LogLevel } from "../core/logger.ts";
-import type { FieldConfig } from "./components/types.ts";
 import { createSettingsCommand } from "../builtins/settings.ts";
 import { loadPersistedParameters } from "./utils/parameterPersistence.ts";
 import { AppContext } from "../core/context.ts";
-
-/**
- * Custom field configuration for TUI forms.
- * Allows adding application-specific fields that aren't part of command options.
- */
-export interface CustomField extends FieldConfig {
-    /** Default value for the field */
-    default?: unknown;
-    /** Called when the field value changes */
-    onChange?: (value: unknown, allValues: Record<string, unknown>) => void;
-}
 
 /**
  * Extended configuration for TUI-enabled applications.
