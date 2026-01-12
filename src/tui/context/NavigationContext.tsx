@@ -1,119 +1,146 @@
 import {
     createContext,
     useContext,
-    useState,
-    useCallback,
+    useMemo,
+    useReducer,
     type ReactNode,
 } from "react";
 
-/**
- * Screen types representing different states/views in the TUI application.
- * Based on the Mode enum in TuiApp.tsx.
- */
-export type Screen =
-    | { type: "CommandSelect"; commandPath?: string[] }
-    | { type: "Config"; commandName: string; commandPath: string[] }
-    | { type: "Running"; commandName: string }
-    | { type: "Results"; commandName: string; success: boolean }
-    | { type: "Error"; commandName: string; error: Error };
+// Generic route→params maps provided by the app
+export type RoutesMap = Record<string, object | undefined>;
+export type ModalsMap = Record<string, object | undefined>;
 
-/**
- * Navigation API for managing the screen stack.
- */
-export interface NavigationAPI {
-    /** Current screen at the top of the stack */
-    currentScreen: Screen;
-    /** All screens in the stack */
-    stack: Screen[];
-    /** Push a new screen onto the stack */
-    push: (screen: Screen) => void;
-    /** Pop the current screen from the stack (returns to previous screen) */
+type RouteKey<M extends RoutesMap> = Extract<keyof M, string>;
+type ModalKey<M extends ModalsMap> = Extract<keyof M, string>;
+
+export type ScreenEntry<M extends RoutesMap, R extends RouteKey<M> = RouteKey<M>> = {
+    route: R;
+    params?: M[R];
+    meta?: { focus?: string; breadcrumb?: string[] };
+};
+
+export type ModalEntry<M extends ModalsMap, ID extends ModalKey<M> = ModalKey<M>> = {
+    id: ID;
+    params?: M[ID];
+};
+
+export interface NavigationAPI<Routes extends RoutesMap = RoutesMap, Modals extends ModalsMap = ModalsMap> {
+    current: ScreenEntry<Routes>;
+    stack: ScreenEntry<Routes>[];
+    push: <R extends RouteKey<Routes>>(screen: ScreenEntry<Routes, R>) => void;
+    replace: <R extends RouteKey<Routes>>(screen: ScreenEntry<Routes, R>) => void;
+    reset: <R extends RouteKey<Routes>>(screen: ScreenEntry<Routes, R>) => void;
     pop: () => void;
-    /** Replace the current screen with a new one */
-    replace: (screen: Screen) => void;
-    /** Reset the stack to a single screen */
-    reset: (screen: Screen) => void;
-    /** Check if we can go back (more than one screen in stack) */
     canGoBack: boolean;
+
+    modalStack: ModalEntry<Modals>[];
+    currentModal?: ModalEntry<Modals>;
+    openModal: <ID extends ModalKey<Modals>>(modal: ModalEntry<Modals, ID>) => void;
+    closeModal: () => void;
+    hasModal: boolean;
 }
 
-const NavigationContext = createContext<NavigationAPI | null>(null);
-
-interface NavigationProviderProps {
-    /** Initial screen to display */
-    initialScreen?: Screen;
+type NavigationProviderProps<Routes extends RoutesMap, Modals extends ModalsMap> = {
+    initialScreen: ScreenEntry<Routes>;
     children: ReactNode;
+    // Phantom fields to keep generic parameters in use for inference
+    _routesType?: Routes;
+    _modalsType?: Modals;
+};
+
+type NavigationAction<Routes extends RoutesMap, Modals extends ModalsMap> =
+    | { type: "push"; screen: ScreenEntry<Routes> }
+    | { type: "replace"; screen: ScreenEntry<Routes> }
+    | { type: "reset"; screen: ScreenEntry<Routes> }
+    | { type: "pop" }
+    | { type: "openModal"; modal: ModalEntry<Modals> }
+    | { type: "closeModal" };
+
+type NavigationState<Routes extends RoutesMap, Modals extends ModalsMap> = {
+    stack: ScreenEntry<Routes>[];
+    modalStack: ModalEntry<Modals>[];
+};
+
+function navigationReducer<Routes extends RoutesMap, Modals extends ModalsMap>(
+    state: NavigationState<Routes, Modals>,
+    action: NavigationAction<Routes, Modals>
+): NavigationState<Routes, Modals> {
+    switch (action.type) {
+        case "push":
+            return { ...state, stack: [...state.stack, action.screen] };
+        case "replace": {
+            const nextStack = state.stack.length === 0
+                ? [action.screen]
+                : [...state.stack.slice(0, -1), action.screen];
+            return { ...state, stack: nextStack };
+        }
+        case "reset":
+            return { ...state, stack: [action.screen] };
+        case "pop": {
+            if (state.stack.length <= 1) return state;
+            return { ...state, stack: state.stack.slice(0, -1) };
+        }
+        case "openModal":
+            return { ...state, modalStack: [...state.modalStack, action.modal] };
+        case "closeModal": {
+            if (state.modalStack.length === 0) return state;
+            return { ...state, modalStack: state.modalStack.slice(0, -1) };
+        }
+        default:
+            return state;
+    }
 }
 
-/**
- * Provider that manages navigation state with a stack-based approach.
- * The stack never becomes empty - there's always at least one screen.
- */
-export function NavigationProvider({
-    initialScreen = { type: "CommandSelect" },
+const NavigationContext = createContext<NavigationAPI<any, any> | null>(null);
+
+export function NavigationProvider<Routes extends RoutesMap, Modals extends ModalsMap>({
+    initialScreen,
     children,
-}: NavigationProviderProps) {
-    // Stack is initialized with the initial screen and never becomes empty
-    const [stack, setStack] = useState<Screen[]>([initialScreen]);
+}: NavigationProviderProps<Routes, Modals>) {
+    const [state, dispatch] = useReducer(navigationReducer<Routes, Modals>, {
+        stack: [initialScreen],
+        modalStack: [],
+    });
 
-    const push = useCallback((screen: Screen) => {
-        setStack((prev) => [...prev, screen]);
-    }, []);
+    const api = useMemo<NavigationAPI<Routes, Modals>>(() => {
+        const stack = state.stack;
+        const modalStack = state.modalStack;
+        const current = stack[stack.length - 1]!;
+        const currentModal = modalStack[modalStack.length - 1];
 
-    const pop = useCallback(() => {
-        setStack((prev) => {
-            // Never allow the stack to become empty
-            if (prev.length <= 1) {
-                return prev;
-            }
-            return prev.slice(0, -1);
-        });
-    }, []);
-
-    const replace = useCallback((screen: Screen) => {
-        setStack((prev) => {
-            // Replace the last screen with the new one
-            if (prev.length === 0) {
-                // This should never happen, but handle it gracefully
-                return [screen];
-            }
-            return [...prev.slice(0, -1), screen];
-        });
-    }, []);
-
-    const reset = useCallback((screen: Screen) => {
-        // Reset to a single screen
-        setStack([screen]);
-    }, []);
-
-    const currentScreen = stack[stack.length - 1]!;
-    const canGoBack = stack.length > 1;
-
-    const value: NavigationAPI = {
-        currentScreen,
-        stack,
-        push,
-        pop,
-        replace,
-        reset,
-        canGoBack,
-    };
+        return {
+            current,
+            stack,
+            push: (screen) => dispatch({ type: "push", screen }),
+            replace: (screen) => dispatch({ type: "replace", screen }),
+            reset: (screen) => dispatch({ type: "reset", screen }),
+            pop: () => {
+                if (modalStack.length > 0) {
+                    dispatch({ type: "closeModal" });
+                } else {
+                    dispatch({ type: "pop" });
+                }
+            },
+            canGoBack: stack.length > 1 || modalStack.length > 0,
+            modalStack,
+            currentModal,
+            openModal: (modal) => dispatch({ type: "openModal", modal }),
+            closeModal: () => dispatch({ type: "closeModal" }),
+            hasModal: modalStack.length > 0,
+        };
+    }, [state]);
 
     return (
-        <NavigationContext.Provider value={value}>
+        <NavigationContext.Provider value={api}>
             {children}
         </NavigationContext.Provider>
     );
 }
 
-/**
- * Hook to access the navigation API.
- * @throws Error if used outside of NavigationProvider
- */
-export function useNavigation(): NavigationAPI {
+export function useNavigation<Routes extends RoutesMap = RoutesMap, Modals extends ModalsMap = ModalsMap>(): NavigationAPI<Routes, Modals> {
     const context = useContext(NavigationContext);
     if (!context) {
         throw new Error("useNavigation must be used within a NavigationProvider");
     }
-    return context;
+    return context as NavigationAPI<Routes, Modals>;
 }

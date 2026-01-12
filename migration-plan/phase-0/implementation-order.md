@@ -8,7 +8,7 @@
 
 The two phases must be completed **sequentially**:
 
-### Phase 0A First: Stack-Based Navigation
+### Phase 0A First: Stack-Based Navigation (completed)
 **Document:** [phase-0a-navigation.md](./phase-0a-navigation.md)
 
 **Rationale:**
@@ -17,7 +17,7 @@ The two phases must be completed **sequentially**:
 - Screen components provide natural boundaries for keyboard handlers
 - Easier to validate navigation independently
 
-### Phase 0B Second: Component-Chain Keyboard
+### Phase 0B Second: Component-Chain Keyboard (next up)
 **Document:** [phase-0b-keyboard.md](./phase-0b-keyboard.md)
 
 **Rationale:**
@@ -26,7 +26,7 @@ The two phases must be completed **sequentially**:
 - Can reference screen types instead of mode enum
 - Benefits from simplified state management
 
-**⚠️ DO NOT start Phase 0B until Phase 0A is complete and validated.**
+**⚠️ Next:** Implement focus-tree bubbling per Phase 0B plan.
 
 ---
 

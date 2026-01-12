@@ -1,105 +1,70 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
-import type { AnyCommand } from "../core/command.ts";
+import { useCallback, useEffect, useState } from "react";
+import type { AnyCommand, CommandResult } from "../core/command.ts";
 import { AppContext } from "../core/context.ts";
-import type { OptionValues, OptionSchema, OptionDef } from "../types/command.ts";
+import type { OptionDef, OptionSchema, OptionValues } from "../types/command.ts";
 import { useClipboard } from "./hooks/useClipboard.ts";
 import { KeyboardPriority, KeyboardProvider } from "./context/KeyboardContext.tsx";
 import { useCommandExecutor } from "./hooks/useCommandExecutor.ts";
 import { useKeyboardHandler } from "./hooks/useKeyboardHandler.ts";
-import { CommandSelector } from "./components/CommandSelector.tsx";
-import { ConfigForm } from "./components/ConfigForm.tsx";
-import { ActionButton } from "./components/ActionButton.tsx";
-import { ResultsPanel } from "./components/ResultsPanel.tsx";
-import { getFieldDisplayValue, schemaToFieldConfigs } from "./utils/schemaToFields.ts";
-import { buildCliCommand } from "./utils/buildCliCommand.ts";
-import { loadPersistedParameters, savePersistedParameters } from "./utils/parameterPersistence.ts";
 import { Header } from "./components/Header.tsx";
 import { StatusBar } from "./components/StatusBar.tsx";
 import { EditorModal } from "./components/EditorModal.tsx";
 import { CliModal } from "./components/CliModal.tsx";
 import { LogsModal } from "./components/LogsModal.tsx";
-import { Theme } from "./theme.ts";
 import type { LogEvent } from "../core/logger.ts";
-
-/**
- * TUI application mode.
- */
-enum Mode {
-    CommandSelect,
-    Config,
-    Running,
-    Results,
-    Error,
-}
-
-/**
- * Focused section for keyboard navigation.
- */
-enum FocusedSection {
-    Config,
-    Results,
-    None,
-}
+import { NavigationProvider, useNavigation } from "./context/NavigationContext.tsx";
+import type { ModalEntry, ScreenEntry } from "./context/NavigationContext.tsx";
+import type { Modals, Routes } from "./routes.ts";
+import { CommandSelectScreen } from "./screens/CommandSelectScreen.tsx";
+import { ConfigScreen } from "./screens/ConfigScreen.tsx";
+import { RunningScreen } from "./screens/RunningScreen.tsx";
+import { ResultsScreen } from "./screens/ResultsScreen.tsx";
+import { ErrorScreen } from "./screens/ErrorScreen.tsx";
+import { loadPersistedParameters, savePersistedParameters } from "./utils/parameterPersistence.ts";
+import { schemaToFieldConfigs } from "./utils/schemaToFields.ts";
+import { buildCliCommand } from "./utils/buildCliCommand.ts";
 
 interface TuiAppProps {
-    /** Application name (CLI name) */
     name: string;
-    /** Display name for TUI header (human-readable) */
     displayName?: string;
-    /** Application version */
     version: string;
-    /** Available commands */
     commands: AnyCommand[];
-    /** Called when user wants to exit */
     onExit: () => void;
 }
 
-/**
- * Main TUI application component.
- * Wraps content with KeyboardProvider.
- */
 export function TuiApp(props: TuiAppProps) {
     return (
         <KeyboardProvider>
-            <TuiAppContent {...props} />
+            <NavigationProvider<Routes, Modals>
+                initialScreen={{ route: "command-select", params: { commandPath: [], selectedIndex: 0 } }}
+            >
+                <TuiAppContent {...props} />
+            </NavigationProvider>
         </KeyboardProvider>
     );
 }
 
-function TuiAppContent({
-    name,
-    displayName,
-    version,
-    commands,
-    onExit
-}: TuiAppProps) {
-    // State
-    const [mode, setMode] = useState<Mode>(Mode.CommandSelect);
-    const [selectedCommand, setSelectedCommand] = useState<AnyCommand | null>(null);
-    const [commandPath, setCommandPath] = useState<string[]>([]);
-    const [commandSelectorIndex, setCommandSelectorIndex] = useState(0);
-    const [selectorIndexStack, setSelectorIndexStack] = useState<number[]>([]);
-    const [selectedFieldIndex, setSelectedFieldIndex] = useState(0);
-    const [editingField, setEditingField] = useState<string | null>(null);
-    const [focusedSection, setFocusedSection] = useState<FocusedSection>(FocusedSection.Config);
-    const [logsModalVisible, setLogsModalVisible] = useState(false);
-    const [cliModalVisible, setCliModalVisible] = useState(false);
-    const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
+function TuiAppContent({ name, displayName, version, commands, onExit }: TuiAppProps) {
+    const navigation = useNavigation<Routes, Modals>();
+    const { current, modalStack } = navigation;
     const [logHistory, setLogHistory] = useState<LogEvent[]>([]);
 
-    // Register log event handler
     useEffect(() => {
-        AppContext.current.logger.onLogEvent((event: LogEvent) => {
+        AppContext.current.setService("commands", commands);
+    }, [commands]);
+
+    useEffect(() => {
+        const unsubscribe = AppContext.current.logger.onLogEvent((event: LogEvent) => {
             setLogHistory((prev) => [...prev, event]);
         });
+        return () => {
+            unsubscribe?.();
+        };
     }, []);
 
-    // Hooks
     const { copyWithMessage, lastAction } = useClipboard();
 
-    // Command executor
     const executeCommand = useCallback(async (cmd: AnyCommand, values: Record<string, unknown>, signal: AbortSignal) => {
-        // If the command provides buildConfig, build and validate before executing
         let configOrValues: unknown = values;
         if (cmd.buildConfig) {
             configOrValues = await cmd.buildConfig(values as OptionValues<OptionSchema>);
@@ -108,477 +73,358 @@ function TuiAppContent({
         return await cmd.execute(configOrValues as OptionValues<OptionSchema>, { signal });
     }, []);
 
-    const { isExecuting, result, error, execute, cancel, reset: resetExecutor } = useCommandExecutor(
-        (cmd: unknown, values: unknown, signal: unknown) => executeCommand(cmd as AnyCommand, values as Record<string, unknown>, signal as AbortSignal)
+    const { isExecuting, result, error, execute, cancel, reset: resetExecutor } = useCommandExecutor<CommandResult>(
+        (cmd: unknown, values: unknown, signal: unknown) =>
+            executeCommand(cmd as AnyCommand, values as Record<string, unknown>, signal as AbortSignal)
     );
 
-    // Computed values
-    const fieldConfigs = useMemo(() => {
-        if (!selectedCommand) return [];
-        const commandFields = schemaToFieldConfigs(selectedCommand.options);
-        return commandFields;
-    }, [selectedCommand]);
-
-    const cliCommand = useMemo(() => {
-        if (!selectedCommand) return "";
-        return buildCliCommand(name, commandPath, selectedCommand.options, configValues as OptionValues<OptionSchema>);
-    }, [name, commandPath, selectedCommand, configValues]);
-
-    // Build breadcrumb with display names by traversing the command path
-    const breadcrumb = useMemo(() => {
-        if (commandPath.length === 0) return undefined;
-
-        const displayNames: string[] = [];
-        let current: AnyCommand[] = commands;
-
-        for (const pathPart of commandPath) {
-            const found = current.find((c) => c.name === pathPart);
-            if (found) {
-                displayNames.push(found.displayName ?? found.name);
-                if (found.subCommands) {
-                    current = found.subCommands;
-                }
-            } else {
-                displayNames.push(pathPart);
-            }
-        }
-
-        return displayNames;
-    }, [commandPath, commands]);
-
-    // Initialize config values when command changes
-    const initializeConfigValues = useCallback((cmd: AnyCommand) => {
-        const defaults: Record<string, unknown> = {};
-        const optionDefs = cmd.options as OptionSchema;
-        for (const [key, def] of Object.entries(optionDefs)) {
-            const typedDef = def as OptionDef;
-            if (typedDef.default !== undefined) {
-                defaults[key] = typedDef.default;
-            } else {
-                switch (typedDef.type) {
-                    case "string":
-                        defaults[key] = typedDef.enum?.[0] ?? "";
-                        break;
-                    case "number":
-                        defaults[key] = typedDef.min ?? 0;
-                        break;
-                    case "boolean":
-                        defaults[key] = false;
-                        break;
-                    case "array":
-                        defaults[key] = [];
-                        break;
-                }
-            }
-        }
-        
-        // Load persisted parameters and merge with defaults
-        const persisted = loadPersistedParameters(name, cmd.name);
-        const merged = { ...defaults, ...persisted };
-
-        setConfigValues(merged);
-    }, [name]);
-
-    /**
-     * Check if a command has navigable subcommands (excluding commands that don't support TUI).
-     */
-    const hasNavigableSubCommands = useCallback((cmd: AnyCommand): boolean => {
-        if (!cmd.subCommands || cmd.subCommands.length === 0) return false;
-        // Filter out commands that don't support TUI
-        const navigable = cmd.subCommands.filter((sub) => sub.supportsTui());
-        return navigable.length > 0;
-    }, []);
-
-    // Handlers
-    const handleCommandSelect = useCallback((cmd: AnyCommand) => {
-        // Check if command has navigable subcommands (container commands)
-        if (hasNavigableSubCommands(cmd)) {
-            // Push current selection index to stack before navigating
-            setSelectorIndexStack((prev) => [...prev, commandSelectorIndex]);
-            // Navigate into subcommands
-            setCommandPath((prev) => [...prev, cmd.name]);
-            setCommandSelectorIndex(0);
-            return;
-        }
-
-        setSelectedCommand(cmd);
-        setCommandPath((prev) => [...prev, cmd.name]);
-        initializeConfigValues(cmd);
-        setSelectedFieldIndex(0);
-        setFocusedSection(FocusedSection.Config);
-        setLogsModalVisible(false);
-
-        // Check if command should execute immediately
-        if (cmd.immediateExecution) {
-            handleRunCommand(cmd);
-        } else {
-            setMode(Mode.Config);
-        }
-    }, [initializeConfigValues, hasNavigableSubCommands, commandSelectorIndex]);
-
     const handleBack = useCallback(() => {
-        if (logsModalVisible) {
-            setLogsModalVisible(false);
-        } else if (mode === Mode.Running) {
-            // Cancel the running command and go back
-            cancel();
-            // If command was immediate execution, go back to command select
-            if (selectedCommand?.immediateExecution) {
-                setMode(Mode.CommandSelect);
-                setSelectedCommand(null);
-                setCommandPath((prev) => prev.slice(0, -1));
-                setSelectedFieldIndex(0);
-                setFocusedSection(FocusedSection.Config);
-            } else {
-                setMode(Mode.Config);
-                setFocusedSection(FocusedSection.Config);
-            }
-            resetExecutor();
-        } else if (mode === Mode.Config) {
-            setMode(Mode.CommandSelect);
-            setSelectedCommand(null);
-            setCommandPath((prev) => prev.slice(0, -1));
-            setSelectedFieldIndex(0);
-            setFocusedSection(FocusedSection.Config);
-        } else if (mode === Mode.Results || mode === Mode.Error) {
-            // If command was immediate execution, go back to command select
-            if (selectedCommand?.immediateExecution) {
-                setMode(Mode.CommandSelect);
-                setSelectedCommand(null);
-                setCommandPath((prev) => prev.slice(0, -1));
-                setSelectedFieldIndex(0);
-                setFocusedSection(FocusedSection.Config);
-            } else {
-                setMode(Mode.Config);
-                setFocusedSection(FocusedSection.Config);
-            }
-            resetExecutor();
-        } else if (mode === Mode.CommandSelect && commandPath.length > 0) {
-            // Pop from selector index stack to restore previous selection
-            const previousIndex = selectorIndexStack[selectorIndexStack.length - 1] ?? 0;
-            setSelectorIndexStack((prev) => prev.slice(0, -1));
-            setCommandSelectorIndex(previousIndex);
-            setCommandPath((prev) => prev.slice(0, -1));
-        } else {
-            onExit();
-        }
-    }, [mode, logsModalVisible, commandPath, selectedCommand, selectorIndexStack, cancel, onExit, resetExecutor]);
-
-    const handleRunCommand = useCallback(async (cmd?: AnyCommand) => {
-        const cmdToRun = cmd ?? selectedCommand;
-        if (!cmdToRun) return;
-
-        // Save parameters before running
-        savePersistedParameters(name, cmdToRun.name, configValues);
-
-        // Set up for running
-        setMode(Mode.Running);
-
-        // Execute and wait for result
-        const outcome = await execute(cmdToRun, configValues);
-
-        // If cancelled, don't transition - handleBack already handled it
-        if (outcome.cancelled) {
+        if (navigation.modalStack.length > 0) {
+            navigation.closeModal();
             return;
         }
-
-        // Transition based on outcome
-        if (outcome.success) {
-            setMode(Mode.Results);
-        } else {
-            setMode(Mode.Error);
+        if (isRoute(current, "running") && isExecuting) {
+            cancel();
+            resetExecutor();
         }
-        setFocusedSection(FocusedSection.Results);
-    }, [selectedCommand, configValues, execute, name]);
-
-    const handleEditField = useCallback((fieldKey: string) => {
-        setEditingField(fieldKey);
-    }, []);
-
-    const handleFieldSubmit = useCallback((value: unknown) => {
-        if (editingField) {
-            setConfigValues((prev) => {
-                let newValues = { ...prev, [editingField]: value };
-
-                // Call command's onConfigChange if available
-                if (selectedCommand?.onConfigChange) {
-                    const updates = selectedCommand.onConfigChange(editingField, value, newValues);
-                    if (updates) {
-                        newValues = { ...newValues, ...updates };
-                    }
-                }
-
-                return newValues;
-            });
+        if (isRoute(current, "command-select") && current.params?.commandPath.length) {
+            const nextPath = current.params.commandPath.slice(0, -1);
+            navigation.replace({ route: "command-select", params: { commandPath: nextPath, selectedIndex: 0 } });
+            return;
         }
-        setEditingField(null);
-    }, [editingField, selectedCommand]);
-
-    const handleCopy = useCallback((content: string, label: string) => {
-        copyWithMessage(content, label);
-    }, [copyWithMessage]);
-
-    const getClipboardContent = useCallback((): { content: string; label: string } | null => {
-        // If showing logs modal, copy logs
-        if (logsModalVisible) {
-            // In Logs mode, copy logs
-            const logs = logHistory;
-            return { content: logs.map(log => log.message).join("\n"), label: "Logs" };
+        if (navigation.stack.length > 1) {
+            navigation.pop();
+            return;
         }
-
-        // In Results/Error mode with results focused
-        if ((mode === Mode.Results || mode === Mode.Error) && focusedSection === FocusedSection.Results) {
-            if (error) {
-                return { content: error.message, label: "Error" };
-            }
-            if (result) {
-                // Use command's getClipboardContent if available
-                if (selectedCommand?.getClipboardContent) {
-                    const customContent = selectedCommand.getClipboardContent(result);
-                    if (customContent) {
-                        return { content: customContent, label: "Results" };
-                    }
-                }
-                return { content: JSON.stringify(result.data ?? result, null, 2), label: "Results" };
-            }
-            return null;
+        if (isRoute(current, "command-select") && !current.params?.commandPath.length) {
+            onExit();
+            return;
         }
+        // Fallback to exit
+        onExit();
+    }, [navigation, current, isExecuting, cancel, resetExecutor, onExit]);
 
-        // In Config mode with config focused, copy config JSON
-        if (mode === Mode.Config && focusedSection === FocusedSection.Config) {
-            return { content: JSON.stringify(configValues, null, 2), label: "Config" };
-        }
-
-        return null;
-    }, [mode, focusedSection, error, result, configValues, selectedCommand, logHistory]);
-
-    const cycleFocusedSection = useCallback(() => {
-        const sections: FocusedSection[] = [];
-        if (mode === Mode.Config) sections.push(FocusedSection.Config);
-        if (mode === Mode.Results || mode === Mode.Error) sections.push(FocusedSection.Results);
-
-        if (sections.length <= 1) return;
-
-        const currentIdx = sections.indexOf(focusedSection);
-        const nextIdx = (currentIdx + 1) % sections.length;
-        setFocusedSection(sections[nextIdx]!);
-    }, [mode, focusedSection]);
-
-    // Global keyboard handler
     useKeyboardHandler(
         (event) => {
             const { key } = event;
 
-            // Escape to go back
             if (key.name === "escape") {
                 handleBack();
                 event.stopPropagation();
                 return;
             }
 
-            // Y to copy content based on current mode and focus
-            if ((key.name === "y")) {
-                const clipboardData = getClipboardContent();
-                if (clipboardData) {
-                    handleCopy(clipboardData.content, clipboardData.label);
+            if (key.name === "y") {
+                const content = getClipboardContent();
+                if (content) {
+                    copyWithMessage(content.content, content.label);
                 }
                 event.stopPropagation();
                 return;
             }
 
-            // Tab to cycle focus
-            if (key.name === "tab") {
-                cycleFocusedSection();
+            if (key.name === "l") {
+                // Toggle logs modal, feed live logHistory so it updates while open
+                const isLogsOpen = modalStack.length > 0 && modalStack[modalStack.length - 1]?.id === "logs";
+                if (isLogsOpen) {
+                    navigation.closeModal();
+                } else {
+                    navigation.openModal({
+                        id: "logs",
+                        params: {
+                            logs: logHistory,
+                            onClose: () => navigation.closeModal(),
+                        },
+                    });
+                }
                 event.stopPropagation();
                 return;
             }
 
-            // L to toggle logs
-            if (key.name === "l" && !editingField) {
-                setLogsModalVisible((prev) => {
-                    const newState = !prev;
-                    AppContext.current.logger.trace(`Logs ${newState ? "opened" : "closed"} via keyboard shortcut.`);
-                    return newState;
-                });
-                event.stopPropagation();
-                return;
+            if ((key.name === "return" || key.name === "enter") && modalStack.length > 0) {
+                const topModal = modalStack[modalStack.length - 1];
+                if (topModal && (isModal(topModal, "logs") || isModal(topModal, "cli-arguments"))) {
+                    navigation.closeModal();
+                    event.stopPropagation();
+                    return;
+                }
             }
 
-            // C to show CLI command
-            if (key.name === "c" && !editingField && mode === Mode.Config) {
-                setCliModalVisible(true);
+            if (key.name === "c" && isRoute(current, "config") && current.params) {
+                const { command, commandPath, values } = current.params;
+                const cli = buildCliCommand(name, commandPath, command.options, values as OptionValues<OptionSchema>);
+                navigation.openModal({ id: "cli-arguments", params: { command: cli, onClose: () => navigation.closeModal() } });
                 event.stopPropagation();
                 return;
             }
         },
         KeyboardPriority.Global,
-        { enabled: !editingField && !cliModalVisible }
+        { enabled: true }
     );
 
-    // Get current commands for selector (excluding commands that don't support TUI)
-    const currentCommands = useMemo(() => {
-        if (commandPath.length === 0) {
-            return commands.filter((cmd) => cmd.supportsTui());
+    const getClipboardContent = useCallback((): { content: string; label: string } | null => {
+        const modal = modalStack[modalStack.length - 1];
+        if (modal && isModal(modal, "logs")) {
+            return { content: logHistory.map((l) => l.message).join("\n"), label: "Logs" };
         }
 
-        // Navigate through the full path to find current level's subcommands
-        let current: AnyCommand[] = commands;
-        for (const pathPart of commandPath) {
-            const found = current.find((c) => c.name === pathPart);
-            if (found?.subCommands) {
-                // Filter out commands that don't support TUI
-                current = found.subCommands.filter((sub) => sub.supportsTui());
-            } else {
-                break; // Path invalid or command has no subcommands
+        if (modal && isModal(modal, "cli-arguments") && modal.params) {
+            return { content: modal.params.command, label: "CLI" };
+        }
+
+        if (isRoute(current, "results") && current.params && result) {
+            const { command } = current.params;
+            if (command.getClipboardContent) {
+                const custom = command.getClipboardContent(result);
+                if (custom) return { content: custom, label: "Results" };
             }
+            return { content: JSON.stringify(result, null, 2), label: "Results" };
         }
-        return current;
-    }, [commands, commandPath]);
 
-    // Status message
-    const statusMessage = useMemo(() => {
-        if (lastAction) return lastAction;
-        if (isExecuting) return "Executing...";
-        if (mode === Mode.Error) return "Error occurred. Press Esc to go back.";
-        if (mode === Mode.Results) return "Run completed. Press Esc to return to config.";
-        if (mode === Mode.CommandSelect) return "Select a command to get started.";
-        if (mode === Mode.Config) {
-            return `Ready. Select [${selectedCommand?.actionLabel ?? "Run"}] and press Enter.`;
+        if (isRoute(current, "error") && current.params && error) {
+            return { content: error.message, label: "Error" };
         }
-        return "";
-    }, [lastAction, isExecuting, mode, selectedCommand]);
 
-    const shortcuts = useMemo(() => {
-        const parts: string[] = [];
-        if (mode === Mode.Config) {
-            parts.push("↑↓ Navigate", "Enter Edit", "Y Copy", "C CLI", "Esc Back");
-        } else if (mode === Mode.Running) {
-            parts.push("Y Copy", "Esc Cancel");
-        } else if (mode === Mode.Results || mode === Mode.Error) {
-            parts.push("Tab Focus", "Y Copy", "Esc Back");
-        } else {
-            parts.push("↑↓ Navigate", "Enter Select", "Esc Exit");
+        if (isRoute(current, "config") && current.params) {
+            return { content: JSON.stringify(current.params.values ?? {}, null, 2), label: "Config" };
         }
-        parts.push("L Logs");
-        return parts.join(" • ");
-    }, [mode]);
 
-    // Get display value for fields
-    const getDisplayValue = useCallback((key: string, value: unknown, _type: string) => {
-        const fieldConfig = fieldConfigs.find((f) => f.key === key);
-        if (fieldConfig) {
-            return getFieldDisplayValue(value, fieldConfig);
-        }
-        return String(value ?? "");
-    }, [fieldConfigs]);
+        return null;
+    }, [modalStack, logHistory, current, result, error]);
 
-    // Render the main content based on current mode
-    const renderContent = () => {
-        switch (mode) {
-            case Mode.CommandSelect:
+    const renderScreen = () => {
+        switch (current.route) {
+            case "command-select": {
+                const params = isRoute(current, "command-select") && current.params
+                    ? current.params
+                    : { commandPath: [], selectedIndex: 0 };
+                const entry: ScreenEntry<Routes, "command-select"> = { route: "command-select", params };
+
                 return (
-                    <CommandSelector
-                        commands={currentCommands.map((cmd) => ({ command: cmd }))}
-                        selectedIndex={commandSelectorIndex}
-                        onSelectionChange={setCommandSelectorIndex}
-                        onSelect={handleCommandSelect}
-                        onExit={handleBack}
-                        breadcrumb={breadcrumb}
+                    <CommandSelectScreen
+                        entry={entry}
+                        commands={commands}
+                        onSelectCommand={(cmd, path) => {
+                            if (cmd.subCommands && cmd.subCommands.some((c) => c.supportsTui())) {
+                                navigation.replace({
+                                    route: "command-select",
+                                    params: { commandPath: [...path, cmd.name], selectedIndex: 0 },
+                                });
+                                return;
+                            }
+
+                            navigation.push({
+                                route: "config",
+                                params: {
+                                    command: cmd,
+                                    commandPath: [...path, cmd.name],
+                                    values: initializeConfigValues(name, cmd),
+                                    selectedFieldIndex: 0,
+                                    fieldConfigs: schemaToFieldConfigs(cmd.options),
+                                },
+                            });
+                        }}
+                        onChangeSelection={(index) => {
+                            navigation.replace({
+                                route: "command-select",
+                                params: { commandPath: params.commandPath, selectedIndex: index },
+                            });
+                        }}
+                        onBack={handleBack}
+                    />
+
+                );
+            }
+            case "config": {
+                if (!isRoute(current, "config") || !current.params) return null;
+                const params = current.params;
+                const entry: ScreenEntry<Routes, "config"> = { route: "config", params };
+
+                return (
+                    <ConfigScreen
+                        entry={entry}
+                        navigation={navigation}
+                        onRun={async (values) => {
+                            savePersistedParameters(name, params.command.name, values);
+                            const runParams: Routes["running"] = {
+                                command: params.command,
+                                commandPath: params.commandPath,
+                                values,
+                            };
+                            navigation.push({
+                                route: "running",
+                                params: runParams,
+                            });
+                            const outcome = await execute(params.command, values);
+                            if (outcome.cancelled) return;
+                            if (outcome.success) {
+                                const resultParams: Routes["results"] = {
+                                    command: params.command,
+                                    commandPath: params.commandPath,
+                                    values,
+                                    result: outcome.result ?? null,
+                                };
+                                navigation.replace({
+                                    route: "results",
+                                    params: resultParams,
+                                });
+                            } else {
+                                const errorParams: Routes["error"] = {
+                                    command: params.command,
+                                    commandPath: params.commandPath,
+                                    values,
+                                    error: outcome.error ?? new Error("Unknown error"),
+                                };
+                                navigation.replace({
+                                    route: "error",
+                                    params: errorParams,
+                                });
+                            }
+                        }}
+                        onEditField={(fieldKey) => {
+                            const { values } = params;
+                            navigation.openModal({
+                                id: "property-editor",
+                                params: {
+                                    fieldKey,
+                                    currentValue: values[fieldKey],
+                                    fieldConfigs: params.fieldConfigs,
+                                    onSubmit: (value: unknown) => {
+                                        const nextValues = { ...values, [fieldKey]: value };
+                                        const nextParams: Routes["config"] = { ...params, values: nextValues };
+                                        navigation.replace({ route: "config", params: nextParams });
+                                        navigation.closeModal();
+                                    },
+                                    onCancel: () => navigation.closeModal(),
+                                },
+                            });
+                        }}
                     />
                 );
-
-            case Mode.Config:
-                if (!selectedCommand) return null;
-                return (
-                    <box flexDirection="column" flexGrow={1}>
-                        <ConfigForm
-                            title={`Configure: ${selectedCommand.displayName ?? selectedCommand.name}`}
-                            fieldConfigs={fieldConfigs}
-                            values={configValues}
-                            selectedIndex={selectedFieldIndex}
-                            focused={focusedSection === FocusedSection.Config}
-                            onSelectionChange={setSelectedFieldIndex}
-                            onEditField={handleEditField}
-                            onAction={() => handleRunCommand()}
-                            getDisplayValue={getDisplayValue}
-                            actionButton={
-                                <ActionButton
-                                    label={selectedCommand.actionLabel ?? "Run"}
-                                    isSelected={selectedFieldIndex === fieldConfigs.length}
-                                />
-                            }
-                        />
-                    </box>
-                );
-
-            case Mode.Running:
-                return (
-                    <box flexDirection="column" flexGrow={1}>
-                        <text fg={Theme.statusText}>
-                            Running... Check logs for progress.
-                        </text>
-                        <text fg={Theme.statusText}>
-                            Press Esc to cancel.
-                        </text>
-                    </box>
-                );
-
-            case Mode.Results:
-            case Mode.Error:
-                return (
-                    <box flexDirection="column" flexGrow={1} gap={1}>
-                        <ResultsPanel
-                            result={result}
-                            error={error}
-                            focused={focusedSection === FocusedSection.Results}
-                            renderResult={selectedCommand?.renderResult}
-                        />
-                    </box>
-                );
-
+            }
+            case "running": {
+                if (!isRoute(current, "running") || !current.params) return null;
+                const entry: ScreenEntry<Routes, "running"> = { route: "running", params: current.params };
+                return <RunningScreen entry={entry} navigation={navigation} />;
+            }
+            case "results": {
+                if (!isRoute(current, "results") || !current.params) return null;
+                const entry: ScreenEntry<Routes, "results"> = { route: "results", params: current.params };
+                return <ResultsScreen entry={entry} />;
+            }
+            case "error": {
+                if (!isRoute(current, "error") || !current.params) return null;
+                const entry: ScreenEntry<Routes, "error"> = { route: "error", params: current.params };
+                return <ErrorScreen entry={entry} />;
+            }
             default:
                 return null;
         }
     };
 
+    const breadcrumb = getCommandPath(current)?.commandPath;
+
     return (
         <box flexDirection="column" flexGrow={1} padding={1}>
             <Header name={displayName ?? name} version={version} breadcrumb={breadcrumb} />
 
-            <box key={`content-${mode}-${isExecuting}`} flexDirection="column" flexGrow={1}>
-                {renderContent()}
+            <box key={`content-${current.route}-${isExecuting}`} flexDirection="column" flexGrow={1}>
+                {renderScreen()}
             </box>
 
             <StatusBar
-                status={statusMessage}
+                status={lastAction ?? (isExecuting ? "Executing..." : "Ready")}
                 isRunning={isExecuting}
-                shortcuts={shortcuts}
+                shortcuts="Esc Back • Y Copy • L Logs • C CLI arguments"
             />
 
-            {/* Modals */}
-            <EditorModal
-                fieldKey={editingField}
-                currentValue={editingField ? configValues[editingField] : undefined}
-                visible={editingField !== null}
-                onSubmit={handleFieldSubmit}
-                onCancel={() => setEditingField(null)}
-                fieldConfigs={fieldConfigs}
-            />
+            {modalStack.map((modal, idx) => {
+                if (isModal(modal, "property-editor") && modal.params) {
+                    const params = modal.params;
+                    return (
+                        <EditorModal
+                            key={`modal-${idx}`}
+                            fieldKey={params.fieldKey}
+                            currentValue={params.currentValue}
+                            visible={true}
+                            onSubmit={(value) => params.onSubmit?.(value)}
+                            onCancel={() => params.onCancel?.()}
+                            fieldConfigs={params.fieldConfigs}
+                        />
+                    );
+                }
 
-            <CliModal
-                command={cliCommand}
-                visible={cliModalVisible}
-                onClose={() => setCliModalVisible(false)}
-                onCopy={handleCopy}
-            />
+                if (isModal(modal, "cli-arguments") && modal.params) {
+                    const params = modal.params;
+                    return (
+                        <CliModal
+                            key={`modal-${idx}`}
+                            command={params.command}
+                            visible={true}
+                            onClose={() => params.onClose?.() ?? navigation.closeModal()}
+                        />
+                    );
+                }
 
-            <LogsModal
-                logs={logHistory}
-                visible={logsModalVisible}
-                onClose={() => setLogsModalVisible(false)}
-                onCopy={handleCopy}
-            />
+                if (isModal(modal, "logs") && modal.params) {
+                    const params = modal.params;
+                    return (
+                        <LogsModal
+                            key={`modal-${idx}`}
+                            logs={logHistory}
+                            visible={true}
+                            onClose={() => params.onClose?.() ?? navigation.closeModal()}
+                        />
+                    );
+                }
 
+                return null;
+            })}
         </box>
     );
+}
+
+function initializeConfigValues(name: string, cmd: AnyCommand) {
+    const defaults: Record<string, unknown> = {};
+    const optionDefs = cmd.options as OptionSchema;
+    for (const [key, def] of Object.entries(optionDefs)) {
+        const typedDef = def as OptionDef;
+        if (typedDef.default !== undefined) {
+            defaults[key] = typedDef.default;
+        } else {
+            switch (typedDef.type) {
+                case "string":
+                    defaults[key] = typedDef.enum?.[0] ?? "";
+                    break;
+                case "number":
+                    defaults[key] = typedDef.min ?? 0;
+                    break;
+                case "boolean":
+                    defaults[key] = false;
+                    break;
+                case "array":
+                    defaults[key] = [];
+                    break;
+            }
+        }
+    }
+
+    const persisted = loadPersistedParameters(name, cmd.name);
+    return { ...defaults, ...persisted };
+}
+
+function isRoute<R extends keyof Routes>(entry: ScreenEntry<Routes>, route: R): entry is ScreenEntry<Routes, R> {
+    return entry.route === route;
+}
+
+function isModal<ID extends keyof Modals>(modal: ModalEntry<Modals>, id: ID): modal is ModalEntry<Modals, ID> {
+    return modal.id === id;
+}
+
+function getCommandPath(entry: ScreenEntry<Routes>) {
+    if (!entry.params) return undefined;
+    if ("commandPath" in entry.params) {
+        return { commandPath: entry.params.commandPath };
+    }
+    return undefined;
 }

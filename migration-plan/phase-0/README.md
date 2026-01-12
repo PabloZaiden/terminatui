@@ -2,7 +2,7 @@
 
 **Document Version:** 1.0  
 **Last Updated:** 2026-01-10  
-**Status:** Implementation Plan
+**Status:** In Progress (navigation stack, modal-first back handling, global copy/logs implemented)
 
 ---
 

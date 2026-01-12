@@ -3,6 +3,7 @@ import { AppContext } from "../core/context.ts";
 import { LogLevel } from "../core/logger.ts";
 import type { OptionSchema, OptionValues } from "../types/command.ts";
 import type { CommandResult } from "../core/command.ts";
+import { getEnumKeys } from "../tui/utils/getEnumKeys.ts";
 
 /**
  * Options schema for the settings command.
@@ -12,7 +13,7 @@ const settingsOptions = {
     type: "string",
     description: "Minimum log level to emit",
     default: "info",
-    enum: Object.keys(LogLevel) as (keyof typeof LogLevel)[],
+    enum: getEnumKeys(LogLevel) as (keyof typeof LogLevel)[],
     label: "Log Level",
     order: 1,
   },

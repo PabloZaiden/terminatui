@@ -68,7 +68,7 @@ Contains:
 
 | Phase | Goal | Status |
 |-------|------|--------|
-| **Phase 0A** | Stack-based navigation (architecture improvement) | Not Started |
+| **Phase 0A** | Stack-based navigation (architecture improvement) | In Progress (navigation context, screens, back handling, modal stack done; live log copy/global shortcuts working) |
 | **Phase 0B** | Component-chain keyboard handling (architecture improvement) | Not Started |
 | **Phase 1** | Create semantic component library (OpenTUI impl) | Not Started |
 | **Phase 2** | Refactor existing components to use semantic layer | Not Started |
@@ -119,7 +119,7 @@ Each component abstracts rendering details so adapters can implement them differ
 - [x] Requirements documented
 - [x] Architecture designed
 - [x] Tasks broken down
-- [ ] Implementation not started
+- [ ] Implementation started: Phase 0A navigation & modal/back handling in progress (stack, modals, global copy/logs)
 
 **Next Steps:**
 1. Review and approve architecture improvements plan

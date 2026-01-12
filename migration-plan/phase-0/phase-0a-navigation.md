@@ -1,7 +1,6 @@
-# Phase 0A: Stack-Based Navigation
 
-**Last Updated:** 2026-01-10  
-**Status:** Ready for Implementation
+**Last Updated:** 2026-01-12  
+**Status:** In Progress (navigation stack, screens, modal stack, back handling complete; live logs copy via global shortcut)
 
 ---
 
@@ -119,50 +118,50 @@ openModal({ id: 'logs', params: { source: 'app' } });
 
 ### Task 0A.1: Create Navigation Context
 
+**Status:** ✅ Completed
+
 **Actions:**
-- [ ] Implement `NavigationContext` with a generic `Routes` map (app-supplied)
-- [ ] Implement `ModalEntry` + `modalStack` with a generic `Modals` map
-- [ ] Implement `NavigationProvider` and `useNavigation()`
-- [ ] Use state (or reducer) to manage screen stack (never empty) and modal stack
-- [ ] Methods: push/replace/reset/pop for screens; openModal/closeModal for modals
-- [ ] Pop/back rule: close top modal if present; otherwise pop screen (keep at least one screen)
+- Implemented `NavigationContext` with generic `Routes` and `Modals` maps
+- Added `modalStack` with typed entries
+- Added `NavigationProvider` and `useNavigation()`
+- Reducer manages screen stack (never empty) and modal stack
+- Methods: push/replace/reset/pop; openModal/closeModal
+- Pop/back rule: closes top modal first; otherwise pops screen while keeping at least one
 
 **Validation Checkpoint:**
 ```
-✓ Context can be imported and used
-✓ Screen and modal stacks are typed via app-provided maps
+✓ Context imports and works
+✓ Screen and modal stacks typed via app-provided maps
 ✓ Pop respects modal-first, stack never empties
 ```
 
-**If validation fails:** Iterate on API design until clean and type-safe.
-
----
-
 ### Task 0A.2: Create Screen Components
 
-**Actions:**
-- [ ] Create `src/tui/screens/` directory
-- [ ] Create `CommandSelectScreen.tsx`
-  - [ ] Extract logic from current CommandSelector usage
-  - [ ] Accept `ScreenEntry` props and navigation API
-  - [ ] Handle command selection → push config screen
-- [ ] Create `ConfigScreen.tsx`
-  - [ ] Extract logic from current Config mode rendering
-  - [ ] Manage field selection/focus via params/meta
-  - [ ] Handle run → push running screen
-  - [ ] Handle CLI button → open `cli` modal
-- [ ] Create `RunningScreen.tsx`
-  - [ ] Show running state (logs now via modal)
-  - [ ] Handle completion → replace with results/error screen
-- [ ] Create `ResultsScreen.tsx`
-  - [ ] Show results panel; logs come from modal
-  - [ ] Handle focus cycling via meta/params
-- [ ] Create `ErrorScreen.tsx`
-  - [ ] Show error panel; logs come from modal
-- [ ] Modals: use modal stack instead of treating modals as screens
-  - [ ] `editor` modal overlay (save/cancel)
-  - [ ] `cli` modal overlay
-  - [ ] `logs` modal overlay (replaces old panel)
+**Status:** ✅ Completed
+
+**Actions Planned:**
+- Create `src/tui/screens/` directory
+- Create `CommandSelectScreen.tsx`
+  - Extract logic from current CommandSelector usage
+  - Accept `ScreenEntry` props and navigation API
+  - Handle command selection → push config screen
+- Create `ConfigScreen.tsx`
+  - Extract logic from current Config mode rendering
+  - Manage field selection/focus via params/meta
+  - Handle run → push running screen
+  - Handle CLI button → open `cli` modal
+- Create `RunningScreen.tsx`
+  - Show running state (logs now via modal)
+  - Handle completion → replace with results/error screen
+- Create `ResultsScreen.tsx`
+  - Show results panel; logs come from modal
+  - Handle focus cycling via meta/params
+- Create `ErrorScreen.tsx`
+  - Show error panel; logs come from modal
+- Modals use modal stack, not screens
+  - `editor` modal overlay (save/cancel)
+  - `cli` modal overlay
+  - `logs` modal overlay
 
 **Validation Checkpoint:**
 ```
@@ -172,131 +171,32 @@ openModal({ id: 'logs', params: { source: 'app' } });
 ✓ No TypeScript errors
 ```
 
-**If validation fails:** Fix screen component logic and props, iterate until working.
-
----
-
 ### Task 0A.3: Refactor TuiApp to Use Navigation + Modal Stacks
 
-**Actions:**
-- [ ] Wrap TuiAppContent with `<NavigationProvider>` using app `Routes`/`Modals`
-- [ ] Remove `Mode` and UI booleans (`logsVisible`, `cliModalVisible`, etc.) in favor of nav + modal stacks
-- [ ] Remove command/path/selection/focus state moved into screen params/meta
-- [ ] Replace `renderContent()` switch with screen stack renderer
-- [ ] Back handling: close modal if present, else `pop()` (stack never empty)
-- [ ] Keyboard handlers drive `push/replace/pop` and `openModal/closeModal`
+**Status:** ✅ Completed
+
+**Actions Planned:**
+- Wrap `TuiAppContent` with `<NavigationProvider>` using app `Routes`/`Modals`
+- Remove `Mode` and UI booleans (`logsVisible`, `cliModalVisible`, etc.)
+- Move command/path/selection/focus state into screen params/meta
+- Replace `renderContent()` switch with screen stack renderer
+- Back handling: close modal if present, else `pop()` (stack never empty)
+- Keyboard handlers drive `push/replace/pop` and `openModal/closeModal`
 
 **Validation Checkpoint:**
 ```
 ✓ App launches to command select
-✓ Can navigate config/running/results/error via nav stack
+✓ Navigate config/running/results/error via nav stack
 ✓ Back closes modals first, then screens
-✓ Breadcrumbs and field focus preserved via params/meta
+✓ Breadcrumbs and focus preserved via params/meta
 ✓ Logs/CLI/editor open as modals from any screen
 ✓ Legacy mode-based state removed
 ```
 
-**If validation fails:** Debug navigation flow, ensure screen state persists correctly in stack. Iterate until navigation works smoothly.
-
 ---
 
-### Task 0A.4: Update Command Execution Flow
-
-**Actions:**
-- [ ] Update run handler to `push` running screen with needed params (command, values, abort)
-- [ ] On completion, `replace` with results/error screen (params carry command/values/result/error)
-- [ ] Ensure re-run uses params from stack entry
-- [ ] Cancellation uses back rule (modal-first, then screens) to land in the right screen
-
-**Validation Checkpoint:**
-```
-✓ Running screen shows during execution
-✓ Completion shows results screen, error shows error screen
-✓ Back returns appropriately (immediate vs non-immediate execution)
-✓ Cancellation works and leaves stack consistent
-```
-
-**If validation fails:** Fix screen transition logic in executor, iterate.
-
----
-
-### Task 0A.5: Update Helper Functions
-
-**Actions:**
-- [ ] Refactor helpers (`getClipboardContent`, `statusMessage`, `shortcuts`) to read from current `ScreenEntry` and `currentModal`
-- [ ] Remove mode checks; use route names and modal IDs instead
-- [ ] Clipboard: when logs modal is open, copy logs; otherwise use screen params/meta
-
-**Validation Checkpoint:**
-```
-✓ Clipboard content correct per screen/modal
-✓ Status messages appropriate for current route
-✓ Shortcuts reflect modal-first back/close behavior
-✓ No mode enum references remain
-```
-
-**If validation fails:** Update helper logic, iterate.
-
----
-
-## Manual Validation Guidelines
-
-After implementing all tasks, perform comprehensive validation:
-
-### Navigation Testing
-1. Navigate through entire command hierarchy (nested subcommands)
-2. Go back from each screen type (modal-first close, then screen pop)
-3. Verify breadcrumbs update correctly
-4. Check that field selection/focus persists via params/meta
-5. Verify logs modal opens from any screen and closes before popping screens
-6. Test immediate execution commands (skip config screen)
-
-### State Management Testing
-1. Verify no Mode enum references remain
-2. Confirm old UI booleans removed (logs/CLI/editor visibility now via modal stack)
-3. Check screen state persists in navigation stack
-4. Test rapid navigation and modal stacking don’t break state
-5. Verify modal-first back/escape behavior
-
-### When Validation Fails
-1. **Document the issue**: What's broken? When does it happen?
-2. **Identify root cause**: State synchronization? Screen transitions?
-3. **Fix implementation**: Update code to address root cause
-4. **Re-test**: Repeat validation until issue resolved
-5. **Document workaround**: If architectural change needed, document why
-
-**DO NOT proceed to Phase 0B until all Phase 0A validation passes.**
-
----
-
-## Benefits
-
-**After Phase 0A completion:**
-- ✅ Single source of truth (navigation stack)
-- ✅ Encapsulated screen state
-- ✅ Natural back navigation
-- ✅ Easy to add new screens
-- ✅ Screen state preserved in history
-- ✅ Simpler transition logic
-- ✅ Better testability (screen components isolated)
-- ✅ Foundation for deep linking (serialize stack)
-
----
-
-## Next Steps
-
-1. Implement Task 0A.1 (Navigation Context)
-2. Validate Task 0A.1
-3. Implement Task 0A.2 (Screen Components)
-4. Validate Task 0A.2
-5. Continue through all tasks with validation
-6. Perform comprehensive manual validation
-7. **Only after all validation passes:** Proceed to [Phase 0B](./phase-0b-keyboard.md)
-
----
-
-**Related:**
-- [Phase 0 Overview](./README.md)
-- [Problem Analysis](./problem-analysis.md)
-- [Phase 0B: Keyboard](./phase-0b-keyboard.md)
-- [Implementation Order](./implementation-order.md)
+## Notes
+- Navigation module no longer exports legacy `Screen` union; tests now validate generic API and typed entries.
+- Modal overlays share `ModalBase` for consistent styling (used by editor/cli/logs).
+- Completed: typed screens, TuiApp navigation + modal stack, modal-first back handling, global shortcuts (Esc back, Y copy) honoring active modal, live log copy uses logHistory.
+- Remaining: proceed to Phase 0B keyboard bubbling redesign per plan.

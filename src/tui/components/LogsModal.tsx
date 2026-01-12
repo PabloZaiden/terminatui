@@ -1,9 +1,7 @@
 import { Theme } from "../theme.ts";
 import { LogColors } from "./logColors.ts";
 import type { LogEvent } from "../../core/logger.ts";
-import { useKeyboardHandler } from "../hooks/useKeyboardHandler.ts";
-import { KeyboardPriority } from "../context/KeyboardContext.tsx";
-import { AppContext } from "../../core/context.ts";
+import { ModalBase } from "./ModalBase.tsx";
 
 interface LogsModalProps {
     /** Log entries to display */
@@ -11,9 +9,7 @@ interface LogsModalProps {
     /** Whether the panel is visible */
     visible: boolean;
     /** Callback when the modal is closed */
-    onClose: () => void;
-    /** Callback when the logs are copied */
-    onCopy?: (content: string, label: string) => void;
+    onClose?: () => void;
 }
 
 /**
@@ -22,31 +18,8 @@ interface LogsModalProps {
 export function LogsModal({
     logs,
     visible,
-    onClose,
-    onCopy
+    onClose: _onClose,
 }: LogsModalProps) {
-    // Modal keyboard handler
-    useKeyboardHandler(
-        (event) => {
-            const { key } = event;
-            if (key.name === "escape" || key.name === "return" || key.name === "enter" || key.name === "l") {
-                onClose();
-                AppContext.current.logger.trace(`Logs closed via keyboard shortcut.`);
-                event.stopPropagation();
-                return;
-            }
-
-            // Y to copy
-            if (key.name === "y") {
-                onCopy?.(logs.map(log => log.message).join("\n"), "Logs");
-                event.stopPropagation();
-                return;
-            }
-        },
-        KeyboardPriority.Modal,
-        { enabled: visible, modal: true }
-    );
-
     if (!visible) {
         return null;
     }
@@ -54,21 +27,7 @@ export function LogsModal({
     const title = `Logs - ${logs.length}`;
 
     return (
-        <box
-            title={title}
-            position="absolute"
-            top={4}
-            bottom={4}
-            left={4}
-            right={4}
-            backgroundColor={Theme.overlay}
-            border={true}
-            borderStyle="rounded"
-            borderColor={Theme.overlayTitle}
-            padding={1}
-            flexDirection="column"
-            zIndex={20}
-        >
+        <ModalBase title={title} top={4} bottom={4} left={4} right={4}>
             <scrollbox
                 scrollY={true}
                 flexGrow={1}
@@ -93,6 +52,6 @@ export function LogsModal({
                     )}
                 </box>
             </scrollbox>
-        </box>
+        </ModalBase>
     );
 }

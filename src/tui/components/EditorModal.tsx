@@ -4,6 +4,7 @@ import { Theme } from "../theme.ts";
 import { useKeyboardHandler } from "../hooks/useKeyboardHandler.ts";
 import type { FieldConfig } from "./types.ts";
 import { KeyboardPriority } from "../context/KeyboardContext.tsx";
+import { ModalBase } from "./ModalBase.tsx";
 
 interface EditorModalProps {
     /** The key of the field being edited */
@@ -104,25 +105,7 @@ export function EditorModal({
     ];
 
     return (
-        <box
-            position="absolute"
-            top={4}
-            left={6}
-            width="60%"
-            height={12}
-            backgroundColor={Theme.overlay}
-            border={true}
-            borderStyle="rounded"
-            borderColor={Theme.overlayTitle}
-            padding={1}
-            flexDirection="column"
-            gap={1}
-            zIndex={20}
-        >
-            <text fg={Theme.overlayTitle}>
-                <strong>Edit: {fieldConfig.label}</strong>
-            </text>
-
+        <ModalBase title={`Edit: ${fieldConfig.label}`} width="60%" height={12} top={4} left={6}>
             {isEnum && fieldConfig.options && (
                 <select
                     options={fieldConfig.options.map((o) => ({
@@ -173,6 +156,6 @@ export function EditorModal({
             <text fg={Theme.statusText}>
                 Enter to save, Esc to cancel
             </text>
-        </box>
+        </ModalBase>
     );
 }
