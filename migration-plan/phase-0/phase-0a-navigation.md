@@ -13,94 +13,57 @@ Replace mode-based state management with a navigation stack that encapsulates sc
 
 ## Proposed Solution
 
-### 1. Screen Type Union
+### 1. Typed-but-Generic Screens
 
-Define discriminated union for all application screens:
+Keep the navigation layer generic; let the app supply the route map to get type safety without hardcoding route names into the navigation module.
 
 ```typescript
-type Screen =
-    | { 
-        type: 'command-select';
-        index: number;
-        path: string[];
-      }
-    | { 
-        type: 'config';
-        command: AnyCommand;
-        path: string[];
-        values: Record<string, unknown>;
-        fieldIndex: number;
-        focusedSection: 'config' | 'logs';
-        logsVisible: boolean;
-      }
-    | { 
-        type: 'running';
-        command: AnyCommand;
-        path: string[];
-        values: Record<string, unknown>;
-      }
-    | { 
-        type: 'results';
-        command: AnyCommand;
-        path: string[];
-        values: Record<string, unknown>;
-        result: unknown;
-        focusedSection: 'results' | 'logs';
-        logsVisible: boolean;
-      }
-    | { 
-        type: 'error';
-        command: AnyCommand;
-        path: string[];
-        values: Record<string, unknown>;
-        error: Error;
-        focusedSection: 'results' | 'logs';
-        logsVisible: boolean;
-      }
-    | {
-        type: 'editor-modal';
-        field: string;
-        fieldType: 'text' | 'number' | 'boolean' | 'enum';
-        value: unknown;
-        options?: unknown[];
-        parentScreen: Screen;
-      }
-    | {
-        type: 'cli-modal';
-        command: string;
-        parentScreen: Screen;
-      };
+// App-owned map of routes → param shapes (undefined when no params)
+type Routes = {
+    'command-select': { path: string[] };
+    config: { command: AnyCommand; values: Record<string, unknown>; focus?: string };
+    running: { command: AnyCommand; values: Record<string, unknown> };
+    results: { command: AnyCommand; values: Record<string, unknown>; result: unknown };
+    error: { command: AnyCommand; values: Record<string, unknown>; error: Error };
+};
+
+// Reusable screen entry (params are optional when the route’s entry is undefined)
+type ScreenEntry<R extends keyof Routes = keyof Routes> = {
+    route: R;
+    params?: Routes[R];
+    meta?: { focus?: string; breadcrumb?: string[] };
+};
 ```
 
 **Benefits:**
-- Each screen encapsulates its own state
-- TypeScript ensures all required data is present
-- Parent screen preserved for modals (enables proper back navigation)
-- Path included in each screen (breadcrumb support)
+- Typed per route without embedding route names in the navigation module
+- Easy to add routes by updating the map in app code
+- Optional metadata for focus/breadcrumb without inflating params
+- Still simple: one entry type, optional params
 
-### 2. Navigation API
+### 2. Navigation API (Screens + Modals)
 
 ```typescript
 interface NavigationAPI {
-    /** Current screen */
-    current: Screen;
-    
-    /** Push new screen onto stack */
-    push: (screen: Screen) => void;
-    
-    /** Pop current screen and return to previous */
+    // Screens
+    current: ScreenEntry;
+    stack: ScreenEntry[];
+    push: <R extends keyof Routes>(screen: ScreenEntry<R>) => void;
+    replace: <R extends keyof Routes>(screen: ScreenEntry<R>) => void;
+    reset: <R extends keyof Routes>(screen: ScreenEntry<R>) => void;
     pop: () => void;
-    
-    /** Replace current screen without adding to history */
-    replace: (screen: Screen) => void;
-    
-    /** Reset stack to initial screen */
-    reset: () => void;
-    
-    /** Can go back? */
     canGoBack: boolean;
+
+    // Modals (stacked overlays allowed)
+    modalStack: ModalEntry[];
+    currentModal?: ModalEntry;
+    openModal: <ID extends keyof Modals>(modal: ModalEntry<ID>) => void;
+    closeModal: () => void;
+    hasModal: boolean;
 }
 ```
+
+**Pop rule:** back/escape closes the top modal first; only when there are no modals does it pop the screen stack.
 
 ### 3. Usage Examples
 
@@ -142,20 +105,12 @@ if (mode === Mode.Running) {
 pop(); // That's it!
 ```
 
-**Opening a modal:**
+**Opening a modal (stacked allowed):**
 ```typescript
-// Old way
-setEditingField(fieldName);
-// Field editing state scattered in EditorModal
-
-// New way
-push({
-    type: 'editor-modal',
-    field: fieldName,
-    fieldType: 'text',
-    value: currentValue,
-    parentScreen: navigation.current,
-});
+openModal({ id: 'editor', params: { field: fieldName, value: currentValue } });
+// Another modal on top (e.g., logs over editor)
+openModal({ id: 'logs', params: { source: 'app' } });
+// Back/escape closes logs first, then editor, then screens
 ```
 
 ---
@@ -165,20 +120,18 @@ push({
 ### Task 0A.1: Create Navigation Context
 
 **Actions:**
-- [ ] Create `src/tui/context/NavigationContext.tsx`
-- [ ] Define `Screen` type union with all screen types
-- [ ] Define `NavigationAPI` interface
-- [ ] Implement `NavigationProvider` component
-- [ ] Use `useState<Screen[]>` for stack storage
-- [ ] Implement push/pop/replace/reset methods
-- [ ] Export `useNavigation()` hook
+- [ ] Implement `NavigationContext` with a generic `Routes` map (app-supplied)
+- [ ] Implement `ModalEntry` + `modalStack` with a generic `Modals` map
+- [ ] Implement `NavigationProvider` and `useNavigation()`
+- [ ] Use state (or reducer) to manage screen stack (never empty) and modal stack
+- [ ] Methods: push/replace/reset/pop for screens; openModal/closeModal for modals
+- [ ] Pop/back rule: close top modal if present; otherwise pop screen (keep at least one screen)
 
 **Validation Checkpoint:**
 ```
 ✓ Context can be imported and used
-✓ TypeScript types are correct
-✓ Push/pop operations work in isolation
-✓ Stack never becomes empty (reset to initial screen)
+✓ Screen and modal stacks are typed via app-provided maps
+✓ Pop respects modal-first, stack never empties
 ```
 
 **If validation fails:** Iterate on API design until clean and type-safe.
@@ -191,35 +144,31 @@ push({
 - [ ] Create `src/tui/screens/` directory
 - [ ] Create `CommandSelectScreen.tsx`
   - [ ] Extract logic from current CommandSelector usage
-  - [ ] Accept screen props and navigation API
+  - [ ] Accept `ScreenEntry` props and navigation API
   - [ ] Handle command selection → push config screen
 - [ ] Create `ConfigScreen.tsx`
   - [ ] Extract logic from current Config mode rendering
-  - [ ] Manage field selection, logs visibility, focused section
+  - [ ] Manage field selection/focus via params/meta
   - [ ] Handle run → push running screen
-  - [ ] Handle CLI button → push cli-modal screen
+  - [ ] Handle CLI button → open `cli` modal
 - [ ] Create `RunningScreen.tsx`
-  - [ ] Show logs panel
+  - [ ] Show running state (logs now via modal)
   - [ ] Handle completion → replace with results/error screen
 - [ ] Create `ResultsScreen.tsx`
-  - [ ] Show results panel and optional logs
-  - [ ] Handle focus cycling
+  - [ ] Show results panel; logs come from modal
+  - [ ] Handle focus cycling via meta/params
 - [ ] Create `ErrorScreen.tsx`
-  - [ ] Show error panel and optional logs
-  - [ ] Similar to results but for errors
-- [ ] Create `EditorModalScreen.tsx`
-  - [ ] Render editor modal overlay
-  - [ ] Handle save → pop with updated value
-  - [ ] Handle cancel → pop without changes
-- [ ] Create `CliModalScreen.tsx`
-  - [ ] Render CLI command modal overlay
-  - [ ] Handle close → pop
+  - [ ] Show error panel; logs come from modal
+- [ ] Modals: use modal stack instead of treating modals as screens
+  - [ ] `editor` modal overlay (save/cancel)
+  - [ ] `cli` modal overlay
+  - [ ] `logs` modal overlay (replaces old panel)
 
 **Validation Checkpoint:**
 ```
-✓ Each screen component renders correctly in isolation
-✓ Screen components accept screen props properly
-✓ Navigation calls work (push/pop from within screens)
+✓ Screens render with typed params/meta
+✓ Navigation calls work (push/replace/pop)
+✓ Modals open/close via modal stack
 ✓ No TypeScript errors
 ```
 
@@ -227,35 +176,24 @@ push({
 
 ---
 
-### Task 0A.3: Refactor TuiApp to Use Navigation Stack
+### Task 0A.3: Refactor TuiApp to Use Navigation + Modal Stacks
 
 **Actions:**
-- [ ] Wrap TuiAppContent with `<NavigationProvider>`
-- [ ] Remove `mode` state variable
-- [ ] Remove `selectedCommand` state variable
-- [ ] Remove `commandPath` state variable
-- [ ] Remove `commandSelectorIndex` state variable
-- [ ] Remove `selectorIndexStack` state variable
-- [ ] Remove `selectedFieldIndex` state variable
-- [ ] Remove `editingField` state variable
-- [ ] Remove `focusedSection` state variable
-- [ ] Remove `logsVisible` state variable
-- [ ] Remove `cliModalVisible` state variable
-- [ ] Keep `configValues` temporarily (or move to config screen state)
+- [ ] Wrap TuiAppContent with `<NavigationProvider>` using app `Routes`/`Modals`
+- [ ] Remove `Mode` and UI booleans (`logsVisible`, `cliModalVisible`, etc.) in favor of nav + modal stacks
+- [ ] Remove command/path/selection/focus state moved into screen params/meta
 - [ ] Replace `renderContent()` switch with screen stack renderer
-- [ ] Simplify `handleBack()` to just `navigation.pop()`
-- [ ] Update keyboard handlers to use current screen type
+- [ ] Back handling: close modal if present, else `pop()` (stack never empty)
+- [ ] Keyboard handlers drive `push/replace/pop` and `openModal/closeModal`
 
 **Validation Checkpoint:**
 ```
-✓ App launches to command select screen
-✓ Can select command and navigate to config
-✓ Can go back from config to command select
-✓ Field index preserved when navigating away and back
-✓ Command path shown correctly in breadcrumbs
-✓ Logs toggle works in appropriate screens
-✓ Modals open and close correctly
-✓ All 13 state variables removed
+✓ App launches to command select
+✓ Can navigate config/running/results/error via nav stack
+✓ Back closes modals first, then screens
+✓ Breadcrumbs and field focus preserved via params/meta
+✓ Logs/CLI/editor open as modals from any screen
+✓ Legacy mode-based state removed
 ```
 
 **If validation fails:** Debug navigation flow, ensure screen state persists correctly in stack. Iterate until navigation works smoothly.
@@ -265,20 +203,17 @@ push({
 ### Task 0A.4: Update Command Execution Flow
 
 **Actions:**
-- [ ] Update run command handler to push running screen
-- [ ] Pass abort controller to running screen
-- [ ] On completion, replace running screen with results/error screen
-- [ ] Ensure command/values available in results screen for re-run
-- [ ] Test cancellation returns to config screen
+- [ ] Update run handler to `push` running screen with needed params (command, values, abort)
+- [ ] On completion, `replace` with results/error screen (params carry command/values/result/error)
+- [ ] Ensure re-run uses params from stack entry
+- [ ] Cancellation uses back rule (modal-first, then screens) to land in the right screen
 
 **Validation Checkpoint:**
 ```
-✓ Running command shows running screen
-✓ Completion shows results screen
-✓ Error shows error screen
-✓ Back from results returns to config (if not immediate execution)
-✓ Back from results returns to command select (if immediate execution)
-✓ Cancellation works correctly
+✓ Running screen shows during execution
+✓ Completion shows results screen, error shows error screen
+✓ Back returns appropriately (immediate vs non-immediate execution)
+✓ Cancellation works and leaves stack consistent
 ```
 
 **If validation fails:** Fix screen transition logic in executor, iterate.
@@ -288,16 +223,15 @@ push({
 ### Task 0A.5: Update Helper Functions
 
 **Actions:**
-- [ ] Refactor `getClipboardContent()` to use current screen
-- [ ] Refactor `statusMessage` to use current screen
-- [ ] Refactor `shortcuts` to use current screen
-- [ ] Remove mode checks, use screen type instead
+- [ ] Refactor helpers (`getClipboardContent`, `statusMessage`, `shortcuts`) to read from current `ScreenEntry` and `currentModal`
+- [ ] Remove mode checks; use route names and modal IDs instead
+- [ ] Clipboard: when logs modal is open, copy logs; otherwise use screen params/meta
 
 **Validation Checkpoint:**
 ```
-✓ Clipboard content correct for each screen type
-✓ Status messages appropriate for current screen
-✓ Keyboard shortcuts displayed correctly per screen
+✓ Clipboard content correct per screen/modal
+✓ Status messages appropriate for current route
+✓ Shortcuts reflect modal-first back/close behavior
 ✓ No mode enum references remain
 ```
 
@@ -311,18 +245,18 @@ After implementing all tasks, perform comprehensive validation:
 
 ### Navigation Testing
 1. Navigate through entire command hierarchy (nested subcommands)
-2. Go back from each screen type
+2. Go back from each screen type (modal-first close, then screen pop)
 3. Verify breadcrumbs update correctly
-4. Check that field selection persists when navigating back
-5. Verify logs panel state preserved
+4. Check that field selection/focus persists via params/meta
+5. Verify logs modal opens from any screen and closes before popping screens
 6. Test immediate execution commands (skip config screen)
 
 ### State Management Testing
 1. Verify no Mode enum references remain
-2. Confirm all 13 state variables removed
+2. Confirm old UI booleans removed (logs/CLI/editor visibility now via modal stack)
 3. Check screen state persists in navigation stack
-4. Test rapid navigation doesn't break state
-5. Verify modals preserve parent screen state
+4. Test rapid navigation and modal stacking don’t break state
+5. Verify modal-first back/escape behavior
 
 ### When Validation Fails
 1. **Document the issue**: What's broken? When does it happen?

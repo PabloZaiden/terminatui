@@ -29,7 +29,7 @@ Create a complete Ink renderer implementation that can replace OpenTUI.
 
 - ✅ Ink renderer class and initialization
 - ✅ All 12 semantic components implemented for Ink
-- ✅ Ink keyboard adapter
+- ✅ Ink keyboard adapter (focus-tree/bubbling, modal-first, global shortcuts preserved)
 - ✅ Integration testing with Ink
 - ✅ Performance validation
 - ✅ Cross-platform testing

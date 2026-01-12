@@ -118,15 +118,16 @@
 - [ ] Test settings command
 - [ ] Test help command
 - [ ] Test all error cases
-- [ ] Verify logs work correctly
+- [ ] Verify logs work correctly (logs modal, modal-first close)
 - [ ] Test cancellation scenarios
-- [ ] Verify clipboard functionality
+- [ ] Verify clipboard functionality (modal content first, else screen)
 
 **Validation:**
 - Example app works flawlessly
 - No regressions from OpenTUI version
 - Performance acceptable
 - UX feels smooth
+- Shortcuts/copy honor modal-first rules
 
 ### Task 4.8: Test Production App
 
@@ -180,18 +181,18 @@
 
 **Actions:**
 - [ ] Run app for extended period (stress test)
-- [ ] Test rapid mode switching
+- [ ] Test rapid navigation + modal stacking
 - [ ] Test edge cases (large logs, complex JSON)
 - [ ] Test terminal resizing
 - [ ] Test in various terminal emulators
-- [ ] Test copy/paste reliability
+- [ ] Test copy/paste reliability (modal-first, bubbling for globals)
 - [ ] Test SSH/remote scenarios
 - [ ] Document any crashes or issues
 
 **Validation:**
 - No crashes during normal use
 - Handles edge cases gracefully
-- Copy/paste works reliably
+- Copy/paste works reliably (modal-first rules)
 - Stable in all tested terminals
 
 ### Task 4.11: Update Migration Evaluation Document

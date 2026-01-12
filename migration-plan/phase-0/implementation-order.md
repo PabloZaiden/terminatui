@@ -42,7 +42,7 @@ The two phases must be completed **sequentially**:
 ✅ **Navigation**
 - Forward/back navigation works correctly
 - Screen state preserved in stack
-- Modals push/pop on stack correctly
+- Modals managed via modal stack (modal-first close), screens via screen stack
 
 ✅ **Screen Components**
 - Each screen encapsulates its own logic
@@ -123,10 +123,11 @@ After implementing each task, perform manual validation:
 
 ### Phase 0B Specific Testing
 1. Test each keyboard shortcut in each screen
-2. Verify modal input capture (background shouldn't respond)
+2. Verify modal input capture (background shouldn't respond to handled keys)
 3. Test field navigation (up/down/tab)
 4. Verify focus indicators visible and correct
 5. Test unhandled keys bubble correctly (e.g., 'c' from field → screen handler)
+6. Test copy shortcut with and without modal open (modal content first, else screen)
 
 ### When Validation Fails
 1. **Document the issue**: What's broken? When does it happen?

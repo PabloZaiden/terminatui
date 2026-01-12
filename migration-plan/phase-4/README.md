@@ -24,7 +24,7 @@ Switch default renderer to Ink, remove OpenTUI dependencies, and complete the mi
 - ✅ TuiApplication defaulting to Ink
 - ✅ OpenTUI dependencies removed
 - ✅ Documentation updated
-- ✅ Both example apps validated
+- ✅ Both example apps validated (shortcuts/copy/modal behavior verified)
 - ✅ Performance benchmarks completed
 - ✅ Stability improvements confirmed
 

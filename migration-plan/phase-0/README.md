@@ -46,7 +46,7 @@ Replace flat priority-based keyboard handling with component hierarchy bubbling.
 - Remove priority-based system
 - Implement focus tree
 - Event bubbling through component chain
-- Natural modal capture
+- Natural modal capture (modal-first, but unhandled keys can bubble for globals like copy)
 
 **Tasks:** 6 implementation tasks with validation checkpoints
 
