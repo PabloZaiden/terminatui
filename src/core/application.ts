@@ -5,17 +5,14 @@ import { ExecutionMode } from "../types/execution.ts";
 import { LogLevel, type LoggerConfig } from "./logger.ts";
 import { generateAppHelp, generateCommandHelp } from "./help.ts";
 import {
-  createVersionCommand,
-  createHelpCommandForParent,
-  createRootHelpCommand,
-} from "../builtins/index.ts";
-import {
   extractCommandChain,
   schemaToParseArgsOptions,
   parseOptionValues,
   validateOptions,
 } from "../cli/parser.ts";
 import { parseArgs, type ParseArgsConfig } from "util";
+import { createVersionCommand } from "../builtins/version.ts";
+import { createHelpCommandForParent, createRootHelpCommand } from "../builtins/help.ts";
 
 /**
  * Global options available on all commands.
@@ -53,11 +50,11 @@ export interface ApplicationConfig {
  */
 export interface ApplicationHooks {
   /** Called before running any command */
-  onBeforeRun?: (ctx: AppContext, commandName: string) => Promise<void> | void;
+  onBeforeRun?: (commandName: string) => Promise<void> | void;
   /** Called after command completes (success or failure) */
-  onAfterRun?: (ctx: AppContext, commandName: string, error?: Error) => Promise<void> | void;
+  onAfterRun?: (commandName: string, error?: Error) => Promise<void> | void;
   /** Called when an error occurs */
-  onError?: (ctx: AppContext, error: Error) => Promise<void> | void;
+  onError?: (error: Error) => Promise<void> | void;
 }
 
 /**
@@ -84,8 +81,7 @@ export class Application {
   readonly version: string;
   readonly commitHash?: string;
   readonly registry: CommandRegistry;
-  readonly context: AppContext;
-
+  
   private readonly defaultCommandName?: string;
   private hooks: ApplicationHooks = {};
 
@@ -102,8 +98,10 @@ export class Application {
       version: config.version,
       ...config.config,
     };
-    this.context = new AppContext(appConfig, config.logger);
-    AppContext.setCurrent(this.context);
+    const context = new AppContext(appConfig, config.logger);
+    AppContext.setCurrent(context);
+
+    context.logger.silly(`Application initialized: ${this.name} v${this.version}`);
 
     // Create registry and register commands
     this.registry = new CommandRegistry();
@@ -163,6 +161,11 @@ export class Application {
    * @param argv Command-line arguments (typically process.argv.slice(2))
    */
   async run(argv: string[]): Promise<void> {
+    // configure logger
+    AppContext.current.logger.onLogEvent((event) => {
+      process.stderr.write(event.message + "\n");
+    });
+
     try {
       // Parse global options first
       const { globalOptions, remainingArgs } = this.parseGlobalOptions(argv);
@@ -194,7 +197,7 @@ export class Application {
 
       // Check for unknown command in path
       if (remainingPath.length > 0 && remainingPath[0] !== "help") {
-        console.error(`Unknown command: ${remainingPath.join(" ")}`);
+        AppContext.current.logger.error(`Unknown command: ${remainingPath.join(" ")}`);
         process.exitCode = 1;
         return;
       }
@@ -258,7 +261,7 @@ export class Application {
 
     // If there was a parse error, show it and help
     if (parseError) {
-      console.error(`Error: ${parseError}\n`);
+      AppContext.current.logger.error(`Error: ${parseError}\n`);
       console.log(generateCommandHelp(command, {
         appName: this.name,
         commandPath: commandPath.length > 0 ? commandPath : [command.name],
@@ -272,7 +275,7 @@ export class Application {
       options = parseOptionValues(schema, parsedValues);
     } catch (err) {
       // Enum validation error from parseOptionValues
-      console.error(`Error: ${(err as Error).message}\n`);
+      AppContext.current.logger.error(`Error: ${(err as Error).message}\n`);
       console.log(generateCommandHelp(command, {
         appName: this.name,
         commandPath: commandPath.length > 0 ? commandPath : [command.name],
@@ -285,7 +288,7 @@ export class Application {
     const errors = validateOptions(schema, options);
     if (errors.length > 0) {
       for (const error of errors) {
-        console.error(`Error: ${error.message}`);
+        AppContext.current.logger.error(`Error: ${error.message}`);
       }
       console.log(); // Blank line
       console.log(generateCommandHelp(command, {
@@ -298,7 +301,7 @@ export class Application {
 
     // Call onBeforeRun hook
     if (this.hooks.onBeforeRun) {
-      await this.hooks.onBeforeRun(this.context, command.name);
+      await this.hooks.onBeforeRun(command.name);
     }
 
     let error: Error | undefined;
@@ -306,19 +309,19 @@ export class Application {
     try {
       // Call beforeExecute hook on command
       if (command.beforeExecute) {
-        await command.beforeExecute(this.context, options);
+        await command.beforeExecute(options);
       }
 
       // Build config if command implements buildConfig, otherwise pass options as-is
       let config: unknown;
       if (command.buildConfig) {
-        config = await command.buildConfig(this.context, options);
+        config = await command.buildConfig(options);
       } else {
         config = options;
       }
 
       // Execute the command with the config
-      const result = await command.execute(this.context, config);
+      const result = await command.execute(config);
       
       // In CLI mode, handle result output
       if (mode === ExecutionMode.Cli && result) {
@@ -339,7 +342,7 @@ export class Application {
       // Always call afterExecute hook
       if (command.afterExecute) {
         try {
-          await command.afterExecute(this.context, options, error);
+          await command.afterExecute(options, error);
         } catch (afterError) {
           // afterExecute error takes precedence if no prior error
           if (!error) {
@@ -351,7 +354,7 @@ export class Application {
 
     // Call onAfterRun hook
     if (this.hooks.onAfterRun) {
-      await this.hooks.onAfterRun(this.context, command.name, error);
+      await this.hooks.onAfterRun(command.name, error);
     }
 
     // Re-throw if there was an error
@@ -413,7 +416,7 @@ export class Application {
    * Apply global options to the application context.
    */
   private applyGlobalOptions(options: GlobalOptions): void {
-    const logger = this.context.logger;
+    const logger = AppContext.current.logger;
 
     // Apply detailed-logs
     if (options["detailed-logs"] !== undefined) {
@@ -438,24 +441,17 @@ export class Application {
    */
   private async handleError(error: Error): Promise<void> {
     if (this.hooks.onError) {
-      await this.hooks.onError(this.context, error);
+      await this.hooks.onError(error);
     } else {
       // Default error handling
       if (error instanceof ConfigValidationError) {
         // Format validation errors more clearly
         const fieldInfo = error.field ? ` (${error.field})` : "";
-        console.error(`Configuration error${fieldInfo}: ${error.message}`);
+        AppContext.current.logger.error(`Configuration error${fieldInfo}: ${error.message}`);
       } else {
-        console.error(`Error: ${error.message}`);
+        AppContext.current.logger.error(`Error: ${error.message}`);
       }
       process.exitCode = 1;
     }
-  }
-
-  /**
-   * Get the application context.
-   */
-  getContext(): AppContext {
-    return this.context;
   }
 }

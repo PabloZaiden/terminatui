@@ -1,5 +1,6 @@
 import { Theme } from "../theme.ts";
-import { useKeyboardHandler, KeyboardPriority } from "../hooks/useKeyboardHandler.ts";
+import { useKeyboardHandler } from "../hooks/useKeyboardHandler.ts";
+import { KeyboardPriority } from "../context/KeyboardContext.tsx";
 
 interface CliModalProps {
     /** CLI command to display */

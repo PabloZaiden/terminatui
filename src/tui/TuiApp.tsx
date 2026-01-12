@@ -1,29 +1,25 @@
-import { useState, useCallback, useMemo } from "react";
-import { KeyboardProvider } from "./context/index.ts";
-import {
-    Header,
-    StatusBar,
-    CommandSelector,
-    ConfigForm,
-    EditorModal,
-    CliModal,
-    LogsPanel,
-    ResultsPanel,
-    ActionButton,
-} from "./components/index.ts";
-import {
-    useKeyboardHandler,
-    KeyboardPriority,
-    useClipboard,
-    useLogStream,
-    useCommandExecutor,
-    type LogSource,
-} from "./hooks/index.ts";
-import { schemaToFieldConfigs, getFieldDisplayValue, buildCliCommand, loadPersistedParameters, savePersistedParameters } from "./utils/index.ts";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import type { AnyCommand } from "../core/command.ts";
-import type { AppContext } from "../core/context.ts";
+import { AppContext } from "../core/context.ts";
 import type { OptionValues, OptionSchema, OptionDef } from "../types/command.ts";
-import type { CustomField } from "./TuiApplication.tsx";
+import { useClipboard } from "./hooks/useClipboard.ts";
+import { KeyboardPriority, KeyboardProvider } from "./context/KeyboardContext.tsx";
+import { useCommandExecutor } from "./hooks/useCommandExecutor.ts";
+import { useKeyboardHandler } from "./hooks/useKeyboardHandler.ts";
+import { CommandSelector } from "./components/CommandSelector.tsx";
+import { ConfigForm } from "./components/ConfigForm.tsx";
+import { ActionButton } from "./components/ActionButton.tsx";
+import { ResultsPanel } from "./components/ResultsPanel.tsx";
+import { getFieldDisplayValue, schemaToFieldConfigs } from "./utils/schemaToFields.ts";
+import { buildCliCommand } from "./utils/buildCliCommand.ts";
+import { loadPersistedParameters, savePersistedParameters } from "./utils/parameterPersistence.ts";
+import { Header } from "./components/Header.tsx";
+import { StatusBar } from "./components/StatusBar.tsx";
+import { EditorModal } from "./components/EditorModal.tsx";
+import { CliModal } from "./components/CliModal.tsx";
+import { LogsModal } from "./components/LogsModal.tsx";
+import { Theme } from "./theme.ts";
+import type { LogEvent } from "../core/logger.ts";
 
 /**
  * TUI application mode.
@@ -41,8 +37,8 @@ enum Mode {
  */
 enum FocusedSection {
     Config,
-    Logs,
     Results,
+    None,
 }
 
 interface TuiAppProps {
@@ -54,12 +50,6 @@ interface TuiAppProps {
     version: string;
     /** Available commands */
     commands: AnyCommand[];
-    /** Application context */
-    context: AppContext;
-    /** Log source for log panel */
-    logSource?: LogSource;
-    /** Custom fields to add to the TUI form */
-    customFields?: CustomField[];
     /** Called when user wants to exit */
     onExit: () => void;
 }
@@ -81,10 +71,7 @@ function TuiAppContent({
     displayName,
     version,
     commands,
-    context,
-    logSource,
-    customFields,
-    onExit,
+    onExit
 }: TuiAppProps) {
     // State
     const [mode, setMode] = useState<Mode>(Mode.CommandSelect);
@@ -95,24 +82,31 @@ function TuiAppContent({
     const [selectedFieldIndex, setSelectedFieldIndex] = useState(0);
     const [editingField, setEditingField] = useState<string | null>(null);
     const [focusedSection, setFocusedSection] = useState<FocusedSection>(FocusedSection.Config);
-    const [logsVisible, setLogsVisible] = useState(false);
+    const [logsModalVisible, setLogsModalVisible] = useState(false);
     const [cliModalVisible, setCliModalVisible] = useState(false);
     const [configValues, setConfigValues] = useState<Record<string, unknown>>({});
+    const [logHistory, setLogHistory] = useState<LogEvent[]>([]);
+
+    // Register log event handler
+    useEffect(() => {
+        AppContext.current.logger.onLogEvent((event: LogEvent) => {
+            setLogHistory((prev) => [...prev, event]);
+        });
+    }, []);
 
     // Hooks
-    const { logs, clearLogs } = useLogStream(logSource);
     const { copyWithMessage, lastAction } = useClipboard();
-    
+
     // Command executor
     const executeCommand = useCallback(async (cmd: AnyCommand, values: Record<string, unknown>, signal: AbortSignal) => {
         // If the command provides buildConfig, build and validate before executing
         let configOrValues: unknown = values;
         if (cmd.buildConfig) {
-            configOrValues = await cmd.buildConfig(context, values as OptionValues<OptionSchema>);
+            configOrValues = await cmd.buildConfig(values as OptionValues<OptionSchema>);
         }
 
-        return await cmd.execute(context, configOrValues as OptionValues<OptionSchema>, { signal });
-    }, [context]);
+        return await cmd.execute(configOrValues as OptionValues<OptionSchema>, { signal });
+    }, []);
 
     const { isExecuting, result, error, execute, cancel, reset: resetExecutor } = useCommandExecutor(
         (cmd: unknown, values: unknown, signal: unknown) => executeCommand(cmd as AnyCommand, values as Record<string, unknown>, signal as AbortSignal)
@@ -122,12 +116,8 @@ function TuiAppContent({
     const fieldConfigs = useMemo(() => {
         if (!selectedCommand) return [];
         const commandFields = schemaToFieldConfigs(selectedCommand.options);
-        // Merge custom fields if provided
-        if (customFields && customFields.length > 0) {
-            return [...commandFields, ...customFields];
-        }
         return commandFields;
-    }, [selectedCommand, customFields]);
+    }, [selectedCommand]);
 
     const cliCommand = useMemo(() => {
         if (!selectedCommand) return "";
@@ -137,10 +127,10 @@ function TuiAppContent({
     // Build breadcrumb with display names by traversing the command path
     const breadcrumb = useMemo(() => {
         if (commandPath.length === 0) return undefined;
-        
+
         const displayNames: string[] = [];
         let current: AnyCommand[] = commands;
-        
+
         for (const pathPart of commandPath) {
             const found = current.find((c) => c.name === pathPart);
             if (found) {
@@ -152,7 +142,7 @@ function TuiAppContent({
                 displayNames.push(pathPart);
             }
         }
-        
+
         return displayNames;
     }, [commandPath, commands]);
 
@@ -181,21 +171,13 @@ function TuiAppContent({
                 }
             }
         }
-        // Initialize custom field defaults
-        if (customFields) {
-            for (const field of customFields) {
-                if (field.default !== undefined) {
-                    defaults[field.key] = field.default;
-                }
-            }
-        }
         
         // Load persisted parameters and merge with defaults
         const persisted = loadPersistedParameters(name, cmd.name);
         const merged = { ...defaults, ...persisted };
-        
+
         setConfigValues(merged);
-    }, [customFields, name]);
+    }, [name]);
 
     /**
      * Check if a command has navigable subcommands (excluding commands that don't support TUI).
@@ -224,7 +206,7 @@ function TuiAppContent({
         initializeConfigValues(cmd);
         setSelectedFieldIndex(0);
         setFocusedSection(FocusedSection.Config);
-        setLogsVisible(false);
+        setLogsModalVisible(false);
 
         // Check if command should execute immediately
         if (cmd.immediateExecution) {
@@ -235,7 +217,9 @@ function TuiAppContent({
     }, [initializeConfigValues, hasNavigableSubCommands, commandSelectorIndex]);
 
     const handleBack = useCallback(() => {
-        if (mode === Mode.Running) {
+        if (logsModalVisible) {
+            setLogsModalVisible(false);
+        } else if (mode === Mode.Running) {
             // Cancel the running command and go back
             cancel();
             // If command was immediate execution, go back to command select
@@ -245,7 +229,6 @@ function TuiAppContent({
                 setCommandPath((prev) => prev.slice(0, -1));
                 setSelectedFieldIndex(0);
                 setFocusedSection(FocusedSection.Config);
-                setLogsVisible(false);
             } else {
                 setMode(Mode.Config);
                 setFocusedSection(FocusedSection.Config);
@@ -257,7 +240,6 @@ function TuiAppContent({
             setCommandPath((prev) => prev.slice(0, -1));
             setSelectedFieldIndex(0);
             setFocusedSection(FocusedSection.Config);
-            setLogsVisible(false);
         } else if (mode === Mode.Results || mode === Mode.Error) {
             // If command was immediate execution, go back to command select
             if (selectedCommand?.immediateExecution) {
@@ -266,7 +248,6 @@ function TuiAppContent({
                 setCommandPath((prev) => prev.slice(0, -1));
                 setSelectedFieldIndex(0);
                 setFocusedSection(FocusedSection.Config);
-                setLogsVisible(false);
             } else {
                 setMode(Mode.Config);
                 setFocusedSection(FocusedSection.Config);
@@ -281,7 +262,7 @@ function TuiAppContent({
         } else {
             onExit();
         }
-    }, [mode, commandPath, selectedCommand, selectorIndexStack, cancel, onExit, resetExecutor]);
+    }, [mode, logsModalVisible, commandPath, selectedCommand, selectorIndexStack, cancel, onExit, resetExecutor]);
 
     const handleRunCommand = useCallback(async (cmd?: AnyCommand) => {
         const cmdToRun = cmd ?? selectedCommand;
@@ -292,9 +273,6 @@ function TuiAppContent({
 
         // Set up for running
         setMode(Mode.Running);
-        clearLogs();
-        setLogsVisible(true);
-        setFocusedSection(FocusedSection.Logs);
 
         // Execute and wait for result
         const outcome = await execute(cmdToRun, configValues);
@@ -311,7 +289,7 @@ function TuiAppContent({
             setMode(Mode.Error);
         }
         setFocusedSection(FocusedSection.Results);
-    }, [selectedCommand, configValues, clearLogs, execute, name]);
+    }, [selectedCommand, configValues, execute, name]);
 
     const handleEditField = useCallback((fieldKey: string) => {
         setEditingField(fieldKey);
@@ -321,7 +299,7 @@ function TuiAppContent({
         if (editingField) {
             setConfigValues((prev) => {
                 let newValues = { ...prev, [editingField]: value };
-                
+
                 // Call command's onConfigChange if available
                 if (selectedCommand?.onConfigChange) {
                     const updates = selectedCommand.onConfigChange(editingField, value, newValues);
@@ -329,36 +307,23 @@ function TuiAppContent({
                         newValues = { ...newValues, ...updates };
                     }
                 }
-                
-                // Call custom field onChange if applicable
-                const customField = customFields?.find((f) => f.key === editingField);
-                if (customField?.onChange) {
-                    customField.onChange(value, newValues);
-                }
+
                 return newValues;
             });
         }
         setEditingField(null);
-    }, [editingField, customFields, selectedCommand]);
+    }, [editingField, selectedCommand]);
 
     const handleCopy = useCallback((content: string, label: string) => {
         copyWithMessage(content, label);
     }, [copyWithMessage]);
 
-    /**
-     * Get clipboard content based on current mode and focused section.
-     * Returns { content, label } or null if nothing to copy.
-     */
     const getClipboardContent = useCallback((): { content: string; label: string } | null => {
-        // In Running mode or when logs are focused, copy logs
-        if (mode === Mode.Running || (logsVisible && focusedSection === FocusedSection.Logs)) {
-            if (logs.length > 0) {
-                const content = logs
-                    .map((log) => `[${log.level}] ${log.timestamp.toISOString()} ${log.message}`)
-                    .join("\n");
-                return { content, label: "Logs" };
-            }
-            return null;
+        // If showing logs modal, copy logs
+        if (logsModalVisible) {
+            // In Logs mode, copy logs
+            const logs = logHistory;
+            return { content: logs.map(log => log.message).join("\n"), label: "Logs" };
         }
 
         // In Results/Error mode with results focused
@@ -385,20 +350,19 @@ function TuiAppContent({
         }
 
         return null;
-    }, [mode, focusedSection, logsVisible, logs, error, result, configValues, selectedCommand]);
+    }, [mode, focusedSection, error, result, configValues, selectedCommand, logHistory]);
 
     const cycleFocusedSection = useCallback(() => {
         const sections: FocusedSection[] = [];
         if (mode === Mode.Config) sections.push(FocusedSection.Config);
         if (mode === Mode.Results || mode === Mode.Error) sections.push(FocusedSection.Results);
-        if (logsVisible) sections.push(FocusedSection.Logs);
 
         if (sections.length <= 1) return;
 
         const currentIdx = sections.indexOf(focusedSection);
         const nextIdx = (currentIdx + 1) % sections.length;
         setFocusedSection(sections[nextIdx]!);
-    }, [mode, logsVisible, focusedSection]);
+    }, [mode, focusedSection]);
 
     // Global keyboard handler
     useKeyboardHandler(
@@ -431,7 +395,11 @@ function TuiAppContent({
 
             // L to toggle logs
             if (key.name === "l" && !editingField) {
-                setLogsVisible((prev) => !prev);
+                setLogsModalVisible((prev) => {
+                    const newState = !prev;
+                    AppContext.current.logger.trace(`Logs ${newState ? "opened" : "closed"} via keyboard shortcut.`);
+                    return newState;
+                });
                 event.stopPropagation();
                 return;
             }
@@ -470,7 +438,7 @@ function TuiAppContent({
     // Status message
     const statusMessage = useMemo(() => {
         if (lastAction) return lastAction;
-        if (isExecuting) return "Running benchmark...";
+        if (isExecuting) return "Executing...";
         if (mode === Mode.Error) return "Error occurred. Press Esc to go back.";
         if (mode === Mode.Results) return "Run completed. Press Esc to return to config.";
         if (mode === Mode.CommandSelect) return "Select a command to get started.";
@@ -483,7 +451,7 @@ function TuiAppContent({
     const shortcuts = useMemo(() => {
         const parts: string[] = [];
         if (mode === Mode.Config) {
-            parts.push("↑↓ Navigate", "Enter Edit", "Y Copy", "C CLI", "L Logs", "Esc Back");
+            parts.push("↑↓ Navigate", "Enter Edit", "Y Copy", "C CLI", "Esc Back");
         } else if (mode === Mode.Running) {
             parts.push("Y Copy", "Esc Cancel");
         } else if (mode === Mode.Results || mode === Mode.Error) {
@@ -491,6 +459,7 @@ function TuiAppContent({
         } else {
             parts.push("↑↓ Navigate", "Enter Select", "Esc Exit");
         }
+        parts.push("L Logs");
         return parts.join(" • ");
     }, [mode]);
 
@@ -539,24 +508,19 @@ function TuiAppContent({
                                 />
                             }
                         />
-                        {logsVisible && (
-                            <LogsPanel
-                                logs={logs}
-                                visible={true}
-                                focused={focusedSection === FocusedSection.Logs}
-                            />
-                        )}
                     </box>
                 );
 
             case Mode.Running:
                 return (
-                    <LogsPanel
-                        logs={logs}
-                        visible={true}
-                        focused={true}
-                        expanded={true}
-                    />
+                    <box flexDirection="column" flexGrow={1}>
+                        <text fg={Theme.statusText}>
+                            Running... Check logs for progress.
+                        </text>
+                        <text fg={Theme.statusText}>
+                            Press Esc to cancel.
+                        </text>
+                    </box>
                 );
 
             case Mode.Results:
@@ -569,13 +533,6 @@ function TuiAppContent({
                             focused={focusedSection === FocusedSection.Results}
                             renderResult={selectedCommand?.renderResult}
                         />
-                        {logsVisible && (
-                            <LogsPanel
-                                logs={logs}
-                                visible={true}
-                                focused={focusedSection === FocusedSection.Logs}
-                            />
-                        )}
                     </box>
                 );
 
@@ -592,10 +549,10 @@ function TuiAppContent({
                 {renderContent()}
             </box>
 
-            <StatusBar 
-                status={statusMessage} 
+            <StatusBar
+                status={statusMessage}
                 isRunning={isExecuting}
-                shortcuts={shortcuts} 
+                shortcuts={shortcuts}
             />
 
             {/* Modals */}
@@ -614,6 +571,14 @@ function TuiAppContent({
                 onClose={() => setCliModalVisible(false)}
                 onCopy={handleCopy}
             />
+
+            <LogsModal
+                logs={logHistory}
+                visible={logsModalVisible}
+                onClose={() => setLogsModalVisible(false)}
+                onCopy={handleCopy}
+            />
+
         </box>
     );
 }

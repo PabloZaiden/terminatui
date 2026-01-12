@@ -1,5 +1,5 @@
 import { Command } from "../core/command.ts";
-import type { AppContext } from "../core/context.ts";
+import { AppContext } from "../core/context.ts";
 import { LogLevel } from "../core/logger.ts";
 import type { OptionSchema, OptionValues } from "../types/command.ts";
 import type { CommandResult } from "../core/command.ts";
@@ -12,7 +12,7 @@ const settingsOptions = {
     type: "string",
     description: "Minimum log level to emit",
     default: "info",
-    enum: ["silly", "trace", "debug", "info", "warn", "error", "fatal"],
+    enum: Object.keys(LogLevel) as (keyof typeof LogLevel)[],
     label: "Log Level",
     order: 1,
   },
@@ -36,28 +36,6 @@ interface SettingsConfig {
 }
 
 /**
- * Map of string log level names to LogLevel enum values.
- */
-const logLevelMap: Record<string, LogLevel> = {
-  silly: LogLevel.Silly,
-  trace: LogLevel.Trace,
-  debug: LogLevel.Debug,
-  info: LogLevel.Info,
-  warn: LogLevel.Warn,
-  error: LogLevel.Error,
-  fatal: LogLevel.Fatal,
-};
-
-/**
- * Parse a string log level to the LogLevel enum.
- */
-function parseLogLevel(value?: string): LogLevel {
-  if (!value) return LogLevel.Info;
-  const level = logLevelMap[value.toLowerCase()];
-  return level ?? LogLevel.Info;
-}
-
-/**
  * Built-in settings command for configuring logging.
  * 
  * This command allows users to configure the log level and detailed logging
@@ -77,24 +55,25 @@ export class SettingsCommand extends Command<typeof settingsOptions, SettingsCon
   override readonly actionLabel = "Save Settings";
   override readonly immediateExecution = false;
 
-  override buildConfig(_ctx: AppContext, opts: SettingsOptions): SettingsConfig {
-    const logLevel = parseLogLevel(opts["log-level"] as string | undefined);
+  override buildConfig(opts: SettingsOptions): SettingsConfig {
+    const logLevelStr = opts["log-level"];
+    const logLevel = LogLevel[logLevelStr as keyof typeof LogLevel] ?? LogLevel.info;
     const detailedLogs = Boolean(opts["detailed-logs"]);
 
     return { logLevel, detailedLogs };
   }
 
-  override async execute(ctx: AppContext, config: SettingsConfig): Promise<CommandResult> {
-    this.applySettings(ctx, config);
+  override async execute(config: SettingsConfig): Promise<CommandResult> {
+    this.applySettings(config);
     return {
       success: true,
       message: `Logging set to ${LogLevel[config.logLevel]}${config.detailedLogs ? " with detailed format" : ""}`,
     };
   }
 
-  private applySettings(ctx: AppContext, config: SettingsConfig): void {
-    ctx.logger.setMinLevel(config.logLevel);
-    ctx.logger.setDetailed(config.detailedLogs);
+  private applySettings(config: SettingsConfig): void {
+    AppContext.current.logger.setMinLevel(config.logLevel);
+    AppContext.current.logger.setDetailed(config.detailedLogs);
   }
 }
 

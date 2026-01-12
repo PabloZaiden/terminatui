@@ -1,4 +1,6 @@
-Default to using Bun instead of Node.js.
+This is a Bun-only project. Never check if something might not be supported in another environment. You can assume Bun is always available.
+
+Always use Bun features and APIs where possible.
 
 - Use `bun <file>` instead of `node <file>` or `ts-node <file>`
 - Use `bun test` instead of `jest` or `vitest`
