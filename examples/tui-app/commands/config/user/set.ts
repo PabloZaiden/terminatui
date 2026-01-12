@@ -1,5 +1,5 @@
 import { Command, type CommandResult } from "../../../../../src/core/command";
-import type { AppContext } from "../../../../../src/core/context";
+import { AppContext } from "../../../../../src/core/context";
 import type { OptionSchema, OptionValues } from "../../../../../src/types/command";
 
 const options = {
@@ -36,13 +36,13 @@ export class UserSetCommand extends Command<typeof options> {
         { command: "config user set --key theme --value light", description: "Set theme" },
     ];
 
-    override async execute(ctx: AppContext, opts: OptionValues<typeof options>): Promise<CommandResult> {
-        ctx.logger.info(`Setting user.${opts.key} = "${opts.value}"`);
+    override async execute(opts: OptionValues<typeof options>): Promise<CommandResult> {
+        AppContext.current.logger.info(`Setting user.${opts.key} = "${opts.value}"`);
         
         // Simulate setting the value
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        ctx.logger.info(`Successfully updated user configuration`);
+        AppContext.current.logger.info(`Successfully updated user configuration`);
         return {
             success: true,
             data: { key: opts.key, value: opts.value },

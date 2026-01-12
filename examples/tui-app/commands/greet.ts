@@ -1,5 +1,5 @@
 import { Command, type CommandResult } from "../../../src/core/command";
-import type { AppContext } from "../../../src/core/context";
+import { AppContext } from "../../../src/core/context";
 import type { OptionSchema, OptionValues } from "../../../src/types/command";
 
 const greetOptions = {
@@ -44,9 +44,9 @@ export class GreetCommand extends Command<typeof greetOptions> {
         { command: "greet --name World --loud --times 3", description: "Loud greeting 3 times" },
     ];
 
-    override async execute(ctx: AppContext, opts: OptionValues<typeof greetOptions>): Promise<CommandResult> {
+    override async execute(opts: OptionValues<typeof greetOptions>): Promise<CommandResult> {
         const greeting = this.createGreeting(opts);
-        ctx.logger.info(greeting);
+        AppContext.current.logger.info(greeting);
         return {
             success: true,
             data: { greeting, timestamp: new Date().toISOString() },

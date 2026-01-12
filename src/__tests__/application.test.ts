@@ -1,9 +1,9 @@
 import { describe, test, expect } from "bun:test";
 import { Application } from "../core/application.ts";
 import { Command } from "../core/command.ts";
-import { AppContext } from "../core/context.ts";
 import type { OptionSchema, OptionValues, OptionDef } from "../types/command.ts";
 import { LogLevel } from "../core/logger.ts";
+import { AppContext } from "../core/context.ts";
 
 // Define a proper option schema
 const testOptions = {
@@ -22,7 +22,6 @@ class TestCommand extends Command<typeof testOptions> {
   executedWith: Record<string, unknown> | null = null;
 
   override async execute(
-    _ctx: AppContext,
     opts: OptionValues<typeof testOptions>
   ): Promise<void> {
     this.executedWith = opts as Record<string, unknown>;
@@ -36,7 +35,7 @@ class TuiCommand extends Command<OptionSchema> {
 
   executed = false;
 
-  override async execute(_ctx: AppContext): Promise<void> {
+  override async execute(): Promise<void> {
     this.executed = true;
   }
 }
@@ -207,7 +206,7 @@ describe("Application", () => {
         commands: [new ErrorCommand()],
       });
       app.setHooks({
-        onError: async (_ctx, error) => {
+        onError: async (error) => {
           errorCaught = error;
         },
       });
@@ -238,7 +237,6 @@ describe("Application", () => {
         readonly options = configOptions;
 
         override buildConfig(
-          _ctx: AppContext,
           opts: OptionValues<typeof configOptions>
         ): ParsedConfig {
           buildConfigCalled = true;
@@ -248,7 +246,7 @@ describe("Application", () => {
           };
         }
 
-        override async execute(_ctx: AppContext, config: ParsedConfig): Promise<void> {
+        override async execute(config: ParsedConfig): Promise<void> {
           receivedConfig = config;
         }
       }
@@ -274,7 +272,6 @@ describe("Application", () => {
         readonly options = testOptions;
 
         override async execute(
-          _ctx: AppContext,
           opts: OptionValues<typeof testOptions>
         ): Promise<void> {
           receivedOpts = opts as Record<string, unknown>;
@@ -316,7 +313,7 @@ describe("Application", () => {
       });
       
       app.setHooks({
-        onError: async (_ctx, error) => {
+        onError: async (error) => {
           errorCaught = error;
         },
       });

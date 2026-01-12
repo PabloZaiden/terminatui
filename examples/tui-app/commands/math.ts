@@ -1,5 +1,5 @@
 import { Command, type CommandResult } from "../../../src/core/command";
-import type { AppContext } from "../../../src/core/context";
+import { AppContext } from "../../../src/core/context";
 import type { OptionSchema, OptionValues } from "../../../src/types/command";
 
 const mathOptions = {
@@ -46,10 +46,10 @@ export class MathCommand extends Command<typeof mathOptions> {
 
     override readonly actionLabel = "Calculate";
 
-    override async execute(ctx: AppContext, opts: OptionValues<typeof mathOptions>): Promise<CommandResult> {
+    override async execute(opts: OptionValues<typeof mathOptions>): Promise<CommandResult> {
         const result = this.calculate(opts);
         if (!result.success) {
-            ctx.logger.error(result.message || "Calculation failed");
+            AppContext.current.logger.error(result.message || "Calculation failed");
         }
         return result;
     }

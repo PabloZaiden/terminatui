@@ -1,7 +1,6 @@
 import { UserConfigCommand } from "./user/index.ts";
 import { AppConfigCommand } from "./app/index.ts";
 import { Command, type CommandResult } from "../../../../src/core/command.ts";
-import type { AppContext } from "../../../../src/core/context.ts";
 
 export class ConfigCommand extends Command {
     readonly name = "config";
@@ -21,7 +20,7 @@ export class ConfigCommand extends Command {
         { command: "config app set --key debug --value true --type boolean", description: "Enable debug mode" },
     ];
 
-    override execute(_ctx: AppContext): CommandResult {
+    override execute(): CommandResult {
         console.log("Use 'config <category> <command>' to manage settings.");
         console.log("Categories: user, app");
         return { success: true };

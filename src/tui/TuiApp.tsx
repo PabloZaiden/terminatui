@@ -106,11 +106,11 @@ function TuiAppContent({
         // If the command provides buildConfig, build and validate before executing
         let configOrValues: unknown = values;
         if (cmd.buildConfig) {
-            configOrValues = await cmd.buildConfig(AppContext.current, values as OptionValues<OptionSchema>);
+            configOrValues = await cmd.buildConfig(values as OptionValues<OptionSchema>);
         }
 
-        return await cmd.execute(AppContext.current, configOrValues as OptionValues<OptionSchema>, { signal });
-    }, [AppContext.current]);
+        return await cmd.execute(configOrValues as OptionValues<OptionSchema>, { signal });
+    }, []);
 
     const { isExecuting, result, error, execute, cancel, reset: resetExecutor } = useCommandExecutor(
         (cmd: unknown, values: unknown, signal: unknown) => executeCommand(cmd as AnyCommand, values as Record<string, unknown>, signal as AbortSignal)

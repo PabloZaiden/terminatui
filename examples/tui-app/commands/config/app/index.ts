@@ -1,5 +1,4 @@
 import { Command, type CommandResult } from "../../../../../src/core/command.ts";
-import type { AppContext } from "../../../../../src/core/context.ts";
 import { AppGetCommand } from "./get.ts";
 import { AppSetCommand } from "./set.ts";
 
@@ -14,7 +13,7 @@ export class AppConfigCommand extends Command {
         new AppSetCommand(),
     ];
 
-    override execute(_ctx: AppContext): CommandResult {
+    override execute(): CommandResult {
         console.log("Use 'config app <command>' for application configuration.");
         console.log("Available: get, set");
         return { success: true };

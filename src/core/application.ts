@@ -50,11 +50,11 @@ export interface ApplicationConfig {
  */
 export interface ApplicationHooks {
   /** Called before running any command */
-  onBeforeRun?: (ctx: AppContext, commandName: string) => Promise<void> | void;
+  onBeforeRun?: (commandName: string) => Promise<void> | void;
   /** Called after command completes (success or failure) */
-  onAfterRun?: (ctx: AppContext, commandName: string, error?: Error) => Promise<void> | void;
+  onAfterRun?: (commandName: string, error?: Error) => Promise<void> | void;
   /** Called when an error occurs */
-  onError?: (ctx: AppContext, error: Error) => Promise<void> | void;
+  onError?: (error: Error) => Promise<void> | void;
 }
 
 /**
@@ -301,7 +301,7 @@ export class Application {
 
     // Call onBeforeRun hook
     if (this.hooks.onBeforeRun) {
-      await this.hooks.onBeforeRun(AppContext.current, command.name);
+      await this.hooks.onBeforeRun(command.name);
     }
 
     let error: Error | undefined;
@@ -309,19 +309,19 @@ export class Application {
     try {
       // Call beforeExecute hook on command
       if (command.beforeExecute) {
-        await command.beforeExecute(AppContext.current, options);
+        await command.beforeExecute(options);
       }
 
       // Build config if command implements buildConfig, otherwise pass options as-is
       let config: unknown;
       if (command.buildConfig) {
-        config = await command.buildConfig(AppContext.current, options);
+        config = await command.buildConfig(options);
       } else {
         config = options;
       }
 
       // Execute the command with the config
-      const result = await command.execute(AppContext.current, config);
+      const result = await command.execute(config);
       
       // In CLI mode, handle result output
       if (mode === ExecutionMode.Cli && result) {
@@ -342,7 +342,7 @@ export class Application {
       // Always call afterExecute hook
       if (command.afterExecute) {
         try {
-          await command.afterExecute(AppContext.current, options, error);
+          await command.afterExecute(options, error);
         } catch (afterError) {
           // afterExecute error takes precedence if no prior error
           if (!error) {
@@ -354,7 +354,7 @@ export class Application {
 
     // Call onAfterRun hook
     if (this.hooks.onAfterRun) {
-      await this.hooks.onAfterRun(AppContext.current, command.name, error);
+      await this.hooks.onAfterRun(command.name, error);
     }
 
     // Re-throw if there was an error
@@ -441,7 +441,7 @@ export class Application {
    */
   private async handleError(error: Error): Promise<void> {
     if (this.hooks.onError) {
-      await this.hooks.onError(AppContext.current, error);
+      await this.hooks.onError(error);
     } else {
       // Default error handling
       if (error instanceof ConfigValidationError) {

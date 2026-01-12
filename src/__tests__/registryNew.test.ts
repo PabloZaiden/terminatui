@@ -1,7 +1,6 @@
 import { describe, test, expect, beforeEach } from "bun:test";
 import { CommandRegistry } from "../core/registry.ts";
 import { Command } from "../core/command.ts";
-import type { AppContext } from "../core/context.ts";
 import type { OptionSchema } from "../types/command.ts";
 
 // Test command implementations
@@ -14,7 +13,7 @@ class TestCommand extends Command<OptionSchema> {
   }
   readonly options = {};
 
-  override async execute(_ctx: AppContext): Promise<void> {}
+  override async execute(): Promise<void> {}
 }
 
 describe("CommandRegistry (new)", () => {

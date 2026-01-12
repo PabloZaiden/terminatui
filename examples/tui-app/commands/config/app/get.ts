@@ -1,5 +1,5 @@
 import { Command, type CommandResult } from "../../../../../src/core/command";
-import type { AppContext } from "../../../../../src/core/context";
+import { AppContext } from "../../../../../src/core/context";
 import type { OptionSchema, OptionValues } from "../../../../../src/types/command";
 
 const options = {
@@ -27,7 +27,7 @@ export class AppGetCommand extends Command<typeof options> {
         { command: "config app get --key logLevel", description: "Get log level" },
     ];
 
-    override async execute(ctx: AppContext, opts: OptionValues<typeof options>): Promise<CommandResult> {
+    override async execute(opts: OptionValues<typeof options>): Promise<CommandResult> {
         // Simulated app config store
         const appConfig: Record<string, string | number | boolean> = {
             port: 3000,
@@ -40,14 +40,14 @@ export class AppGetCommand extends Command<typeof options> {
         const value = appConfig[opts.key];
         
         if (value === undefined) {
-            ctx.logger.warn(`Key "${opts.key}" not found in application configuration`);
+            AppContext.current.logger.warn(`Key "${opts.key}" not found in application configuration`);
             return {
                 success: false,
                 message: `Key "${opts.key}" not found`,
             };
         }
 
-        ctx.logger.info(`Retrieved app.${opts.key} = ${value}`);
+        AppContext.current.logger.info(`Retrieved app.${opts.key} = ${value}`);
         return {
             success: true,
             data: { key: opts.key, value },

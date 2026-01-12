@@ -1,5 +1,5 @@
 import { Command, type CommandResult } from "../../../../../src/core/command";
-import type { AppContext } from "../../../../../src/core/context";
+import { AppContext } from "../../../../../src/core/context";
 import type { OptionSchema, OptionValues } from "../../../../../src/types/command";
 
 const options = {
@@ -27,7 +27,7 @@ export class UserGetCommand extends Command<typeof options> {
         { command: "config user get --key email", description: "Get user email" },
     ];
 
-    override async execute(ctx: AppContext, opts: OptionValues<typeof options>): Promise<CommandResult> {
+    override async execute(opts: OptionValues<typeof options>): Promise<CommandResult> {
         // Simulated user config store
         const userConfig: Record<string, string> = {
             name: "John Doe",
@@ -39,14 +39,14 @@ export class UserGetCommand extends Command<typeof options> {
         const value = userConfig[opts.key];
         
         if (value === undefined) {
-            ctx.logger.warn(`Key "${opts.key}" not found in user configuration`);
+            AppContext.current.logger.warn(`Key "${opts.key}" not found in user configuration`);
             return {
                 success: false,
                 message: `Key "${opts.key}" not found`,
             };
         }
 
-        ctx.logger.info(`Retrieved user.${opts.key} = ${value}`);
+        AppContext.current.logger.info(`Retrieved user.${opts.key} = ${value}`);
         return {
             success: true,
             data: { key: opts.key, value },

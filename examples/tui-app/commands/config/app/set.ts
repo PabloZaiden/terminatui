@@ -1,5 +1,5 @@
-import { Command, type CommandResult } from "../../../../../src/core/command";
-import type { AppContext } from "../../../../../src/core/context";
+import { Command, type CommandExecutionContext, type CommandResult } from "../../../../../src/core/command";
+import { AppContext } from "../../../../../src/core/context";
 import type { OptionSchema, OptionValues } from "../../../../../src/types/command";
 
 const options = {
@@ -45,14 +45,14 @@ export class AppSetCommand extends Command<typeof options> {
         { command: "config app set --key debug --value false --type boolean", description: "Disable debug" },
     ];
 
-    override async execute(ctx: AppContext, opts: OptionValues<typeof options>): Promise<CommandResult> {
+    override async execute(opts: OptionValues<typeof options>, execCtx: CommandExecutionContext): Promise<CommandResult> {
         let parsedValue: string | number | boolean = opts.value;
         
         // Parse value based on type
         if (opts.type === "number") {
             parsedValue = Number(opts.value);
             if (isNaN(parsedValue)) {
-                ctx.logger.error(`Invalid number value: "${opts.value}"`);
+                AppContext.current.logger.error(`Invalid number value: "${opts.value}"`);
                 return {
                     success: false,
                     message: `Invalid number: "${opts.value}"`,
@@ -62,7 +62,7 @@ export class AppSetCommand extends Command<typeof options> {
             parsedValue = opts.value.toLowerCase() === "true";
         }
 
-        ctx.logger.info(`Setting app.${opts.key} = ${JSON.stringify(parsedValue)}`);
+        AppContext.current.logger.info(`Setting app.${opts.key} = ${JSON.stringify(parsedValue)}`);
         
 
         // Simulate setting the value on the 5th iteration
@@ -70,15 +70,15 @@ export class AppSetCommand extends Command<typeof options> {
             let count = 0;
             let interval = setInterval(() => {
                 count++;
-                ctx.logger.info(`Applying configuration... (${count}/5)`);
-                if (count >= 5) {
+                AppContext.current.logger.info(`Applying configuration... (${count}/5)`);
+                if (count >= 5 || execCtx.signal.aborted) {
                     clearInterval(interval);
                     resolve(undefined);
                 }
             }, 1000);
         });
         
-        ctx.logger.info(`Successfully updated application configuration`);
+        AppContext.current.logger.info(`Successfully updated application configuration`);
         return {
             success: true,
             data: { key: opts.key, value: parsedValue, type: opts.type },
