@@ -9,13 +9,14 @@
 - **Navigation stacks**: screen stack and modal stack; back/escape closes top modal first, otherwise pops screen stack; if at root command-select with empty path, exit.
 - **Global shortcuts**:
   - `Esc`: back (modal-first, then screen pop, exit at root).
-  - `Y`: copy from active view (top modal if present; otherwise current screen). Logs use live `logHistory`; CLI modal uses its command string; results may use command-specific `getClipboardContent`.
+  - `Y`: copy from active view (top modal if present; otherwise current screen). Active view decides what to provide; logs use live `logHistory`.
   - `L`: toggle logs modal (available anywhere; shows live logHistory while open).
-  - `C`: from config screen, opens CLI modal with built command string.
+- **Screen-owned shortcuts/actions**:
+  - Config owns `C` to open CLI modal; other screen-specific shortcuts live in their screens (only logs toggle stays global).
 - **Active view data** (used by global copy/status):
-  - Modals: logs (logHistory), CLI (command string), property editor (no copy content).
-  - Screens: results (result/custom), error (message), config (values JSON), others: none.
-- **Status/last action**: provided by clipboard hook (e.g., copy success message) and execution state (running flag).
+  - Modals: logs (logHistory), CLI (command string provided by modal), property editor (no copy content).
+  - Screens: results (command-provided clipboard content), error (message), config (values JSON), others: none.
+- **Status/last action**: provided by clipboard hook (e.g., copy success message) and execution state (running flag); TuiApp need not track an explicit "state", just render based on current screen/modal and executor status.
 
 ## Screen Transitions
 
@@ -28,7 +29,7 @@
 ### Config
 - **On edit field**: open property editor modal with field key/value/configs; submit updates values and replaces config entry; cancel closes.
 - **On run/action**: push running screen with command, path, values; executor drives results/error replacement.
-- **On `C`**: open CLI modal with built command string.
+- **On `C` (screen-owned)**: open CLI modal with built command string.
 - **On back**: pop to previous screen (typically command-select).
 - **Modals available**: property editor, CLI, logs.
 
@@ -40,7 +41,7 @@
 
 ### Results
 - **On back**: pop to previous screen (typically config or command-select).
-- **Clipboard content**: command-specific `getClipboardContent` if provided; otherwise JSON of result.
+- **Clipboard content**: command-provided content (e.g., `getClipboardContent`), not assumed to be JSON.
 - **Modals available**: logs.
 
 ### Error
@@ -66,8 +67,8 @@
 - **Clipboard**: live `logHistory` via global `Y`.
 
 ## Global Copy Resolution Order
-1. Top modal (logs → logHistory; CLI → command string).
-2. Screen: results (custom or JSON), error (message), config (values JSON); otherwise none.
+1. Top modal (logs → live logHistory; CLI → command string from modal; property editor → none).
+2. Screen: results (command-provided content), error (message), config (values JSON); otherwise none.
 
 ## Back/Escape Behavior
 - If modal stack non-empty: close top modal.
