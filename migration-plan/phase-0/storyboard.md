@@ -82,3 +82,11 @@
 - TuiApp becomes screen-agnostic: screens/modals declare their transitions and data providers (e.g., clipboard content) instead of hardcoded `switch`/`if` chains.
 - Global handler remains only for truly global concerns (back, logs toggle, global copy); screen-specific shortcuts (e.g., `C` in config) move into their screen.
 - Navigation actions (push/replace/pop, open/close modal) are invoked by screens/modals based on their own logic, not centralized branching in TuiApp.
+
+## Refactor Implementation Checklist (based on storyboard)
+1) Define contracts: screen/modal interfaces for transitions and data (clipboard/status), plus a registry to map routes/modal IDs to components/providers.
+2) Clipboard/data providers: replace `if`/`switch` with providers per screen/modal; results use command-provided content; logs use live logHistory; CLI modal provides its command string.
+3) Move screen logic out of TuiApp: command-select handles selection/back; config owns `C`/run/edit; running owns cancel/back; results/error own back and copy providers; modals handle their own submit/close.
+4) Keep TuiApp global-only: back/escape (modal-first), logs toggle, global copy dispatch, status bar wiring, executor plumbing; rendering via registry lookups instead of hardcoded switches.
+5) Navigation wiring: screens/modals invoke navigation actions directly (push/replace/pop/openModal/closeModal) without TuiApp branching on route.
+6) Validation: exercise all flows (select→config→run→results/error; back paths; logs toggle anywhere; CLI modal from config; property editor submit/cancel; copy in screens/modals) then `bun run build` and `bun run test`.
