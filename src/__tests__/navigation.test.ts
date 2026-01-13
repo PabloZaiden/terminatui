@@ -4,7 +4,6 @@ import type {
     ScreenEntry,
     ModalEntry,
     RoutesMap,
-    ModalsMap,
 } from "../tui/context/NavigationContext.tsx";
 
 type Routes = {
@@ -12,14 +11,11 @@ type Routes = {
     Config: { commandName: string; commandPath: string[] };
 };
 
-type Modals = {
-    "cli-arguments": { command: string };
-    "property-editor": { fieldKey: string };
-};
+type CliArgumentsModalParams = { command: string };
 
 describe("NavigationContext types", () => {
     test("NavigationAPI shape compiles for routes and modals", () => {
-        const mock: NavigationAPI<Routes, Modals> = {
+        const mock: NavigationAPI<Routes> = {
             current: { route: "CommandSelect", params: { commandPath: [] } },
             stack: [{ route: "CommandSelect", params: { commandPath: [] } }],
             push: () => {},
@@ -43,7 +39,7 @@ describe("NavigationContext types", () => {
 
     test("ScreenEntry and ModalEntry enforce key safety", () => {
         const screen: ScreenEntry<Routes> = { route: "Config", params: { commandName: "foo", commandPath: ["foo"] } };
-        const modal: ModalEntry<Modals> = { id: "cli-arguments", params: { command: "foo" } };
+        const modal: ModalEntry<CliArgumentsModalParams> = { id: "cli-arguments", params: { command: "foo" } };
 
         expect(screen.route).toBe("Config");
         expect(modal.id).toBe("cli-arguments");
@@ -51,7 +47,7 @@ describe("NavigationContext types", () => {
 
     test("default generics allow arbitrary maps", () => {
         const genericScreen: ScreenEntry<RoutesMap> = { route: "any", params: { value: 1 } };
-        const genericModal: ModalEntry<ModalsMap> = { id: "modal", params: { anything: true } };
+        const genericModal: ModalEntry = { id: "modal", params: { anything: true } };
 
         expect(genericScreen.route).toBe("any");
         expect(genericModal.id).toBe("modal");

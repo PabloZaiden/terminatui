@@ -15,6 +15,7 @@ import { getScreen, getModal } from "./registry.tsx";
 
 // Register screens and modals
 import { registerAllScreens, registerAllModals } from "./registry.tsx";
+import type { LogsModalParams } from "./modals/LogsModal.tsx";
 
 // Register all screens and modals at module load
 await registerAllScreens();
@@ -101,10 +102,7 @@ function TuiAppContent() {
             if (isLogsOpen) {
                 navigation.closeModal();
             } else {
-                navigation.openModal({
-                    id: "logs",
-                    params: { logs: logHistory },
-                });
+                navigation.openModal<LogsModalParams>("logs", { logs: logHistory });
             }
             return true;
         }

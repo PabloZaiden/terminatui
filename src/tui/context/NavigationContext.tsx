@@ -10,10 +10,8 @@ import {
 
 // Generic route→params maps provided by the app
 export type RoutesMap = Record<string, object | undefined>;
-export type ModalsMap = Record<string, object | undefined>;
 
 type RouteKey<M extends RoutesMap> = Extract<keyof M, string>;
-type ModalKey<M extends ModalsMap> = Extract<keyof M, string>;
 
 export type ScreenEntry<M extends RoutesMap, R extends RouteKey<M> = RouteKey<M>> = {
     route: R;
@@ -21,10 +19,10 @@ export type ScreenEntry<M extends RoutesMap, R extends RouteKey<M> = RouteKey<M>
     meta?: { focus?: string; breadcrumb?: string[] };
 };
 
-export type ModalEntry<M extends ModalsMap, ID extends ModalKey<M> = ModalKey<M>> = {
-    id: ID;
-    params?: M[ID];
-};
+export interface ModalEntry<TParams = unknown> {
+    id: string;
+    params?: TParams;
+}
 
 /**
  * Back handler function.
@@ -32,7 +30,7 @@ export type ModalEntry<M extends ModalsMap, ID extends ModalKey<M> = ModalKey<M>
  */
 export type BackHandler = () => boolean;
 
-export interface NavigationAPI<Routes extends RoutesMap = RoutesMap, Modals extends ModalsMap = ModalsMap> {
+export interface NavigationAPI<Routes extends RoutesMap = RoutesMap> {
     current: ScreenEntry<Routes>;
     stack: ScreenEntry<Routes>[];
     push: <R extends RouteKey<Routes>>(screen: ScreenEntry<Routes, R>) => void;
@@ -41,9 +39,9 @@ export interface NavigationAPI<Routes extends RoutesMap = RoutesMap, Modals exte
     pop: () => void;
     canGoBack: boolean;
 
-    modalStack: ModalEntry<Modals>[];
-    currentModal?: ModalEntry<Modals>;
-    openModal: <ID extends ModalKey<Modals>>(modal: ModalEntry<Modals, ID>) => void;
+    modalStack: ModalEntry[];
+    currentModal?: ModalEntry;
+    openModal: <TParams>(id: string, params?: TParams) => void;
     closeModal: () => void;
     hasModal: boolean;
 
@@ -63,33 +61,32 @@ export interface NavigationAPI<Routes extends RoutesMap = RoutesMap, Modals exte
     setBackHandler: (handler: BackHandler | null) => void;
 }
 
-type NavigationProviderProps<Routes extends RoutesMap, Modals extends ModalsMap> = {
+type NavigationProviderProps<Routes extends RoutesMap> = {
     initialScreen: ScreenEntry<Routes>;
     children: ReactNode;
     /** Called when we can't go back anymore (at root with empty stack) */
     onExit?: () => void;
-    // Phantom fields to keep generic parameters in use for inference
+    // Phantom field to keep generic parameter in use for inference
     _routesType?: Routes;
-    _modalsType?: Modals;
 };
 
-type NavigationAction<Routes extends RoutesMap, Modals extends ModalsMap> =
+type NavigationAction<Routes extends RoutesMap> =
     | { type: "push"; screen: ScreenEntry<Routes> }
     | { type: "replace"; screen: ScreenEntry<Routes> }
     | { type: "reset"; screen: ScreenEntry<Routes> }
     | { type: "pop" }
-    | { type: "openModal"; modal: ModalEntry<Modals> }
+    | { type: "openModal"; modal: ModalEntry }
     | { type: "closeModal" };
 
-type NavigationState<Routes extends RoutesMap, Modals extends ModalsMap> = {
+type NavigationState<Routes extends RoutesMap> = {
     stack: ScreenEntry<Routes>[];
-    modalStack: ModalEntry<Modals>[];
+    modalStack: ModalEntry[];
 };
 
-function navigationReducer<Routes extends RoutesMap, Modals extends ModalsMap>(
-    state: NavigationState<Routes, Modals>,
-    action: NavigationAction<Routes, Modals>
-): NavigationState<Routes, Modals> {
+function navigationReducer<Routes extends RoutesMap>(
+    state: NavigationState<Routes>,
+    action: NavigationAction<Routes>
+): NavigationState<Routes> {
     switch (action.type) {
         case "push":
             return { ...state, stack: [...state.stack, action.screen] };
@@ -116,14 +113,14 @@ function navigationReducer<Routes extends RoutesMap, Modals extends ModalsMap>(
     }
 }
 
-const NavigationContext = createContext<NavigationAPI<any, any> | null>(null);
+const NavigationContext = createContext<NavigationAPI<any> | null>(null);
 
-export function NavigationProvider<Routes extends RoutesMap, Modals extends ModalsMap>({
+export function NavigationProvider<Routes extends RoutesMap>({
     initialScreen,
     children,
     onExit,
-}: NavigationProviderProps<Routes, Modals>) {
-    const [state, dispatch] = useReducer(navigationReducer<Routes, Modals>, {
+}: NavigationProviderProps<Routes>) {
+    const [state, dispatch] = useReducer(navigationReducer<Routes>, {
         stack: [initialScreen],
         modalStack: [],
     });
@@ -135,7 +132,7 @@ export function NavigationProvider<Routes extends RoutesMap, Modals extends Moda
         backHandlerRef.current = handler;
     }, []);
 
-    const api = useMemo<NavigationAPI<Routes, Modals>>(() => {
+    const api = useMemo<NavigationAPI<Routes>>(() => {
         const stack = state.stack;
         const modalStack = state.modalStack;
         const current = stack[stack.length - 1]!;
@@ -176,7 +173,8 @@ export function NavigationProvider<Routes extends RoutesMap, Modals extends Moda
             canGoBack: stack.length > 1 || modalStack.length > 0,
             modalStack,
             currentModal,
-            openModal: (modal) => dispatch({ type: "openModal", modal }),
+            openModal: <TParams = unknown>(id: string, params?: TParams) => 
+                dispatch({ type: "openModal", modal: { id, params } }),
             closeModal: () => dispatch({ type: "closeModal" }),
             hasModal: modalStack.length > 0,
             goBack,
@@ -191,10 +189,10 @@ export function NavigationProvider<Routes extends RoutesMap, Modals extends Moda
     );
 }
 
-export function useNavigation<Routes extends RoutesMap = RoutesMap, Modals extends ModalsMap = ModalsMap>(): NavigationAPI<Routes, Modals> {
+export function useNavigation<Routes extends RoutesMap = RoutesMap>(): NavigationAPI<Routes> {
     const context = useContext(NavigationContext);
     if (!context) {
         throw new Error("useNavigation must be used within a NavigationProvider");
     }
-    return context as NavigationAPI<Routes, Modals>;
+    return context as NavigationAPI<Routes>;
 }

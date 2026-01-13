@@ -13,6 +13,8 @@ import type { ScreenComponent } from "../registry.tsx";
 import { savePersistedParameters } from "../utils/parameterPersistence.ts";
 import type { OptionSchema, OptionValues } from "../../types/command.ts";
 import { ScreenBase } from "./ScreenBase.ts";
+import type { EditorModalParams } from "../modals/EditorModal.tsx";
+import { type CliModalParams } from "../modals/CliModal.tsx";
 
 /**
  * Screen state stored in navigation params.
@@ -113,32 +115,26 @@ export class ConfigScreen extends ScreenBase {
 
             // Handle editing a field - open property editor modal
             const handleEditField = useCallback((fieldKey: string) => {
-                navigation.openModal({
-                    id: "property-editor",
-                    params: {
-                        fieldKey,
-                        currentValue: values[fieldKey],
-                        fieldConfigs: derivedFieldConfigs,
-                        onSubmit: (value: unknown) => {
-                            const nextValues = { ...values, [fieldKey]: value };
-                            navigation.replace({
-                                route: "config",
-                                params: { ...params, values: nextValues },
-                            });
-                            navigation.closeModal();
-                        },
-                        onCancel: () => navigation.closeModal(),
+                navigation.openModal<EditorModalParams>("property-editor", {
+                    fieldKey,
+                    currentValue: values[fieldKey],
+                    fieldConfigs: derivedFieldConfigs,
+                    onSubmit: (value: unknown) => {
+                        const nextValues = { ...values, [fieldKey]: value };
+                        navigation.replace({
+                            route: "config",
+                            params: { ...params, values: nextValues },
+                        });
+                        navigation.closeModal();
                     },
+                    onCancel: () => navigation.closeModal(),
                 });
             }, [navigation, values, derivedFieldConfigs, params]);
 
             // Handle opening the CLI Args modal
             const handleShowCliArgs = useCallback(() => {
                 const cli = buildCliCommand(appName, commandPath, command.options, values as OptionValues<OptionSchema>);
-                navigation.openModal({
-                    id: "cli",
-                    params: { command: cli },
-                });
+                navigation.openModal<CliModalParams>("cli", { command: cli });
             }, [appName, commandPath, command.options, values, navigation]);
 
             return (
