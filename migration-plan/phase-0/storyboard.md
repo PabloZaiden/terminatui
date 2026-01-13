@@ -151,15 +151,17 @@ This design ensures:
 
 Phase 0A refactoring is complete. TuiApp is now fully screen-agnostic:
 
-| Component | Self-Registers | Uses Context |
-|-----------|---------------|--------------|
-| `CommandSelectScreen` | ✅ | `useTuiApp`, `useNavigation`, `useBackHandler` |
-| `ConfigScreen` | ✅ | `useTuiApp`, `useNavigation`, `useExecutor` |
-| `RunningScreen` | ✅ | `useNavigation`, `useExecutor`, `useBackHandler` |
-| `ResultsScreen` | ✅ | `useNavigation` |
-| `ErrorScreen` | ✅ | `useNavigation` |
-| `EditorModal` | ✅ | - |
-| `CliModal` | ✅ | - |
-| `LogsModal` | ✅ | - |
+| Component | Registered | Uses Context |
+|-----------|------------|--------------|
+| `CommandSelectScreen` | ✅ Registry | `useTuiApp`, `useNavigation`, `useBackHandler` |
+| `ConfigScreen` | ✅ Registry | `useTuiApp`, `useNavigation`, `useExecutor` |
+| `RunningScreen` | ✅ Registry | `useNavigation`, `useExecutor`, `useBackHandler` |
+| `ResultsScreen` | ✅ Registry | `useNavigation` |
+| `ErrorScreen` | ✅ Registry | `useNavigation` |
+| `EditorModal` | ✅ Registry | - |
+| `CliModal` | ✅ Registry | - |
+| `LogsModal` | ✅ Registry | - |
+
+All screens and modals are registered centrally via `registerAllScreens()` and `registerAllModals()` in `TuiApp.tsx`.
 
 **Next Step**: Manual testing to verify all flows work correctly, then Phase 0B if needed.

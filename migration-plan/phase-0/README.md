@@ -25,13 +25,15 @@ Phase 0 contains critical architectural improvements that were implemented **bef
 ### Phase 0A: Stack-Based Navigation ✅ COMPLETE
 **Document:** [phase-0a-navigation.md](./phase-0a-navigation.md)
 
-Replaced mode-based state management with navigation stack and self-registering screens/modals.
+Replaced mode-based state management with navigation stack and registry-based screens/modals.
 
 **What Was Done:**
 - Removed 13+ state variables from TuiApp
 - Implemented navigation stack with goBack/setBackHandler
 - Created self-contained screen components (no props, context-only)
-- Implemented screen/modal registry with self-registration
+- Implemented screen/modal registry with centralized registration
+- Simplified navigation API by removing generic type maps
+- Added static IDs and exported parameter interfaces for type safety
 - TuiApp is now ~150 lines and screen-agnostic
 
 ### Phase 0B: Component-Chain Keyboard Handling ⏸️ DEFERRED

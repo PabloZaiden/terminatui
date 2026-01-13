@@ -13,33 +13,50 @@ Replace mode-based state management with a navigation stack that encapsulates sc
 
 ## Proposed Solution
 
-### 1. Typed-but-Generic Screens
+### 1. Simplified Type-Safe Navigation
 
-Keep the navigation layer generic; let the app supply the route map to get type safety without hardcoding route names into the navigation module.
+The navigation layer uses per-call generic type parameters instead of centralized type maps, making the API simpler while maintaining full type safety.
 
 ```typescript
-// App-owned map of routes → param shapes (undefined when no params)
-type Routes = {
-    'command-select': { path: string[] };
-    config: { command: AnyCommand; values: Record<string, unknown>; focus?: string };
-    running: { command: AnyCommand; values: Record<string, unknown> };
-    results: { command: AnyCommand; values: Record<string, unknown>; result: unknown };
-    error: { command: AnyCommand; values: Record<string, unknown>; error: Error };
-};
+// Each screen/modal exports its parameter interface
+export interface CommandSelectParams {
+    commandPath: string[];
+}
 
-// Reusable screen entry (params are optional when the route’s entry is undefined)
-type ScreenEntry<R extends keyof Routes = keyof Routes> = {
-    route: R;
-    params?: Routes[R];
+export interface ConfigParams {
+    command: AnyCommand;
+    commandPath: string[];
+    values: Record<string, unknown>;
+    fieldConfigs: FieldConfig[];
+}
+
+// Screen entries are typed per-call, not via a central map
+export interface ScreenEntry<TParams = unknown> {
+    route: string;
+    params?: TParams;
     meta?: { focus?: string; breadcrumb?: string[] };
-};
+}
+
+export interface ModalEntry<TParams = unknown> {
+    id: string;
+    params?: TParams;
+}
+
+// Screens/modals define static IDs
+export class CommandSelectScreen extends ScreenBase {
+    static readonly Id = "command-select";
+    getRoute(): string {
+        return CommandSelectScreen.Id;
+    }
+}
 ```
 
 **Benefits:**
-- Typed per route without embedding route names in the navigation module
-- Easy to add routes by updating the map in app code
-- Optional metadata for focus/breadcrumb without inflating params
-- Still simple: one entry type, optional params
+- No centralized type map to maintain
+- Type safety provided via per-call generic parameters
+- Each screen/modal owns its parameter interface
+- Static IDs prevent typos and enable refactoring
+- Simpler API with fewer concepts to learn
 
 ### 2. Navigation API (Screens + Modals)
 
@@ -48,20 +65,30 @@ interface NavigationAPI {
     // Screens
     current: ScreenEntry;
     stack: ScreenEntry[];
-    push: <R extends keyof Routes>(screen: ScreenEntry<R>) => void;
-    replace: <R extends keyof Routes>(screen: ScreenEntry<R>) => void;
-    reset: <R extends keyof Routes>(screen: ScreenEntry<R>) => void;
+    push: <TParams>(route: string, params?: TParams, meta?: ScreenEntry["meta"]) => void;
+    replace: <TParams>(route: string, params?: TParams, meta?: ScreenEntry["meta"]) => void;
+    reset: <TParams>(route: string, params?: TParams, meta?: ScreenEntry["meta"]) => void;
     pop: () => void;
     canGoBack: boolean;
 
     // Modals (stacked overlays allowed)
     modalStack: ModalEntry[];
     currentModal?: ModalEntry;
-    openModal: <ID extends keyof Modals>(modal: ModalEntry<ID>) => void;
+    openModal: <TParams>(id: string, params?: TParams) => void;
     closeModal: () => void;
     hasModal: boolean;
+    
+    // Back handling
+    goBack: () => void;
+    setBackHandler: (handler: BackHandler | null) => void;
 }
 ```
+
+**Key Changes from Previous Design:**
+- Methods take route/id strings directly instead of objects
+- Type safety via per-call generic parameters (`<TParams>`)
+- No generic type parameters on `NavigationAPI` itself
+- Simpler method signatures: `push(route, params)` vs `push({ route, params })`
 
 **Pop rule:** back/escape closes the top modal first; only when there are no modals does it pop the screen stack.
 
@@ -69,22 +96,19 @@ interface NavigationAPI {
 
 **Navigating from command selection to config:**
 ```typescript
-// Old way
+// Old way (mode-based)
 setMode(Mode.Config);
 setSelectedCommand(command);
 setCommandPath([...commandPath, command.name]);
 setSelectedFieldIndex(0);
 setFocusedSection(FocusedSection.Config);
 
-// New way
-push({
-    type: 'config',
+// New way (navigation stack)
+navigation.push<ConfigParams>(ConfigScreen.Id, {
     command,
-    path: [...currentPath, command.name],
+    commandPath: [...commandPath, command.name],
     values: {},
-    fieldIndex: 0,
-    focusedSection: 'config',
-    logsVisible: false,
+    fieldConfigs: schemaToFieldConfigs(command.options),
 });
 ```
 
@@ -102,15 +126,36 @@ if (mode === Mode.Running) {
 // ... 4 more conditions
 
 // New way
-pop(); // That's it!
+navigation.pop(); // That's it!
+// Or use the back handler system:
+navigation.goBack(); // Calls custom back handler if registered
 ```
 
 **Opening a modal (stacked allowed):**
 ```typescript
-openModal({ id: 'editor', params: { field: fieldName, value: currentValue } });
+// Using static IDs and type parameters
+navigation.openModal<EditorModalParams>(EditorModal.Id, {
+    fieldKey,
+    currentValue: values[fieldKey],
+    fieldConfigs,
+    onSubmit: (value) => { /* ... */ },
+    onCancel: () => navigation.closeModal(),
+});
+
 // Another modal on top (e.g., logs over editor)
-openModal({ id: 'logs', params: { source: 'app' } });
+navigation.openModal<LogsModalParams>(LogsModal.Id, { logs: logHistory });
+
 // Back/escape closes logs first, then editor, then screens
+```
+
+**Using replace instead of push:**
+```typescript
+// Replace current screen (no back to previous)
+navigation.replace<RunningParams>(RunningScreen.Id, {
+    command,
+    commandPath,
+    values,
+});
 ```
 
 ---
@@ -122,12 +167,14 @@ openModal({ id: 'logs', params: { source: 'app' } });
 **Status:** ✅ Completed
 
 **Actions:**
-- Implemented `NavigationContext` with generic `Routes` and `Modals` maps
+- Implemented `NavigationContext` without generic type parameters (simplified)
+- Navigation methods use per-call generics for type safety
 - Added `modalStack` with typed entries
 - Added `NavigationProvider` and `useNavigation()`
 - Reducer manages screen stack (never empty) and modal stack
-- Methods: push/replace/reset/pop; openModal/closeModal
+- Methods: `push/replace/reset/pop` (for screens); `openModal/closeModal` (for modals)
 - Pop/back rule: closes top modal first; otherwise pops screen while keeping at least one
+- Back handler system via `setBackHandler()` for custom back behavior
 
 **Validation Checkpoint:**
 ```
@@ -140,29 +187,32 @@ openModal({ id: 'logs', params: { source: 'app' } });
 
 **Status:** ✅ Completed
 
-**Actions Planned:**
-- Create `src/tui/screens/` directory
-- Create `CommandSelectScreen.tsx`
-  - Extract logic from current CommandSelector usage
-  - Accept `ScreenEntry` props and navigation API
+**Actions Completed:**
+- Created `src/tui/screens/` directory with screen base class
+- Created `CommandSelectScreen.tsx`
+  - Gets data from context (no props)
+  - Static `Id` constant for type-safe references
+  - Exports `CommandSelectParams` interface
   - Handle command selection → push config screen
-- Create `ConfigScreen.tsx`
-  - Extract logic from current Config mode rendering
+- Created `ConfigScreen.tsx`
+  - Gets data from context via `useNavigation().current.params`
+  - Exports `ConfigParams` interface
   - Manage field selection/focus via params/meta
   - Handle run → push running screen
   - Handle CLI button → open `cli` modal
-- Create `RunningScreen.tsx`
-  - Show running state (logs now via modal)
+- Created `RunningScreen.tsx`
+  - Show running state (logs accessible via modal)
   - Handle completion → replace with results/error screen
-- Create `ResultsScreen.tsx`
-  - Show results panel; logs come from modal
+- Created `ResultsScreen.tsx`
+  - Show results panel; logs accessible from modal
   - Handle focus cycling via meta/params
-- Create `ErrorScreen.tsx`
-  - Show error panel; logs come from modal
-- Modals use modal stack, not screens
-  - `editor` modal overlay (save/cancel)
-  - `cli` modal overlay
-  - `logs` modal overlay
+- Created `ErrorScreen.tsx`
+  - Show error panel; logs accessible from modal
+- Created modal wrappers extending `ModalBase`:
+  - `EditorModal` - Property editor overlay (exports `EditorModalParams`)
+  - `CliModal` - CLI arguments display (exports `CliModalParams`)
+  - `LogsModal` - Log viewer (exports `LogsModalParams`)
+  - Each has static `Id` constant for type-safe references
 
 **Validation Checkpoint:**
 ```
@@ -176,13 +226,14 @@ openModal({ id: 'logs', params: { source: 'app' } });
 
 **Status:** ✅ Completed
 
-**Actions Planned:**
-- Wrap `TuiAppContent` with `<NavigationProvider>` using app `Routes`/`Modals`
-- Remove `Mode` and UI booleans (`logsVisible`, `cliModalVisible`, etc.)
-- Move command/path/selection/focus state into screen params/meta
-- Replace `renderContent()` switch with screen stack renderer
+**Actions Completed:**
+- Wrapped `TuiAppContent` with `<NavigationProvider>` (no generic parameters needed)
+- Removed `Mode` enum and UI booleans (`logsVisible`, `cliModalVisible`, etc.)
+- Moved command/path/selection/focus state into screen params/meta
+- Replaced `renderContent()` switch with registry-based renderer
 - Back handling: close modal if present, else `pop()` (stack never empty)
 - Keyboard handlers drive `push/replace/pop` and `openModal/closeModal`
+- Created centralized registration via `registerAllScreens()` and `registerAllModals()`
 
 **Validation Checkpoint:**
 ```
@@ -197,11 +248,15 @@ openModal({ id: 'logs', params: { source: 'app' } });
 ---
 
 ## Notes
-- Navigation module no longer exports legacy `Screen` union; tests now validate generic API and typed entries.
-- Modal overlays share `ModalBase` for consistent styling (used by editor/cli/logs).
-- All screens and modals are now self-contained and self-registering.
-- TuiApp knows nothing about specific screens - uses registry lookups only.
-- Build passes and all 228 tests pass.
+- Navigation module no longer uses legacy `Screen` union or centralized type maps
+- Navigation API simplified: no generic parameters, per-call type safety instead
+- Modal overlays share `ModalBase` for consistent styling (used by editor/cli/logs)
+- All screens and modals are self-contained (no props, context-only)
+- Screens/modals registered centrally via `registerAllScreens()`/`registerAllModals()` in `TuiApp`
+- TuiApp knows nothing about specific screens - uses registry lookups only
+- Static `Id` constants on screens/modals enable type-safe string references
+- Parameter interfaces exported from each screen/modal for type safety
+- Build passes and all tests pass
 
 ## Architecture Achieved
 
@@ -212,12 +267,39 @@ TuiApp now only handles:
 3. Rendering modals from registry
 4. Global shortcuts: Esc→goBack, Ctrl+Y→copy, Ctrl+L→logs
 
-### Self-Registering Components
+### Registry-Based Components
 Each screen/modal:
 - Takes NO props (gets everything from context)
 - Uses hooks: `useTuiApp()`, `useNavigation()`, `useExecutor()`
 - Handles its own transitions
-- Self-registers at module load via `registerScreen()` / `registerModal()`
+- Defines a static `Id` constant for type-safe references
+- Exports its parameter interface for type safety
+- Registered centrally in `TuiApp` via registry functions
+
+### Registration Flow
+```typescript
+// 1. Screen/modal defines its structure
+export class ConfigScreen extends ScreenBase {
+    static readonly Id = "config";
+    getRoute(): string { return ConfigScreen.Id; }
+    override component(): ScreenComponent { /* ... */ }
+}
+export interface ConfigParams { /* ... */ }
+
+// 2. Registry exports centralized registration
+export function registerAllScreens(): void {
+    registerScreen(new CommandSelectScreen());
+    registerScreen(new ConfigScreen());
+    // ... other screens
+}
+
+// 3. TuiApp calls registration at module load
+await registerAllScreens();
+await registerAllModals();
+
+// 4. Runtime: TuiApp uses registry to render
+const ScreenComponent = getScreen(navigation.current.route);
+```
 
 ### New Files Created
 | File | Purpose |
@@ -232,14 +314,41 @@ Each screen/modal:
 
 ### Key Type Signatures
 ```typescript
-// Screen component - no props
+// Screen component - no props, gets data from context
 type ScreenComponent = () => ReactNode;
 
-// Modal component - receives params and onClose
-type ModalComponent<TParams> = (props: { params: TParams; onClose: () => void }) => ReactNode;
+// Modal component - receives typed params and onClose callback
+type ModalComponent<TParams> = (props: { 
+    params: TParams; 
+    onClose: () => void;
+}) => ReactNode;
 
-// Back handler - return true if handled
+// Back handler - return true if handled, false to use default
 type BackHandler = () => boolean;
+
+// Screen/modal entries - generic per usage
+interface ScreenEntry<TParams = unknown> {
+    route: string;
+    params?: TParams;
+    meta?: { focus?: string; breadcrumb?: string[] };
+}
+
+interface ModalEntry<TParams = unknown> {
+    id: string;
+    params?: TParams;
+}
+
+// Example screen with static ID and exported params
+export class ConfigScreen extends ScreenBase {
+    static readonly Id = "config";
+    // ...
+}
+export interface ConfigParams {
+    command: AnyCommand;
+    commandPath: string[];
+    values: Record<string, unknown>;
+    fieldConfigs: FieldConfig[];
+}
 ```
 
 ## Next Steps

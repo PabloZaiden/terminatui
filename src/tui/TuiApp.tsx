@@ -15,6 +15,8 @@ import { getScreen, getModal } from "./registry.tsx";
 
 // Register screens and modals
 import { registerAllScreens, registerAllModals } from "./registry.tsx";
+import type { LogsModalParams } from "./modals/LogsModal.tsx";
+import { CommandSelectScreen, type CommandSelectParams } from "./screens/CommandSelectScreen.tsx";
 
 // Register all screens and modals at module load
 await registerAllScreens();
@@ -40,8 +42,8 @@ export function TuiApp({ name, displayName, version, commands, onExit }: TuiAppP
                     onExit={onExit}
                 >
                     <ExecutorProvider>
-                        <NavigationProvider
-                            initialScreen={{ route: "command-select", params: { commandPath: [] } }}
+                        <NavigationProvider<CommandSelectParams>
+                            initialScreen={{ route: CommandSelectScreen.Id, params: { commandPath: [] } }}
                             onExit={onExit}
                         >
                             <TuiAppContent />
@@ -101,10 +103,7 @@ function TuiAppContent() {
             if (isLogsOpen) {
                 navigation.closeModal();
             } else {
-                navigation.openModal({
-                    id: "logs",
-                    params: { logs: logHistory },
-                });
+                navigation.openModal<LogsModalParams>("logs", { logs: logHistory });
             }
             return true;
         }

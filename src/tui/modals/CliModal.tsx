@@ -2,7 +2,7 @@ import { CliModal as CliModalComponent } from "../components/CliModal.tsx";
 import type { ModalComponent } from "../registry.tsx";
 import { ModalBase } from "./ModalBase.ts";
 
-interface CliModalParams {
+export interface CliModalParams {
     command: string;
 }
 
@@ -11,8 +11,10 @@ interface CliModalParams {
  * Shows the CLI equivalent of the current command configuration.
  */
 export class CliModal extends ModalBase<CliModalParams> {
+    static readonly Id = "cli";
+
     getId(): string {
-        return "cli";
+        return CliModal.Id;
     }
 
     override component(): ModalComponent<CliModalParams> {

@@ -3,7 +3,7 @@ import type { LogEvent } from "../../core/logger.ts";
 import { ModalBase } from "./ModalBase.ts";
 import type { ModalComponent } from "../registry.tsx";
 
-interface LogsModalParams {
+export interface LogsModalParams {
     logs: LogEvent[];
 }
 
@@ -12,8 +12,10 @@ interface LogsModalParams {
  * Displays application log history with color-coded levels.
  */
 export class LogsModal extends ModalBase<LogsModalParams> {
+    static readonly Id = "logs";
+    
     getId(): string {
-        return "logs";
+        return LogsModal.Id;
     }
 
     override component(): ModalComponent<LogsModalParams> {

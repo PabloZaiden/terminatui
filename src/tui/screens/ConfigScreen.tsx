@@ -13,11 +13,16 @@ import type { ScreenComponent } from "../registry.tsx";
 import { savePersistedParameters } from "../utils/parameterPersistence.ts";
 import type { OptionSchema, OptionValues } from "../../types/command.ts";
 import { ScreenBase } from "./ScreenBase.ts";
+import type { EditorModalParams } from "../modals/EditorModal.tsx";
+import { type CliModalParams } from "../modals/CliModal.tsx";
+import { RunningScreen, type RunningParams } from "./RunningScreen.tsx";
+import { type ErrorParams, ErrorScreen } from "./ErrorScreen.tsx";
+import { type ResultsParams, ResultsScreen } from "./ResultsScreen.tsx";
 
 /**
  * Screen state stored in navigation params.
  */
-interface ConfigParams {
+export interface ConfigParams {
     command: AnyCommand;
     commandPath: string[];
     values: Record<string, unknown>;
@@ -29,8 +34,9 @@ interface ConfigParams {
  * Fully self-contained - gets all data from context and handles its own transitions.
  */
 export class ConfigScreen extends ScreenBase {
+    static readonly Id = "config";
     getRoute(): string {
-        return "config";
+        return ConfigScreen.Id;
     }
 
     override component(): ScreenComponent {
@@ -68,13 +74,10 @@ export class ConfigScreen extends ScreenBase {
                 savePersistedParameters(appName, command.name, values);
                 
                 // Push to running screen
-                navigation.push({
-                    route: "running",
-                    params: {
-                        command,
-                        commandPath,
-                        values,
-                    },
+                navigation.push<RunningParams>(RunningScreen.Id, {
+                    command,
+                    commandPath,
+                    values,
                 });
                 
                 // Execute the command
@@ -88,57 +91,42 @@ export class ConfigScreen extends ScreenBase {
                 
                 if (outcome.success) {
                     // Replace running with results
-                    navigation.replace({
-                        route: "results",
-                        params: {
-                            command,
-                            commandPath,
-                            values,
-                            result: outcome.result ?? null,
-                        },
+                    navigation.replace<ResultsParams>(ResultsScreen.Id, {
+                        command,
+                        commandPath,
+                        values,
+                        result: outcome.result ?? null,
                     });
                 } else {
                     // Replace running with error
-                    navigation.replace({
-                        route: "error",
-                        params: {
-                            command,
-                            commandPath,
-                            values,
-                            error: outcome.error ?? new Error("Unknown error"),
-                        },
+                    navigation.replace<ErrorParams>(ErrorScreen.Id, {
+                        command,
+                        commandPath,
+                        values,
+                        error: outcome.error ?? new Error("Unknown error"),
                     });
                 }
             }, [appName, command, commandPath, values, navigation, executor]);
 
             // Handle editing a field - open property editor modal
             const handleEditField = useCallback((fieldKey: string) => {
-                navigation.openModal({
-                    id: "property-editor",
-                    params: {
-                        fieldKey,
-                        currentValue: values[fieldKey],
-                        fieldConfigs: derivedFieldConfigs,
-                        onSubmit: (value: unknown) => {
-                            const nextValues = { ...values, [fieldKey]: value };
-                            navigation.replace({
-                                route: "config",
-                                params: { ...params, values: nextValues },
-                            });
-                            navigation.closeModal();
-                        },
-                        onCancel: () => navigation.closeModal(),
+                navigation.openModal<EditorModalParams>("property-editor", {
+                    fieldKey,
+                    currentValue: values[fieldKey],
+                    fieldConfigs: derivedFieldConfigs,
+                    onSubmit: (value: unknown) => {
+                        const nextValues = { ...values, [fieldKey]: value };
+                        navigation.replace<ConfigParams>(ConfigScreen.Id, { ...params, values: nextValues });
+                        navigation.closeModal();
                     },
+                    onCancel: () => navigation.closeModal(),
                 });
             }, [navigation, values, derivedFieldConfigs, params]);
 
             // Handle opening the CLI Args modal
             const handleShowCliArgs = useCallback(() => {
                 const cli = buildCliCommand(appName, commandPath, command.options, values as OptionValues<OptionSchema>);
-                navigation.openModal({
-                    id: "cli",
-                    params: { command: cli },
-                });
+                navigation.openModal<CliModalParams>("cli", { command: cli });
             }, [appName, commandPath, command.options, values, navigation]);
 
             return (
