@@ -119,7 +119,7 @@ Each component abstracts rendering details so adapters can implement them differ
 - [x] Requirements documented
 - [x] Architecture designed
 - [x] Tasks broken down
-- [x] Phase 0A complete: Screen-agnostic TuiApp with self-registering screens/modals
+- [x] Phase 0A complete: Screen-agnostic TuiApp with registry-based screens/modals and simplified navigation API
 
 **Next Steps:**
 1. **Manual testing** to verify all flows work correctly
