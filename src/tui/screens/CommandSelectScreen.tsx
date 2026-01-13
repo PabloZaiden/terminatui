@@ -9,11 +9,10 @@ interface CommandSelectScreenProps {
     entry: ScreenEntry<Routes, "command-select">;
     onSelectCommand: (cmd: AnyCommand, path: string[], selectedIndex: number) => void;
     onChangeSelection: (index: number) => void;
-    onBack: () => void;
     commands?: AnyCommand[];
 }
 
-export function CommandSelectScreen({ entry, onSelectCommand, onChangeSelection, onBack, commands: providedCommands }: CommandSelectScreenProps) {
+export function CommandSelectScreen({ entry, onSelectCommand, onChangeSelection, commands: providedCommands }: CommandSelectScreenProps) {
     const { commandPath, selectedIndex = 0 } = entry.params ?? { commandPath: [], selectedIndex: 0 };
     const serviceCommands = AppContext.current.getService<AnyCommand[]>("commands") ?? [];
     const commands = providedCommands ?? serviceCommands;
@@ -76,7 +75,6 @@ export function CommandSelectScreen({ entry, onSelectCommand, onChangeSelection,
             selectedIndex={selectedIndex}
             onSelectionChange={handleSelectionChange}
             onSelect={handleSelect}
-            onExit={onBack}
             breadcrumb={breadcrumb}
         />
     );

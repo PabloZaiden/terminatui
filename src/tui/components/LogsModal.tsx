@@ -1,4 +1,7 @@
+import { useCallback } from "react";
 import { Theme } from "../theme.ts";
+import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
+import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 import { LogColors } from "./logColors.ts";
 import type { LogEvent } from "../../core/logger.ts";
 import { ModalBase } from "./ModalBase.tsx";
@@ -9,7 +12,7 @@ interface LogsModalProps {
     /** Whether the panel is visible */
     visible: boolean;
     /** Callback when the modal is closed */
-    onClose?: () => void;
+    onClose: () => void;
 }
 
 /**
@@ -18,8 +21,29 @@ interface LogsModalProps {
 export function LogsModal({
     logs,
     visible,
-    onClose: _onClose,
+    onClose,
 }: LogsModalProps) {
+    // Handle Enter to close (Esc and Ctrl+L are handled globally)
+    useActiveKeyHandler(
+        (event) => {
+            if (event.key.name === "return" || event.key.name === "enter") {
+                onClose();
+                return true;
+            }
+            return false;
+        },
+        { enabled: visible }
+    );
+
+    // Register clipboard provider - logs content takes precedence when modal is open
+    useClipboardProvider(
+        useCallback(() => ({
+            content: logs.map((l) => l.message).join("\n"),
+            label: "Logs",
+        }), [logs]),
+        visible
+    );
+
     if (!visible) {
         return null;
     }

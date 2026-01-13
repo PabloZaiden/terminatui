@@ -1,5 +1,7 @@
 import { Theme } from "../theme.ts";
+import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { ModalBase } from "./ModalBase.tsx";
+import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 
 interface CliModalProps {
     /** CLI command to display */
@@ -7,7 +9,7 @@ interface CliModalProps {
     /** Whether the modal is visible */
     visible: boolean;
     /** Called when the modal should close */
-    onClose?: () => void;
+    onClose: () => void;
 }
 
 /**
@@ -16,8 +18,26 @@ interface CliModalProps {
 export function CliModal({
     command,
     visible,
-    onClose: _onClose,
+    onClose,
 }: CliModalProps) {
+    // Register clipboard provider for CLI command
+    useClipboardProvider(
+        () => ({ content: command, label: "CLI" }),
+        visible
+    );
+
+    // Handle Enter to close (Esc is handled globally)
+    useActiveKeyHandler(
+        (event) => {
+            if (event.key.name === "return" || event.key.name === "enter") {
+                onClose();
+                return true;
+            }
+            return false;
+        },
+        { enabled: visible }
+    );
+
     if (!visible) {
         return null;
     }

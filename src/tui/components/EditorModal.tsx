@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import type { SelectOption } from "@opentui/core";
 import { Theme } from "../theme.ts";
-import { useKeyboardHandler } from "../hooks/useKeyboardHandler.ts";
 import type { FieldConfig } from "./types.ts";
-import { KeyboardPriority } from "../context/KeyboardContext.tsx";
 import { ModalBase } from "./ModalBase.tsx";
 
 interface EditorModalProps {
@@ -24,13 +22,15 @@ interface EditorModalProps {
 /**
  * Modal for editing field values.
  * Supports text, number, enum, and boolean types.
+ * 
+ * Note: This modal uses native OpenTUI input/select components that handle
+ * keyboard events internally. Esc is handled by the global handler.
  */
 export function EditorModal({
     fieldKey,
     currentValue,
     visible,
     onSubmit,
-    onCancel,
     fieldConfigs,
 }: EditorModalProps) {
     const [inputValue, setInputValue] = useState("");
@@ -50,16 +50,8 @@ export function EditorModal({
         }
     }, [fieldKey, currentValue, visible, fieldConfigs]);
 
-    // Modal keyboard handler - blocks all keys from bubbling out of the modal
-    useKeyboardHandler(
-        (event) => {
-            if (event.key.name === "escape") {
-                onCancel();
-            }
-        },
-        KeyboardPriority.Modal,
-        { enabled: visible, modal: true }
-    );
+    // Note: No keyboard handler needed here - the input/select components
+    // handle Enter for submission, and Esc is handled by the global handler
 
     if (!visible || !fieldKey) {
         return null;

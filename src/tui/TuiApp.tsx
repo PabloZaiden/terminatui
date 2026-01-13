@@ -3,9 +3,9 @@ import type { AnyCommand, CommandResult } from "../core/command.ts";
 import { AppContext } from "../core/context.ts";
 import type { OptionDef, OptionSchema, OptionValues } from "../types/command.ts";
 import { useClipboard } from "./hooks/useClipboard.ts";
-import { KeyboardPriority, KeyboardProvider } from "./context/KeyboardContext.tsx";
+import { KeyboardProvider } from "./context/KeyboardContext.tsx";
+import { useGlobalKeyHandler } from "./hooks/useGlobalKeyHandler.ts";
 import { useCommandExecutor } from "./hooks/useCommandExecutor.ts";
-import { useKeyboardHandler } from "./hooks/useKeyboardHandler.ts";
 import { Header } from "./components/Header.tsx";
 import { StatusBar } from "./components/StatusBar.tsx";
 import { EditorModal } from "./components/EditorModal.tsx";
@@ -13,6 +13,7 @@ import { CliModal } from "./components/CliModal.tsx";
 import { LogsModal } from "./components/LogsModal.tsx";
 import type { LogEvent } from "../core/logger.ts";
 import { NavigationProvider, useNavigation } from "./context/NavigationContext.tsx";
+import { ClipboardProviderComponent, useClipboardContext } from "./context/ClipboardContext.tsx";
 import type { ModalEntry, ScreenEntry } from "./context/NavigationContext.tsx";
 import type { Modals, Routes } from "./routes.ts";
 import { CommandSelectScreen } from "./screens/CommandSelectScreen.tsx";
@@ -22,7 +23,6 @@ import { ResultsScreen } from "./screens/ResultsScreen.tsx";
 import { ErrorScreen } from "./screens/ErrorScreen.tsx";
 import { loadPersistedParameters, savePersistedParameters } from "./utils/parameterPersistence.ts";
 import { schemaToFieldConfigs } from "./utils/schemaToFields.ts";
-import { buildCliCommand } from "./utils/buildCliCommand.ts";
 
 interface TuiAppProps {
     name: string;
@@ -35,11 +35,13 @@ interface TuiAppProps {
 export function TuiApp(props: TuiAppProps) {
     return (
         <KeyboardProvider>
-            <NavigationProvider<Routes, Modals>
-                initialScreen={{ route: "command-select", params: { commandPath: [], selectedIndex: 0 } }}
-            >
-                <TuiAppContent {...props} />
-            </NavigationProvider>
+            <ClipboardProviderComponent>
+                <NavigationProvider<Routes, Modals>
+                    initialScreen={{ route: "command-select", params: { commandPath: [], selectedIndex: 0 } }}
+                >
+                    <TuiAppContent {...props} />
+                </NavigationProvider>
+            </ClipboardProviderComponent>
         </KeyboardProvider>
     );
 }
@@ -48,6 +50,7 @@ function TuiAppContent({ name, displayName, version, commands, onExit }: TuiAppP
     const navigation = useNavigation<Routes, Modals>();
     const { current, modalStack } = navigation;
     const [logHistory, setLogHistory] = useState<LogEvent[]>([]);
+    const clipboard = useClipboardContext();
 
     useEffect(() => {
         AppContext.current.setService("commands", commands);
@@ -73,7 +76,7 @@ function TuiAppContent({ name, displayName, version, commands, onExit }: TuiAppP
         return await cmd.execute(configOrValues as OptionValues<OptionSchema>, { signal });
     }, []);
 
-    const { isExecuting, result, error, execute, cancel, reset: resetExecutor } = useCommandExecutor<CommandResult>(
+    const { isExecuting, execute, cancel, reset: resetExecutor } = useCommandExecutor<CommandResult>(
         (cmd: unknown, values: unknown, signal: unknown) =>
             executeCommand(cmd as AnyCommand, values as Record<string, unknown>, signal as AbortSignal)
     );
@@ -104,93 +107,44 @@ function TuiAppContent({ name, displayName, version, commands, onExit }: TuiAppP
         onExit();
     }, [navigation, current, isExecuting, cancel, resetExecutor, onExit]);
 
-    useKeyboardHandler(
-        (event) => {
-            const { key } = event;
+    // Global keyboard handler - processes app-wide shortcuts first
+    useGlobalKeyHandler((event) => {
+        const { key } = event;
 
-            if (key.name === "escape") {
-                handleBack();
-                event.stopPropagation();
-                return;
-            }
-
-            if (key.name === "y") {
-                const content = getClipboardContent();
-                if (content) {
-                    copyWithMessage(content.content, content.label);
-                }
-                event.stopPropagation();
-                return;
-            }
-
-            if (key.name === "l") {
-                // Toggle logs modal, feed live logHistory so it updates while open
-                const isLogsOpen = modalStack.length > 0 && modalStack[modalStack.length - 1]?.id === "logs";
-                if (isLogsOpen) {
-                    navigation.closeModal();
-                } else {
-                    navigation.openModal({
-                        id: "logs",
-                        params: {
-                            logs: logHistory,
-                            onClose: () => navigation.closeModal(),
-                        },
-                    });
-                }
-                event.stopPropagation();
-                return;
-            }
-
-            if ((key.name === "return" || key.name === "enter") && modalStack.length > 0) {
-                const topModal = modalStack[modalStack.length - 1];
-                if (topModal && (isModal(topModal, "logs") || isModal(topModal, "cli-arguments"))) {
-                    navigation.closeModal();
-                    event.stopPropagation();
-                    return;
-                }
-            }
-
-            if (key.name === "c" && isRoute(current, "config") && current.params) {
-                const { command, commandPath, values } = current.params;
-                const cli = buildCliCommand(name, commandPath, command.options, values as OptionValues<OptionSchema>);
-                navigation.openModal({ id: "cli-arguments", params: { command: cli, onClose: () => navigation.closeModal() } });
-                event.stopPropagation();
-                return;
-            }
-        },
-        KeyboardPriority.Global,
-        { enabled: true }
-    );
-
-    const getClipboardContent = useCallback((): { content: string; label: string } | null => {
-        const modal = modalStack[modalStack.length - 1];
-        if (modal && isModal(modal, "logs")) {
-            return { content: logHistory.map((l) => l.message).join("\n"), label: "Logs" };
+        // Esc - back/close
+        if (key.name === "escape") {
+            handleBack();
+            return true;
         }
 
-        if (modal && isModal(modal, "cli-arguments") && modal.params) {
-            return { content: modal.params.command, label: "CLI" };
-        }
-
-        if (isRoute(current, "results") && current.params && result) {
-            const { command } = current.params;
-            if (command.getClipboardContent) {
-                const custom = command.getClipboardContent(result);
-                if (custom) return { content: custom, label: "Results" };
+        // Ctrl+Y - copy
+        if (key.ctrl && key.name === "y") {
+            const content = clipboard.getContent();
+            if (content) {
+                copyWithMessage(content.content, content.label);
             }
-            return { content: JSON.stringify(result, null, 2), label: "Results" };
+            return true;
         }
 
-        if (isRoute(current, "error") && current.params && error) {
-            return { content: error.message, label: "Error" };
+        // Ctrl+L - toggle logs modal
+        if (key.ctrl && key.name === "l") {
+            const isLogsOpen = modalStack.length > 0 && modalStack[modalStack.length - 1]?.id === "logs";
+            if (isLogsOpen) {
+                navigation.closeModal();
+            } else {
+                navigation.openModal({
+                    id: "logs",
+                    params: {
+                        logs: logHistory,
+                        onClose: () => navigation.closeModal(),
+                    },
+                });
+            }
+            return true;
         }
 
-        if (isRoute(current, "config") && current.params) {
-            return { content: JSON.stringify(current.params.values ?? {}, null, 2), label: "Config" };
-        }
-
-        return null;
-    }, [modalStack, logHistory, current, result, error]);
+        return false; // Let active handler process other keys
+    });
 
     const renderScreen = () => {
         switch (current.route) {
@@ -230,7 +184,6 @@ function TuiAppContent({ name, displayName, version, commands, onExit }: TuiAppP
                                 params: { commandPath: params.commandPath, selectedIndex: index },
                             });
                         }}
-                        onBack={handleBack}
                     />
 
                 );
@@ -244,6 +197,7 @@ function TuiAppContent({ name, displayName, version, commands, onExit }: TuiAppP
                     <ConfigScreen
                         entry={entry}
                         navigation={navigation}
+                        appName={name}
                         onRun={async (values) => {
                             savePersistedParameters(name, params.command.name, values);
                             const runParams: Routes["running"] = {
@@ -335,7 +289,7 @@ function TuiAppContent({ name, displayName, version, commands, onExit }: TuiAppP
             <StatusBar
                 status={lastAction ?? (isExecuting ? "Executing..." : "Ready")}
                 isRunning={isExecuting}
-                shortcuts="Esc Back • Y Copy • L Logs • C CLI arguments"
+                shortcuts="Esc Back • ^Y Copy • ^L Logs"
             />
 
             {modalStack.map((modal, idx) => {

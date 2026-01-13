@@ -4,15 +4,39 @@
 
 **Scope**: Screens (command-select at any depth, config, running, results, error) and overlays (property editor modal, CLI modal, logs modal). Global shortcuts and back behavior are included.
 
+## Keyboard Architecture
+
+The keyboard system uses a **single-active-handler model** to prevent key conflicts:
+
+1. **Global handler** (in TuiApp) processes app-wide shortcuts FIRST:
+   - `Esc`: back/close modal
+   - `Ctrl+Y`: copy from active view
+   - `Ctrl+L`: toggle logs modal
+   - `Ctrl+A`: show CLI command (on config screen only)
+
+2. **Active handler** (topmost screen/modal) gets remaining keys:
+   - Only ONE handler is active at a time
+   - When a modal opens, it becomes the active handler
+   - When it closes, the previous handler is restored
+   - Screens handle navigation keys (arrows, Enter)
+
+3. **Key hooks**:
+   - `useGlobalKeyHandler`: Set the global handler (TuiApp only)
+   - `useActiveKeyHandler`: Register as the active handler (screens/modals)
+
+This design ensures:
+- No key conflicts between screens and modals
+- Ctrl modifiers for global shortcuts avoid conflicts with typing
+- Clear ownership of which component handles each key
+
 ## Global Rules
 
 - **Navigation stacks**: screen stack and modal stack; back/escape closes top modal first, otherwise pops screen stack; if at root command-select with empty path, exit.
-- **Global shortcuts**:
+- **Global shortcuts** (use Ctrl to avoid conflicts with typing):
   - `Esc`: back (modal-first, then screen pop, exit at root).
-  - `Y`: copy from active view (top modal if present; otherwise current screen). Active view decides what to provide; logs use live `logHistory`.
-  - `L`: toggle logs modal (available anywhere; shows live logHistory while open).
-- **Screen-owned shortcuts/actions**:
-  - Config owns `C` to open CLI modal; other screen-specific shortcuts live in their screens (only logs toggle stays global).
+  - `Ctrl+Y`: copy from active view (top modal if present; otherwise current screen). Active view decides what to provide; logs use live `logHistory`.
+  - `Ctrl+L`: toggle logs modal (available anywhere; shows live logHistory while open).
+   - `Ctrl+A`: open CLI modal (handled by ConfigScreen, not global).
 - **Active view data** (used by global copy/status):
   - Modals: logs (logHistory), CLI (command string provided by modal), property editor (no copy content).
   - Screens: results (command-provided clipboard content), error (message), config (values JSON), others: none.
@@ -24,14 +48,16 @@
 - **On select subcommand with runnable descendants**: push next command-select with extended path.
 - **On select runnable command**: push config screen with command, path, initial values, field configs.
 - **On back**: pop to previous command-select path; at root with empty path → exit.
-- **Modals**: logs (`L`) always available; property editor/CLI not used here.
+- **Modals**: logs (`Ctrl+L`) always available; property editor/CLI not used here.
+- **Keys handled**: ↑↓ navigation, Enter to select
 
 ### Config
 - **On edit field**: open property editor modal with field key/value/configs; submit updates values and replaces config entry; cancel closes.
 - **On run/action**: push running screen with command, path, values; executor drives results/error replacement.
-- **On `C` (screen-owned)**: open CLI modal with built command string.
+- **On `Ctrl+A`**: open CLI modal with built command string.
 - **On back**: pop to previous screen (typically command-select).
 - **Modals available**: property editor, CLI, logs.
+- **Keys handled**: ↑↓ navigation, Enter to edit/run
 
 ### Running
 - **On success**: replace with results screen (includes command, path, values, result).
@@ -53,18 +79,21 @@
 
 ### Property Editor Modal
 - **Open from**: config screen field edit.
-- **Close/submit**: submit updates value, replaces config params, closes; cancel closes.
+- **Close/submit**: submit updates value, replaces config params, closes; Esc closes (handled globally).
 - **Clipboard**: none.
+- **Keys handled**: input/select components handle their own keys internally
 
 ### CLI Modal
-- **Open from**: config screen (`C` shortcut).
-- **Close**: enter/esc.
-- **Clipboard**: command string (via global `Y`).
+- **Open from**: `Ctrl+A` on config screen.
+- **Close**: Enter or Esc.
+- **Clipboard**: command string (via global `Ctrl+Y`).
+- **Keys handled**: Enter to close
 
 ### Logs Modal
-- **Open/toggle from**: `L` anywhere (modal stack on top).
-- **Close**: `L`, enter, esc.
-- **Clipboard**: live `logHistory` via global `Y`.
+- **Open/toggle from**: `Ctrl+L` anywhere (modal stack on top).
+- **Close**: `Ctrl+L`, Enter, Esc.
+- **Clipboard**: live `logHistory` via global `Ctrl+Y`.
+- **Keys handled**: Enter to close
 
 ## Global Copy Resolution Order
 1. Top modal (logs → live logHistory; CLI → command string from modal; property editor → none).
@@ -80,13 +109,32 @@
 
 ## Intended Refactor Goals (guidance for upcoming work)
 - TuiApp becomes screen-agnostic: screens/modals declare their transitions and data providers (e.g., clipboard content) instead of hardcoded `switch`/`if` chains.
-- Global handler remains only for truly global concerns (back, logs toggle, global copy); screen-specific shortcuts (e.g., `C` in config) move into their screen.
+- Global handler remains only for truly global concerns (back, logs toggle, global copy, CLI modal); screen-specific navigation lives in screens.
 - Navigation actions (push/replace/pop, open/close modal) are invoked by screens/modals based on their own logic, not centralized branching in TuiApp.
 
 ## Refactor Implementation Checklist (based on storyboard)
-1) Define contracts: screen/modal interfaces for transitions and data (clipboard/status), plus a registry to map routes/modal IDs to components/providers.
-2) Clipboard/data providers: replace `if`/`switch` with providers per screen/modal; results use command-provided content; logs use live logHistory; CLI modal provides its command string.
-3) Move screen logic out of TuiApp: command-select handles selection/back; config owns `C`/run/edit; running owns cancel/back; results/error own back and copy providers; modals handle their own submit/close.
-4) Keep TuiApp global-only: back/escape (modal-first), logs toggle, global copy dispatch, status bar wiring, executor plumbing; rendering via registry lookups instead of hardcoded switches.
-5) Navigation wiring: screens/modals invoke navigation actions directly (push/replace/pop/openModal/closeModal) without TuiApp branching on route.
-6) Validation: exercise all flows (select→config→run→results/error; back paths; logs toggle anywhere; CLI modal from config; property editor submit/cancel; copy in screens/modals) then `bun run build` and `bun run test`.
+1) ✅ Define contracts: screen/modal interfaces for transitions and data (clipboard/status), plus a registry to map routes/modal IDs to components/providers.
+2) ✅ Clipboard/data providers: replace `if`/`switch` with providers per screen/modal; results use command-provided content; logs use live logHistory; CLI modal provides its command string.
+   - ✅ Created ClipboardContext with register/getContent API
+   - ✅ Created useClipboardProvider hook for screens/modals
+   - ✅ ConfigScreen provides config values JSON
+   - ✅ ResultsScreen provides command.getClipboardContent or JSON result
+   - ✅ ErrorScreen provides error.message
+   - ✅ LogsModal provides logs content (enabled only when visible)
+   - ✅ CliModal provides CLI command string
+   - ✅ TuiApp uses ClipboardContext instead of getClipboardContent if-chains
+3) ✅ Keyboard architecture refactored to single-active-handler model:
+   - ✅ Rewrote KeyboardContext for global + active handler model
+   - ✅ Created useGlobalKeyHandler for app-wide shortcuts
+   - ✅ Created useActiveKeyHandler for screen/modal key handling
+   - ✅ Global shortcuts use Ctrl modifiers (Ctrl+Y, Ctrl+L, Ctrl+A) to avoid typing conflicts
+   - ✅ Only ONE handler active at a time - no priority conflicts
+   - ✅ Removed old priority-based useKeyboardHandler
+4) ⬜ Keep TuiApp global-only: back/escape (modal-first), logs toggle, global copy dispatch, status bar wiring, executor plumbing; rendering via registry lookups instead of hardcoded switches.
+   - ✅ Global handler handles: Esc (back), Ctrl+Y (copy), Ctrl+L (logs toggle)
+   - ✅ Screen-specific: Ctrl+A (CLI modal) handled by ConfigScreen
+   - ✅ getClipboardContent if-chains replaced with ClipboardContext provider pattern
+   - ⬜ renderScreen switch still present (to be replaced with registry)
+   - ⬜ Modal rendering if-chains still present (to be replaced with registry)
+5) ⬜ Navigation wiring: screens/modals invoke navigation actions directly (push/replace/pop/openModal/closeModal) without TuiApp branching on route.
+6) ⬜ Validation: exercise all flows (select→config→run→results/error; back paths; logs toggle anywhere; CLI modal from config; property editor submit/cancel; copy in screens/modals) then `bun run build` and `bun run test`.
