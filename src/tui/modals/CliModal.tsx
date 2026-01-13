@@ -1,10 +1,6 @@
-import { CliModal as CliModalComponent } from "../components/CliModal.tsx";
+import { CliModal as CliModalComponent, type CliModalParams } from "../components/CliModal.tsx";
 import type { ModalComponent } from "../registry.tsx";
 import { ModalBase } from "./ModalBase.ts";
-
-export interface CliModalParams {
-    command: string;
-}
 
 /**
  * CLI command modal wrapper for registry.

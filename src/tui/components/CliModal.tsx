@@ -3,6 +3,10 @@ import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { ModalBase } from "./ModalBase.tsx";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 
+export interface CliModalParams {
+    command: string;
+}
+
 interface CliModalProps {
     /** CLI command to display */
     command: string;

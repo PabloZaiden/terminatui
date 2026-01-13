@@ -1,15 +1,6 @@
-import { EditorModal as EditorModalComponent } from "../components/EditorModal.tsx";
-import type { FieldConfig } from "../components/types.ts";
+import { EditorModal as EditorModalComponent, type EditorModalParams } from "../components/EditorModal.tsx";
 import type { ModalComponent } from "../registry.tsx";
 import { ModalBase } from "./ModalBase.ts";
-
-export interface EditorModalParams {
-    fieldKey: string;
-    currentValue: unknown;
-    fieldConfigs: FieldConfig[];
-    onSubmit: (value: unknown) => void;
-    onCancel: () => void;
-}
 
 /**
  * Property editor modal wrapper for registry.

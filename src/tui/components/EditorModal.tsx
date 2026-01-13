@@ -5,19 +5,17 @@ import type { FieldConfig } from "./types.ts";
 import { ModalBase } from "./ModalBase.tsx";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 
-interface EditorModalProps {
-    /** The key of the field being edited */
-    fieldKey: string | null;
-    /** The current value of the field */
+export interface EditorModalParams {
+    fieldKey: string;
     currentValue: unknown;
+    fieldConfigs: FieldConfig[];
+    onSubmit: (value: unknown) => void;
+    onCancel: () => void;
+}
+
+interface EditorModalProps {
     /** Whether the modal is visible */
     visible: boolean;
-    /** Called when the user submits a new value */
-    onSubmit: (value: unknown) => void;
-    /** Called when the user cancels editing */
-    onCancel: () => void;
-    /** Field configurations */
-    fieldConfigs: FieldConfig[];
 }
 
 /**
@@ -35,7 +33,7 @@ export function EditorModal({
     visible,
     onSubmit,
     fieldConfigs,
-}: EditorModalProps) {
+}: EditorModalParams & EditorModalProps) {
     const [inputValue, setInputValue] = useState("");
     const [selectIndex, setSelectIndex] = useState(0);
 
