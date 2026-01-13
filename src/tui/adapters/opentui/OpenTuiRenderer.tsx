@@ -2,12 +2,11 @@ import { createCliRenderer, type CliRenderer } from "@opentui/core";
 import { createRoot, type Root } from "@opentui/react";
 import type { ReactNode } from "react";
 import { Theme } from "../../theme.ts";
-import type { KeyboardAdapter, Renderer, RendererConfig } from "../types.ts";
+import type { Renderer, RendererConfig } from "../types.ts";
 import { useOpenTuiKeyboardAdapter } from "./keyboard.ts";
-
-declare const globalThis: {
-    __tuiRendererKeyboard?: KeyboardAdapter;
-};
+import { Button } from "./components/Button.tsx";
+import { Field } from "./components/Field.tsx";
+import { MenuButton } from "./components/MenuButton.tsx";
 
 export class OpenTuiRenderer implements Renderer {
     private renderer: CliRenderer | null = null;
@@ -16,6 +15,12 @@ export class OpenTuiRenderer implements Renderer {
     public keyboard: Renderer["keyboard"] = {
         setActiveHandler: () => () => {},
         setGlobalHandler: () => {},
+    };
+
+    public components: Renderer["components"] = {
+        Field,
+        Button,
+        MenuButton,
     };
 
     constructor(private readonly config: RendererConfig) {}
@@ -43,7 +48,6 @@ export class OpenTuiRenderer implements Renderer {
             <KeyboardBridge
                 onReady={(keyboard) => {
                     this.keyboard = keyboard;
-                    globalThis.__tuiRendererKeyboard = keyboard;
                 }}
             >
                 {node}

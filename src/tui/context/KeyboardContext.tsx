@@ -7,18 +7,11 @@ import {
     useRef,
     type ReactNode,
 } from "react";
-import type { KeyboardAdapter, KeyboardEvent, KeyHandler } from "../adapters/types.ts";
+import type { KeyboardEvent, KeyHandler } from "../adapters/types.ts";
+import { useRenderer } from "./RendererContext.tsx";
 
-declare const globalThis: {
-    __tuiRendererKeyboard?: KeyboardAdapter;
-};
-
-function useRendererKeyboard(): KeyboardAdapter {
-    const keyboard = globalThis.__tuiRendererKeyboard;
-    if (!keyboard) {
-        throw new Error("KeyboardProvider used before renderer keyboard installed");
-    }
-    return keyboard;
+function useRendererKeyboard() {
+    return useRenderer().keyboard;
 }
 
 

@@ -1,4 +1,5 @@
 import { createRenderer } from "./adapters/factory.ts";
+import { RendererProvider } from "./context/RendererContext.tsx";
 import { Application, type ApplicationConfig } from "../core/application.ts";
 import type { AnyCommand } from "../core/command.ts";
 import { TuiApp } from "./TuiApp.tsx";
@@ -88,13 +89,15 @@ export class TuiApplication extends Application {
             };
 
             renderer.render(
-                <TuiApp
-                    name={this.name}
-                    displayName={this.displayName}
-                    version={this.version}
-                    commands={commands}
-                    onExit={handleExit}
-                />
+                <RendererProvider renderer={renderer}>
+                    <TuiApp
+                        name={this.name}
+                        displayName={this.displayName}
+                        version={this.version}
+                        commands={commands}
+                        onExit={handleExit}
+                    />
+                </RendererProvider>
             );
         });
     }

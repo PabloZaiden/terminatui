@@ -21,10 +21,17 @@ export interface RendererConfig {
     useAlternateScreen?: boolean;
 }
 
+export interface RendererComponents {
+    Field: (props: import("../semantic/types.ts").FieldProps) => ReactNode;
+    Button: (props: import("../semantic/types.ts").ButtonProps) => ReactNode;
+    MenuButton: (props: import("../semantic/types.ts").MenuButtonProps) => ReactNode;
+}
+
 export interface Renderer {
     initialize: () => Promise<void>;
     render: (node: ReactNode) => void;
     destroy: () => void;
 
     keyboard: KeyboardAdapter;
+    components: RendererComponents;
 }

@@ -152,3 +152,9 @@ export interface ButtonProps {
     selected?: boolean;
     onActivate?: () => void;
 }
+
+export interface MenuButtonProps {
+    label: string;
+    selected?: boolean;
+    onActivate?: () => void;
+}

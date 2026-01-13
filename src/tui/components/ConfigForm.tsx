@@ -1,8 +1,8 @@
 import { useRef, useEffect, type ReactNode } from "react";
 import type { ScrollBoxRenderable } from "@opentui/core";
 import { Theme } from "../theme.ts";
-import { Field } from "./FieldRow.tsx";
-import { Button } from "./ActionButton.tsx";
+import { Field } from "../semantic/Field.tsx";
+import { MenuButton } from "../semantic/MenuButton.tsx";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import type { KeyboardEvent } from "../adapters/types.ts";
 import type { FieldConfig } from "./types.ts";
@@ -160,7 +160,7 @@ export function ConfigForm({
                     {additionalButtons.map((btn, idx) => {
                         const buttonSelectedIndex = fieldConfigs.length + idx;
                         return (
-                            <Button
+                            <MenuButton
                                 key={btn.label}
                                 label={btn.label}
                                 selected={selectedIndex === buttonSelectedIndex}
