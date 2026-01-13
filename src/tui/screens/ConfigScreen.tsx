@@ -62,20 +62,6 @@ export class ConfigScreen extends ScreenBase {
                 }), [values])
             );
 
-            // Handle screen-specific keyboard shortcuts
-            const handleKeyDown = useCallback((event: { key: { ctrl?: boolean; name?: string } }) => {
-                // Ctrl+A - open CLI modal
-                if (event.key.ctrl && event.key.name === "a") {
-                    const cli = buildCliCommand(appName, commandPath, command.options, values as OptionValues<OptionSchema>);
-                    navigation.openModal({
-                        id: "cli-arguments",
-                        params: { command: cli, onClose: () => navigation.closeModal() },
-                    });
-                    return true;
-                }
-                return false;
-            }, [appName, commandPath, command.options, values, navigation]);
-
             // Handle running the command
             const handleRun = useCallback(async () => {
                 // Save parameters for next time
@@ -146,6 +132,15 @@ export class ConfigScreen extends ScreenBase {
                 });
             }, [navigation, values, derivedFieldConfigs, params]);
 
+            // Handle opening the CLI Args modal
+            const handleShowCliArgs = useCallback(() => {
+                const cli = buildCliCommand(appName, commandPath, command.options, values as OptionValues<OptionSchema>);
+                navigation.openModal({
+                    id: "cli",
+                    params: { command: cli },
+                });
+            }, [appName, commandPath, command.options, values, navigation]);
+
             return (
                 <box flexDirection="column" flexGrow={1}>
                     <ConfigForm
@@ -157,11 +152,13 @@ export class ConfigScreen extends ScreenBase {
                         onSelectionChange={setSelectedFieldIndex}
                         onEditField={handleEditField}
                         onAction={handleRun}
-                        onKeyDown={handleKeyDown}
+                        additionalButtons={[
+                            { label: "CLI Command", onPress: handleShowCliArgs },
+                        ]}
                         actionButton={
                             <ActionButton
                                 label={command.actionLabel ?? "Run"}
-                                isSelected={selectedFieldIndex === derivedFieldConfigs.length}
+                                isSelected={selectedFieldIndex === derivedFieldConfigs.length + 1}
                             />
                         }
                     />

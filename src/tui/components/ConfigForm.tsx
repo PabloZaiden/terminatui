@@ -2,6 +2,7 @@ import { useRef, useEffect, type ReactNode } from "react";
 import type { ScrollBoxRenderable } from "@opentui/core";
 import { Theme } from "../theme.ts";
 import { FieldRow } from "./FieldRow.tsx";
+import { ActionButton } from "./ActionButton.tsx";
 import { useActiveKeyHandler, type KeyboardEvent } from "../hooks/useActiveKeyHandler.ts";
 import type { FieldConfig } from "./types.ts";
 
@@ -26,6 +27,8 @@ interface ConfigFormProps {
     getDisplayValue?: (key: string, value: unknown, type: string) => string;
     /** The action button component */
     actionButton: ReactNode;
+    /** Optional additional buttons rendered before the main action button */
+    additionalButtons?: { label: string; onPress: () => void }[];
     /** Optional handler for additional keys (called before default handling) */
     onKeyDown?: (event: KeyboardEvent) => boolean;
 }
@@ -58,11 +61,12 @@ export function ConfigForm({
     onAction,
     getDisplayValue = defaultGetDisplayValue,
     actionButton,
+    additionalButtons = [],
     onKeyDown,
 }: ConfigFormProps) {
     const borderColor = focused ? Theme.borderFocused : Theme.border;
     const scrollboxRef = useRef<ScrollBoxRenderable>(null);
-    const totalFields = fieldConfigs.length + 1; // +1 for action button
+    const totalItems = fieldConfigs.length + additionalButtons.length + 1; // fields + additional buttons + action button
 
     // Auto-scroll to keep selected item visible
     useEffect(() => {
@@ -83,7 +87,7 @@ export function ConfigForm({
 
             // Arrow key navigation
             if (key.name === "down") {
-                const newIndex = Math.min(selectedIndex + 1, totalFields - 1);
+                const newIndex = Math.min(selectedIndex + 1, totalItems - 1);
                 onSelectionChange(newIndex);
                 return true;
             }
@@ -94,15 +98,21 @@ export function ConfigForm({
                 return true;
             }
 
-            // Enter to edit field or run action
+            // Enter to edit field, press additional button, or run action
             if (key.name === "return" || key.name === "enter") {
-                if (selectedIndex === fieldConfigs.length) {
-                    onAction();
-                } else {
+                if (selectedIndex < fieldConfigs.length) {
+                    // It's a field
                     const fieldConfig = fieldConfigs[selectedIndex];
                     if (fieldConfig) {
                         onEditField(fieldConfig.key);
                     }
+                } else if (selectedIndex < fieldConfigs.length + additionalButtons.length) {
+                    // It's an additional button
+                    const buttonIndex = selectedIndex - fieldConfigs.length;
+                    additionalButtons[buttonIndex]?.onPress();
+                } else {
+                    // It's the main action button
+                    onAction();
                 }
                 return true;
             }
@@ -142,6 +152,17 @@ export function ConfigForm({
                                 label={field.label}
                                 value={displayValue}
                                 isSelected={isSelected}
+                            />
+                        );
+                    })}
+
+                    {additionalButtons.map((btn, idx) => {
+                        const buttonSelectedIndex = fieldConfigs.length + idx;
+                        return (
+                            <ActionButton
+                                key={btn.label}
+                                label={btn.label}
+                                isSelected={selectedIndex === buttonSelectedIndex}
                             />
                         );
                     })}

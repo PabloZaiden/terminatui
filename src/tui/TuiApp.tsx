@@ -130,7 +130,7 @@ function TuiAppContent() {
             <StatusBar
                 status={lastAction ?? (executor.isExecuting ? "Executing..." : "Ready")}
                 isRunning={executor.isExecuting}
-                shortcuts="Esc Back • Ctrl + Y Copy • Ctrl + L Logs • Ctrl + A CLI Args"
+                shortcuts="Esc Back • Ctrl + Y Copy • Ctrl + L Logs"
             />
 
             {/* Render modals from registry */}
