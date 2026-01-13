@@ -7,6 +7,7 @@ import { useOpenTuiKeyboardAdapter } from "./keyboard.ts";
 import { Button } from "./components/Button.tsx";
 import { Field } from "./components/Field.tsx";
 import { MenuButton } from "./components/MenuButton.tsx";
+import { MenuItem } from "./components/MenuItem.tsx";
 
 export class OpenTuiRenderer implements Renderer {
     private renderer: CliRenderer | null = null;
@@ -21,6 +22,7 @@ export class OpenTuiRenderer implements Renderer {
         Field,
         Button,
         MenuButton,
+        MenuItem,
     };
 
     constructor(private readonly config: RendererConfig) {}

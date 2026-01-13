@@ -25,6 +25,7 @@ export interface RendererComponents {
     Field: (props: import("../semantic/types.ts").FieldProps) => ReactNode;
     Button: (props: import("../semantic/types.ts").ButtonProps) => ReactNode;
     MenuButton: (props: import("../semantic/types.ts").MenuButtonProps) => ReactNode;
+    MenuItem: (props: import("../semantic/types.ts").MenuItemProps) => ReactNode;
 }
 
 export interface Renderer {
