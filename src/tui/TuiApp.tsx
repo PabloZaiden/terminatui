@@ -13,17 +13,12 @@ import { Header } from "./components/Header.tsx";
 import { StatusBar } from "./components/StatusBar.tsx";
 import { getScreen, getModal } from "./registry.tsx";
 
-// Import screens to trigger self-registration
-import "./screens/CommandSelectScreen.tsx";
-import "./screens/ConfigScreen.tsx";
-import "./screens/RunningScreen.tsx";
-import "./screens/ResultsScreen.tsx";
-import "./screens/ErrorScreen.tsx";
+// Register screens and modals
+import { registerAllScreens, registerAllModals } from "./registry.tsx";
 
-// Import modals to trigger self-registration
-import "./modals/EditorModal.tsx";
-import "./modals/CliModal.tsx";
-import "./modals/LogsModal.tsx";
+// Register all screens and modals at module load
+await registerAllScreens();
+await registerAllModals();
 
 interface TuiAppProps {
     name: string;

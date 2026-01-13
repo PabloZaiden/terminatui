@@ -4,10 +4,11 @@ import { CommandSelector } from "../components/CommandSelector.tsx";
 import { useTuiApp } from "../context/TuiAppContext.tsx";
 import { useNavigation } from "../context/NavigationContext.tsx";
 import { useBackHandler } from "../hooks/useBackHandler.ts";
-import { registerScreen } from "../registry.tsx";
+import type { ScreenComponent } from "../registry.tsx";
 import { loadPersistedParameters } from "../utils/parameterPersistence.ts";
 import { schemaToFieldConfigs } from "../utils/schemaToFields.ts";
 import type { OptionDef, OptionSchema } from "../../types/command.ts";
+import { ScreenBase } from "./ScreenBase.ts";
 
 /**
  * Screen state stored in navigation params.
@@ -20,109 +21,117 @@ interface CommandSelectParams {
  * Command selection screen.
  * Fully self-contained - gets all data from context and handles its own transitions.
  */
-export function CommandSelectScreen() {
-    const { name, commands } = useTuiApp();
-    const navigation = useNavigation();
-    
-    // Get params from navigation, with defaults
-    const params = (navigation.current.params ?? { commandPath: [] }) as CommandSelectParams;
-    const commandPath = params.commandPath ?? [];
-    
-    // Local selection state
-    const [selectedIndex, setSelectedIndex] = useState(0);
+export class CommandSelectScreen extends ScreenBase {
+    getRoute(): string {
+        return "command-select";
+    }
 
-    // Get current commands based on path
-    const currentCommands = useMemo<AnyCommand[]>(() => {
-        if (commandPath.length === 0) {
-            return commands.filter((cmd) => cmd.supportsTui());
-        }
+    override component(): ScreenComponent {
+        return function CommandSelectScreenComponent() {
+            const { name, commands } = useTuiApp();
+            const navigation = useNavigation();
+            
+            // Get params from navigation, with defaults
+            const params = (navigation.current.params ?? { commandPath: [] }) as CommandSelectParams;
+            const commandPath = params.commandPath ?? [];
+            
+            // Local selection state
+            const [selectedIndex, setSelectedIndex] = useState(0);
 
-        let current: AnyCommand[] = commands;
-        for (const pathPart of commandPath) {
-            const found = current.find((c) => c.name === pathPart);
-            if (found?.subCommands) {
-                current = found.subCommands.filter((sub) => sub.supportsTui());
-            } else {
-                break;
-            }
-        }
-        return current;
-    }, [commands, commandPath]);
-
-    // Build breadcrumb from path
-    const breadcrumb = useMemo(() => {
-        if (commandPath.length === 0) return undefined;
-
-        const displayNames: string[] = [];
-        let current: AnyCommand[] = commands;
-
-        for (const pathPart of commandPath) {
-            const found = current.find((c) => c.name === pathPart);
-            if (found) {
-                displayNames.push(found.displayName ?? found.name);
-                if (found.subCommands) {
-                    current = found.subCommands;
+            // Get current commands based on path
+            const currentCommands = useMemo<AnyCommand[]>(() => {
+                if (commandPath.length === 0) {
+                    return commands.filter((cmd) => cmd.supportsTui());
                 }
-            } else {
-                displayNames.push(pathPart);
-            }
-        }
 
-        return displayNames;
-    }, [commandPath, commands]);
+                let current: AnyCommand[] = commands;
+                for (const pathPart of commandPath) {
+                    const found = current.find((c) => c.name === pathPart);
+                    if (found?.subCommands) {
+                        current = found.subCommands.filter((sub) => sub.supportsTui());
+                    } else {
+                        break;
+                    }
+                }
+                return current;
+            }, [commands, commandPath]);
 
-    const items = currentCommands.map((cmd) => ({
-        command: cmd,
-        label: cmd.displayName ?? cmd.name,
-        description: cmd.description,
-    }));
+            // Build breadcrumb from path
+            const breadcrumb = useMemo(() => {
+                if (commandPath.length === 0) return undefined;
 
-    // Handle command selection - this screen decides where to go next
-    const handleSelect = useCallback((cmd: AnyCommand) => {
-        // If command has runnable subcommands, navigate deeper
-        if (cmd.subCommands && cmd.subCommands.some((c) => c.supportsTui())) {
-            navigation.replace({
-                route: "command-select",
-                params: { commandPath: [...commandPath, cmd.name] },
-            });
-            return;
-        }
+                const displayNames: string[] = [];
+                let current: AnyCommand[] = commands;
 
-        // Otherwise, push to config screen
-        navigation.push({
-            route: "config",
-            params: {
+                for (const pathPart of commandPath) {
+                    const found = current.find((c) => c.name === pathPart);
+                    if (found) {
+                        displayNames.push(found.displayName ?? found.name);
+                        if (found.subCommands) {
+                            current = found.subCommands;
+                        }
+                    } else {
+                        displayNames.push(pathPart);
+                    }
+                }
+
+                return displayNames;
+            }, [commandPath, commands]);
+
+            const items = currentCommands.map((cmd) => ({
                 command: cmd,
-                commandPath: [...commandPath, cmd.name],
-                values: initializeConfigValues(name, cmd),
-                fieldConfigs: schemaToFieldConfigs(cmd.options),
-            },
-        });
-    }, [navigation, commandPath, name]);
+                label: cmd.displayName ?? cmd.name,
+                description: cmd.description,
+            }));
 
-    // Register back handler - this screen decides what back means
-    useBackHandler(useCallback(() => {
-        if (commandPath.length > 0) {
-            // Go up one level
-            navigation.replace({
-                route: "command-select",
-                params: { commandPath: commandPath.slice(0, -1) },
-            });
-            return true; // We handled it
-        }
-        // At root - let navigation call onExit
-        return false;
-    }, [navigation, commandPath]));
+            // Handle command selection - this screen decides where to go next
+            const handleSelect = useCallback((cmd: AnyCommand) => {
+                // If command has runnable subcommands, navigate deeper
+                if (cmd.subCommands && cmd.subCommands.some((c) => c.supportsTui())) {
+                    navigation.replace({
+                        route: "command-select",
+                        params: { commandPath: [...commandPath, cmd.name] },
+                    });
+                    return;
+                }
 
-    return (
-        <CommandSelector
-            commands={items}
-            selectedIndex={selectedIndex}
-            onSelectionChange={setSelectedIndex}
-            onSelect={handleSelect}
-            breadcrumb={breadcrumb}
-        />
-    );
+                // Otherwise, push to config screen
+                navigation.push({
+                    route: "config",
+                    params: {
+                        command: cmd,
+                        commandPath: [...commandPath, cmd.name],
+                        values: initializeConfigValues(name, cmd),
+                        fieldConfigs: schemaToFieldConfigs(cmd.options),
+                    },
+                });
+            }, [navigation, commandPath, name]);
+
+            // Register back handler - this screen decides what back means
+            useBackHandler(useCallback(() => {
+                if (commandPath.length > 0) {
+                    // Go up one level
+                    navigation.replace({
+                        route: "command-select",
+                        params: { commandPath: commandPath.slice(0, -1) },
+                    });
+                    return true; // We handled it
+                }
+                // At root - let navigation call onExit
+                return false;
+            }, [navigation, commandPath]));
+
+            return (
+                <CommandSelector
+                    commands={items}
+                    selectedIndex={selectedIndex}
+                    onSelectionChange={setSelectedIndex}
+                    onSelect={handleSelect}
+                    breadcrumb={breadcrumb}
+                />
+            );
+        };
+    }
 }
 
 /**
@@ -157,6 +166,3 @@ function initializeConfigValues(appName: string, cmd: AnyCommand): Record<string
     const persisted = loadPersistedParameters(appName, cmd.name);
     return { ...defaults, ...persisted };
 }
-
-// Self-register this screen
-registerScreen("command-select", CommandSelectScreen);

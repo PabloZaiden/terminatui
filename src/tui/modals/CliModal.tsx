@@ -1,5 +1,6 @@
 import { CliModal as CliModalComponent } from "../components/CliModal.tsx";
-import { registerModal } from "../registry.tsx";
+import type { ModalComponent } from "../registry.tsx";
+import { ModalBase } from "./ModalBase.ts";
 
 interface CliModalParams {
     command: string;
@@ -9,17 +10,20 @@ interface CliModalParams {
  * CLI command modal wrapper for registry.
  * Shows the CLI equivalent of the current command configuration.
  */
-function CliModal({ params, onClose }: { params: CliModalParams; onClose: () => void }) {
-    return (
-        <CliModalComponent
-            command={params.command}
-            visible={true}
-            onClose={onClose}
-        />
-    );
+export class CliModal extends ModalBase<CliModalParams> {
+    getId(): string {
+        return "cli";
+    }
+
+    override component(): ModalComponent<CliModalParams> {
+        return function CliModalComponentWrapper({ params, onClose }: { params: CliModalParams; onClose: () => void; }) {
+            return (
+                <CliModalComponent
+                    command={params.command}
+                    visible={true}
+                    onClose={onClose}
+                />
+            );
+        };
+    }
 }
-
-// Self-register this modal
-registerModal("cli", CliModal);
-
-export { CliModal };

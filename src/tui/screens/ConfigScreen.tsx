@@ -9,9 +9,10 @@ import { buildCliCommand } from "../utils/buildCliCommand.ts";
 import { useTuiApp } from "../context/TuiAppContext.tsx";
 import { useNavigation } from "../context/NavigationContext.tsx";
 import { useExecutor } from "../context/ExecutorContext.tsx";
-import { registerScreen } from "../registry.tsx";
+import type { ScreenComponent } from "../registry.tsx";
 import { savePersistedParameters } from "../utils/parameterPersistence.ts";
 import type { OptionSchema, OptionValues } from "../../types/command.ts";
+import { ScreenBase } from "./ScreenBase.ts";
 
 /**
  * Screen state stored in navigation params.
@@ -27,140 +28,145 @@ interface ConfigParams {
  * Config screen for editing command options before execution.
  * Fully self-contained - gets all data from context and handles its own transitions.
  */
-export function ConfigScreen() {
-    const { name: appName } = useTuiApp();
-    const navigation = useNavigation();
-    const executor = useExecutor();
-    
-    // Get params from navigation
-    const params = navigation.current.params as ConfigParams | undefined;
-    if (!params) return null;
-    
-    const { command, commandPath, values, fieldConfigs } = params;
-    
-    // Local selection state for the form
-    const [selectedFieldIndex, setSelectedFieldIndex] = useState(0);
+export class ConfigScreen extends ScreenBase {
+    getRoute(): string {
+        return "config";
+    }
 
-    // Derive field configs (in case they weren't passed)
-    const derivedFieldConfigs = useMemo(
-        () => fieldConfigs ?? schemaToFieldConfigs(command.options),
-        [fieldConfigs, command.options]
-    );
+    override component(): ScreenComponent {
+        return function ConfigScreenComponent() {
+            const { name: appName } = useTuiApp();
+            const navigation = useNavigation();
+            const executor = useExecutor();
+            
+            // Get params from navigation
+            const params = navigation.current.params as ConfigParams | undefined;
+            if (!params) return null;
+            
+            const { command, commandPath, values, fieldConfigs } = params;
+            
+            // Local selection state for the form
+            const [selectedFieldIndex, setSelectedFieldIndex] = useState(0);
 
-    // Register clipboard provider for this screen
-    useClipboardProvider(
-        useCallback(() => ({
-            content: JSON.stringify(values, null, 2),
-            label: "Config",
-        }), [values])
-    );
+            // Derive field configs (in case they weren't passed)
+            const derivedFieldConfigs = useMemo(
+                () => fieldConfigs ?? schemaToFieldConfigs(command.options),
+                [fieldConfigs, command.options]
+            );
 
-    // Handle screen-specific keyboard shortcuts
-    const handleKeyDown = useCallback((event: { key: { ctrl?: boolean; name?: string } }) => {
-        // Ctrl+A - open CLI modal
-        if (event.key.ctrl && event.key.name === "a") {
-            const cli = buildCliCommand(appName, commandPath, command.options, values as OptionValues<OptionSchema>);
-            navigation.openModal({
-                id: "cli-arguments",
-                params: { command: cli, onClose: () => navigation.closeModal() },
-            });
-            return true;
-        }
-        return false;
-    }, [appName, commandPath, command.options, values, navigation]);
+            // Register clipboard provider for this screen
+            useClipboardProvider(
+                useCallback(() => ({
+                    content: JSON.stringify(values, null, 2),
+                    label: "Config",
+                }), [values])
+            );
 
-    // Handle running the command
-    const handleRun = useCallback(async () => {
-        // Save parameters for next time
-        savePersistedParameters(appName, command.name, values);
-        
-        // Push to running screen
-        navigation.push({
-            route: "running",
-            params: {
-                command,
-                commandPath,
-                values,
-            },
-        });
-        
-        // Execute the command
-        const outcome = await executor.execute(command, values);
-        
-        if (outcome.cancelled) {
-            // If cancelled, pop back to config
-            navigation.pop();
-            return;
-        }
-        
-        if (outcome.success) {
-            // Replace running with results
-            navigation.replace({
-                route: "results",
-                params: {
-                    command,
-                    commandPath,
-                    values,
-                    result: outcome.result ?? null,
-                },
-            });
-        } else {
-            // Replace running with error
-            navigation.replace({
-                route: "error",
-                params: {
-                    command,
-                    commandPath,
-                    values,
-                    error: outcome.error ?? new Error("Unknown error"),
-                },
-            });
-        }
-    }, [appName, command, commandPath, values, navigation, executor]);
-
-    // Handle editing a field - open property editor modal
-    const handleEditField = useCallback((fieldKey: string) => {
-        navigation.openModal({
-            id: "property-editor",
-            params: {
-                fieldKey,
-                currentValue: values[fieldKey],
-                fieldConfigs: derivedFieldConfigs,
-                onSubmit: (value: unknown) => {
-                    const nextValues = { ...values, [fieldKey]: value };
-                    navigation.replace({
-                        route: "config",
-                        params: { ...params, values: nextValues },
+            // Handle screen-specific keyboard shortcuts
+            const handleKeyDown = useCallback((event: { key: { ctrl?: boolean; name?: string } }) => {
+                // Ctrl+A - open CLI modal
+                if (event.key.ctrl && event.key.name === "a") {
+                    const cli = buildCliCommand(appName, commandPath, command.options, values as OptionValues<OptionSchema>);
+                    navigation.openModal({
+                        id: "cli-arguments",
+                        params: { command: cli, onClose: () => navigation.closeModal() },
                     });
-                    navigation.closeModal();
-                },
-                onCancel: () => navigation.closeModal(),
-            },
-        });
-    }, [navigation, values, derivedFieldConfigs, params]);
-
-    return (
-        <box flexDirection="column" flexGrow={1}>
-            <ConfigForm
-                title={`Configure: ${command.displayName ?? command.name}`}
-                fieldConfigs={derivedFieldConfigs}
-                values={values}
-                selectedIndex={selectedFieldIndex}
-                focused={true}
-                onSelectionChange={setSelectedFieldIndex}
-                onEditField={handleEditField}
-                onAction={handleRun}
-                onKeyDown={handleKeyDown}
-                actionButton={
-                    <ActionButton
-                        label={command.actionLabel ?? "Run"}
-                        isSelected={selectedFieldIndex === derivedFieldConfigs.length}
-                    />
+                    return true;
                 }
-            />
-        </box>
-    );
-}
+                return false;
+            }, [appName, commandPath, command.options, values, navigation]);
 
-// Self-register this screen
-registerScreen("config", ConfigScreen);
+            // Handle running the command
+            const handleRun = useCallback(async () => {
+                // Save parameters for next time
+                savePersistedParameters(appName, command.name, values);
+                
+                // Push to running screen
+                navigation.push({
+                    route: "running",
+                    params: {
+                        command,
+                        commandPath,
+                        values,
+                    },
+                });
+                
+                // Execute the command
+                const outcome = await executor.execute(command, values);
+                
+                if (outcome.cancelled) {
+                    // If cancelled, pop back to config
+                    navigation.pop();
+                    return;
+                }
+                
+                if (outcome.success) {
+                    // Replace running with results
+                    navigation.replace({
+                        route: "results",
+                        params: {
+                            command,
+                            commandPath,
+                            values,
+                            result: outcome.result ?? null,
+                        },
+                    });
+                } else {
+                    // Replace running with error
+                    navigation.replace({
+                        route: "error",
+                        params: {
+                            command,
+                            commandPath,
+                            values,
+                            error: outcome.error ?? new Error("Unknown error"),
+                        },
+                    });
+                }
+            }, [appName, command, commandPath, values, navigation, executor]);
+
+            // Handle editing a field - open property editor modal
+            const handleEditField = useCallback((fieldKey: string) => {
+                navigation.openModal({
+                    id: "property-editor",
+                    params: {
+                        fieldKey,
+                        currentValue: values[fieldKey],
+                        fieldConfigs: derivedFieldConfigs,
+                        onSubmit: (value: unknown) => {
+                            const nextValues = { ...values, [fieldKey]: value };
+                            navigation.replace({
+                                route: "config",
+                                params: { ...params, values: nextValues },
+                            });
+                            navigation.closeModal();
+                        },
+                        onCancel: () => navigation.closeModal(),
+                    },
+                });
+            }, [navigation, values, derivedFieldConfigs, params]);
+
+            return (
+                <box flexDirection="column" flexGrow={1}>
+                    <ConfigForm
+                        title={`Configure: ${command.displayName ?? command.name}`}
+                        fieldConfigs={derivedFieldConfigs}
+                        values={values}
+                        selectedIndex={selectedFieldIndex}
+                        focused={true}
+                        onSelectionChange={setSelectedFieldIndex}
+                        onEditField={handleEditField}
+                        onAction={handleRun}
+                        onKeyDown={handleKeyDown}
+                        actionButton={
+                            <ActionButton
+                                label={command.actionLabel ?? "Run"}
+                                isSelected={selectedFieldIndex === derivedFieldConfigs.length}
+                            />
+                        }
+                    />
+                </box>
+            );
+        };
+    }
+}
