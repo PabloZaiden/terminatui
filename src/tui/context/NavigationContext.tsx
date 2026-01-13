@@ -3,6 +3,8 @@ import {
     useContext,
     useMemo,
     useReducer,
+    useRef,
+    useCallback,
     type ReactNode,
 } from "react";
 
@@ -24,6 +26,12 @@ export type ModalEntry<M extends ModalsMap, ID extends ModalKey<M> = ModalKey<M>
     params?: M[ID];
 };
 
+/**
+ * Back handler function.
+ * Return true if handled, false to let navigation handle it.
+ */
+export type BackHandler = () => boolean;
+
 export interface NavigationAPI<Routes extends RoutesMap = RoutesMap, Modals extends ModalsMap = ModalsMap> {
     current: ScreenEntry<Routes>;
     stack: ScreenEntry<Routes>[];
@@ -38,11 +46,28 @@ export interface NavigationAPI<Routes extends RoutesMap = RoutesMap, Modals exte
     openModal: <ID extends ModalKey<Modals>>(modal: ModalEntry<Modals, ID>) => void;
     closeModal: () => void;
     hasModal: boolean;
+
+    /**
+     * Handle back/escape.
+     * 1. If modal is open, closes modal
+     * 2. Otherwise, calls the registered back handler (if any)
+     * 3. If no handler or handler returns false, pops the stack
+     */
+    goBack: () => void;
+
+    /**
+     * Register a back handler for the current screen.
+     * The handler is called when goBack() is invoked (after closing modals).
+     * Return true from the handler if it handled the back action.
+     */
+    setBackHandler: (handler: BackHandler | null) => void;
 }
 
 type NavigationProviderProps<Routes extends RoutesMap, Modals extends ModalsMap> = {
     initialScreen: ScreenEntry<Routes>;
     children: ReactNode;
+    /** Called when we can't go back anymore (at root with empty stack) */
+    onExit?: () => void;
     // Phantom fields to keep generic parameters in use for inference
     _routesType?: Routes;
     _modalsType?: Modals;
@@ -96,11 +121,19 @@ const NavigationContext = createContext<NavigationAPI<any, any> | null>(null);
 export function NavigationProvider<Routes extends RoutesMap, Modals extends ModalsMap>({
     initialScreen,
     children,
+    onExit,
 }: NavigationProviderProps<Routes, Modals>) {
     const [state, dispatch] = useReducer(navigationReducer<Routes, Modals>, {
         stack: [initialScreen],
         modalStack: [],
     });
+
+    // Back handler ref - set by the current screen
+    const backHandlerRef = useRef<BackHandler | null>(null);
+
+    const setBackHandler = useCallback((handler: BackHandler | null) => {
+        backHandlerRef.current = handler;
+    }, []);
 
     const api = useMemo<NavigationAPI<Routes, Modals>>(() => {
         const stack = state.stack;
@@ -108,27 +141,48 @@ export function NavigationProvider<Routes extends RoutesMap, Modals extends Moda
         const current = stack[stack.length - 1]!;
         const currentModal = modalStack[modalStack.length - 1];
 
+        const goBack = () => {
+            // 1. If modal is open, close it
+            if (modalStack.length > 0) {
+                dispatch({ type: "closeModal" });
+                return;
+            }
+
+            // 2. Let the screen's back handler try first
+            if (backHandlerRef.current) {
+                const handled = backHandlerRef.current();
+                if (handled) {
+                    return;
+                }
+            }
+
+            // 3. Pop the stack if possible
+            if (stack.length > 1) {
+                dispatch({ type: "pop" });
+                return;
+            }
+
+            // 4. At root, call onExit
+            onExit?.();
+        };
+
         return {
             current,
             stack,
             push: (screen) => dispatch({ type: "push", screen }),
             replace: (screen) => dispatch({ type: "replace", screen }),
             reset: (screen) => dispatch({ type: "reset", screen }),
-            pop: () => {
-                if (modalStack.length > 0) {
-                    dispatch({ type: "closeModal" });
-                } else {
-                    dispatch({ type: "pop" });
-                }
-            },
+            pop: () => dispatch({ type: "pop" }),
             canGoBack: stack.length > 1 || modalStack.length > 0,
             modalStack,
             currentModal,
             openModal: (modal) => dispatch({ type: "openModal", modal }),
             closeModal: () => dispatch({ type: "closeModal" }),
             hasModal: modalStack.length > 0,
+            goBack,
+            setBackHandler,
         };
-    }, [state]);
+    }, [state, onExit, setBackHandler]);
 
     return (
         <NavigationContext.Provider value={api}>

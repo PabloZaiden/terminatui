@@ -1,22 +1,37 @@
-import { useMemo } from "react";
-import type { ScreenEntry } from "../context/NavigationContext.tsx";
-import type { Routes } from "../routes.ts";
+import { useState, useMemo, useCallback } from "react";
 import type { AnyCommand } from "../../core/command.ts";
 import { CommandSelector } from "../components/CommandSelector.tsx";
-import { AppContext } from "../../core/context.ts";
+import { useTuiApp } from "../context/TuiAppContext.tsx";
+import { useNavigation } from "../context/NavigationContext.tsx";
+import { useBackHandler } from "../hooks/useBackHandler.ts";
+import { registerScreen } from "../registry.tsx";
+import { loadPersistedParameters } from "../utils/parameterPersistence.ts";
+import { schemaToFieldConfigs } from "../utils/schemaToFields.ts";
+import type { OptionDef, OptionSchema } from "../../types/command.ts";
 
-interface CommandSelectScreenProps {
-    entry: ScreenEntry<Routes, "command-select">;
-    onSelectCommand: (cmd: AnyCommand, path: string[], selectedIndex: number) => void;
-    onChangeSelection: (index: number) => void;
-    commands?: AnyCommand[];
+/**
+ * Screen state stored in navigation params.
+ */
+interface CommandSelectParams {
+    commandPath: string[];
 }
 
-export function CommandSelectScreen({ entry, onSelectCommand, onChangeSelection, commands: providedCommands }: CommandSelectScreenProps) {
-    const { commandPath, selectedIndex = 0 } = entry.params ?? { commandPath: [], selectedIndex: 0 };
-    const serviceCommands = AppContext.current.getService<AnyCommand[]>("commands") ?? [];
-    const commands = providedCommands ?? serviceCommands;
+/**
+ * Command selection screen.
+ * Fully self-contained - gets all data from context and handles its own transitions.
+ */
+export function CommandSelectScreen() {
+    const { name, commands } = useTuiApp();
+    const navigation = useNavigation();
+    
+    // Get params from navigation, with defaults
+    const params = (navigation.current.params ?? { commandPath: [] }) as CommandSelectParams;
+    const commandPath = params.commandPath ?? [];
+    
+    // Local selection state
+    const [selectedIndex, setSelectedIndex] = useState(0);
 
+    // Get current commands based on path
     const currentCommands = useMemo<AnyCommand[]>(() => {
         if (commandPath.length === 0) {
             return commands.filter((cmd) => cmd.supportsTui());
@@ -34,6 +49,7 @@ export function CommandSelectScreen({ entry, onSelectCommand, onChangeSelection,
         return current;
     }, [commands, commandPath]);
 
+    // Build breadcrumb from path
     const breadcrumb = useMemo(() => {
         if (commandPath.length === 0) return undefined;
 
@@ -61,21 +77,86 @@ export function CommandSelectScreen({ entry, onSelectCommand, onChangeSelection,
         description: cmd.description,
     }));
 
-    const handleSelect = (cmd: AnyCommand) => {
-        onSelectCommand(cmd, commandPath, selectedIndex);
-    };
+    // Handle command selection - this screen decides where to go next
+    const handleSelect = useCallback((cmd: AnyCommand) => {
+        // If command has runnable subcommands, navigate deeper
+        if (cmd.subCommands && cmd.subCommands.some((c) => c.supportsTui())) {
+            navigation.replace({
+                route: "command-select",
+                params: { commandPath: [...commandPath, cmd.name] },
+            });
+            return;
+        }
 
-    const handleSelectionChange = (index: number) => {
-        onChangeSelection(index);
-    };
+        // Otherwise, push to config screen
+        navigation.push({
+            route: "config",
+            params: {
+                command: cmd,
+                commandPath: [...commandPath, cmd.name],
+                values: initializeConfigValues(name, cmd),
+                fieldConfigs: schemaToFieldConfigs(cmd.options),
+            },
+        });
+    }, [navigation, commandPath, name]);
+
+    // Register back handler - this screen decides what back means
+    useBackHandler(useCallback(() => {
+        if (commandPath.length > 0) {
+            // Go up one level
+            navigation.replace({
+                route: "command-select",
+                params: { commandPath: commandPath.slice(0, -1) },
+            });
+            return true; // We handled it
+        }
+        // At root - let navigation call onExit
+        return false;
+    }, [navigation, commandPath]));
 
     return (
         <CommandSelector
             commands={items}
             selectedIndex={selectedIndex}
-            onSelectionChange={handleSelectionChange}
+            onSelectionChange={setSelectedIndex}
             onSelect={handleSelect}
             breadcrumb={breadcrumb}
         />
     );
 }
+
+/**
+ * Initialize config values from defaults and persisted values.
+ */
+function initializeConfigValues(appName: string, cmd: AnyCommand): Record<string, unknown> {
+    const defaults: Record<string, unknown> = {};
+    const optionDefs = cmd.options as OptionSchema;
+    
+    for (const [key, def] of Object.entries(optionDefs)) {
+        const typedDef = def as OptionDef;
+        if (typedDef.default !== undefined) {
+            defaults[key] = typedDef.default;
+        } else {
+            switch (typedDef.type) {
+                case "string":
+                    defaults[key] = typedDef.enum?.[0] ?? "";
+                    break;
+                case "number":
+                    defaults[key] = typedDef.min ?? 0;
+                    break;
+                case "boolean":
+                    defaults[key] = false;
+                    break;
+                case "array":
+                    defaults[key] = [];
+                    break;
+            }
+        }
+    }
+
+    const persisted = loadPersistedParameters(appName, cmd.name);
+    return { ...defaults, ...persisted };
+}
+
+// Self-register this screen
+registerScreen("command-select", CommandSelectScreen);

@@ -27,6 +27,8 @@ describe("NavigationContext types", () => {
             replace: () => {},
             reset: () => {},
             canGoBack: false,
+            goBack: () => {},
+            setBackHandler: () => () => {},
             modalStack: [],
             currentModal: undefined,
             openModal: () => {},

@@ -1,18 +1,31 @@
 import { useCallback } from "react";
-import type { ScreenEntry } from "../context/NavigationContext.tsx";
-import type { Routes } from "../routes.ts";
-import type { CommandResult } from "../../core/command.ts";
+import type { AnyCommand, CommandResult } from "../../core/command.ts";
+import { useNavigation } from "../context/NavigationContext.tsx";
 import { ResultsPanel } from "../components/ResultsPanel.tsx";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
+import { registerScreen } from "../registry.tsx";
 
-interface ResultsScreenProps {
-    entry: ScreenEntry<Routes, "results">;
+/**
+ * Screen state stored in navigation params.
+ */
+interface ResultsParams {
+    command: AnyCommand;
+    commandPath: string[];
+    values: Record<string, unknown>;
+    result: unknown;
 }
 
-export function ResultsScreen({ entry }: ResultsScreenProps) {
-    const { params } = entry;
+/**
+ * Results screen - shows command execution results.
+ * Fully self-contained - gets all data from context and handles its own transitions.
+ */
+export function ResultsScreen() {
+    const navigation = useNavigation();
+    
+    // Get params from navigation
+    const params = navigation.current.params as ResultsParams | undefined;
     if (!params) return null;
-
+    
     const { result, command } = params;
 
     // Register clipboard provider for this screen
@@ -28,10 +41,13 @@ export function ResultsScreen({ entry }: ResultsScreenProps) {
 
     return (
         <ResultsPanel
-            result={result as any}
+            result={result as CommandResult | null}
             error={null}
             focused={true}
             renderResult={command.renderResult}
         />
     );
 }
+
+// Self-register this screen
+registerScreen("results", ResultsScreen);

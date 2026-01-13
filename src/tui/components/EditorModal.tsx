@@ -3,6 +3,7 @@ import type { SelectOption } from "@opentui/core";
 import { Theme } from "../theme.ts";
 import type { FieldConfig } from "./types.ts";
 import { ModalBase } from "./ModalBase.tsx";
+import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 
 interface EditorModalProps {
     /** The key of the field being edited */
@@ -24,7 +25,9 @@ interface EditorModalProps {
  * Supports text, number, enum, and boolean types.
  * 
  * Note: This modal uses native OpenTUI input/select components that handle
- * keyboard events internally. Esc is handled by the global handler.
+ * keyboard events internally. The modal registers as the active handler to
+ * block the underlying screen from receiving events, even though most key
+ * handling is done by the native components.
  */
 export function EditorModal({
     fieldKey,
@@ -50,8 +53,16 @@ export function EditorModal({
         }
     }, [fieldKey, currentValue, visible, fieldConfigs]);
 
-    // Note: No keyboard handler needed here - the input/select components
-    // handle Enter for submission, and Esc is handled by the global handler
+    // Register as active handler to block underlying screen from receiving events.
+    // The native input/select components handle Enter internally via onSubmit/onSelect,
+    // so we don't need to handle it here. We just need to be the active handler.
+    useActiveKeyHandler(
+        () => {
+            // Let native components handle everything - we're just blocking the screen below
+            return false;
+        },
+        { enabled: visible && fieldKey !== null }
+    );
 
     if (!visible || !fieldKey) {
         return null;

@@ -1,28 +1,51 @@
-import { useCallback, useMemo } from "react";
-import type { ScreenEntry, NavigationAPI } from "../context/NavigationContext.tsx";
-import type { Routes, Modals } from "../routes.ts";
+import { useCallback, useMemo, useState } from "react";
+import type { AnyCommand } from "../../core/command.ts";
+import type { FieldConfig } from "../components/types.ts";
 import { ConfigForm } from "../components/ConfigForm.tsx";
 import { ActionButton } from "../components/ActionButton.tsx";
 import { schemaToFieldConfigs } from "../utils/schemaToFields.ts";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 import { buildCliCommand } from "../utils/buildCliCommand.ts";
+import { useTuiApp } from "../context/TuiAppContext.tsx";
+import { useNavigation } from "../context/NavigationContext.tsx";
+import { useExecutor } from "../context/ExecutorContext.tsx";
+import { registerScreen } from "../registry.tsx";
+import { savePersistedParameters } from "../utils/parameterPersistence.ts";
 import type { OptionSchema, OptionValues } from "../../types/command.ts";
 
-interface ConfigScreenProps {
-    entry: ScreenEntry<Routes, "config">;
-    navigation: NavigationAPI<Routes, Modals>;
-    appName: string;
-    onRun: (values: Record<string, unknown>) => void;
-    onEditField: (fieldKey: string) => void;
+/**
+ * Screen state stored in navigation params.
+ */
+interface ConfigParams {
+    command: AnyCommand;
+    commandPath: string[];
+    values: Record<string, unknown>;
+    fieldConfigs: FieldConfig[];
 }
 
-export function ConfigScreen({ entry, navigation, appName, onRun, onEditField }: ConfigScreenProps) {
-    const { params } = entry;
+/**
+ * Config screen for editing command options before execution.
+ * Fully self-contained - gets all data from context and handles its own transitions.
+ */
+export function ConfigScreen() {
+    const { name: appName } = useTuiApp();
+    const navigation = useNavigation();
+    const executor = useExecutor();
+    
+    // Get params from navigation
+    const params = navigation.current.params as ConfigParams | undefined;
     if (!params) return null;
+    
+    const { command, commandPath, values, fieldConfigs } = params;
+    
+    // Local selection state for the form
+    const [selectedFieldIndex, setSelectedFieldIndex] = useState(0);
 
-    const { command, commandPath, values, selectedFieldIndex } = params;
-
-    const fieldConfigs = useMemo(() => schemaToFieldConfigs(command.options), [command]);
+    // Derive field configs (in case they weren't passed)
+    const derivedFieldConfigs = useMemo(
+        () => fieldConfigs ?? schemaToFieldConfigs(command.options),
+        [fieldConfigs, command.options]
+    );
 
     // Register clipboard provider for this screen
     useClipboardProvider(
@@ -46,31 +69,98 @@ export function ConfigScreen({ entry, navigation, appName, onRun, onEditField }:
         return false;
     }, [appName, commandPath, command.options, values, navigation]);
 
-    const handleAction = () => {
-        onRun(values);
-    };
+    // Handle running the command
+    const handleRun = useCallback(async () => {
+        // Save parameters for next time
+        savePersistedParameters(appName, command.name, values);
+        
+        // Push to running screen
+        navigation.push({
+            route: "running",
+            params: {
+                command,
+                commandPath,
+                values,
+            },
+        });
+        
+        // Execute the command
+        const outcome = await executor.execute(command, values);
+        
+        if (outcome.cancelled) {
+            // If cancelled, pop back to config
+            navigation.pop();
+            return;
+        }
+        
+        if (outcome.success) {
+            // Replace running with results
+            navigation.replace({
+                route: "results",
+                params: {
+                    command,
+                    commandPath,
+                    values,
+                    result: outcome.result ?? null,
+                },
+            });
+        } else {
+            // Replace running with error
+            navigation.replace({
+                route: "error",
+                params: {
+                    command,
+                    commandPath,
+                    values,
+                    error: outcome.error ?? new Error("Unknown error"),
+                },
+            });
+        }
+    }, [appName, command, commandPath, values, navigation, executor]);
+
+    // Handle editing a field - open property editor modal
+    const handleEditField = useCallback((fieldKey: string) => {
+        navigation.openModal({
+            id: "property-editor",
+            params: {
+                fieldKey,
+                currentValue: values[fieldKey],
+                fieldConfigs: derivedFieldConfigs,
+                onSubmit: (value: unknown) => {
+                    const nextValues = { ...values, [fieldKey]: value };
+                    navigation.replace({
+                        route: "config",
+                        params: { ...params, values: nextValues },
+                    });
+                    navigation.closeModal();
+                },
+                onCancel: () => navigation.closeModal(),
+            },
+        });
+    }, [navigation, values, derivedFieldConfigs, params]);
 
     return (
         <box flexDirection="column" flexGrow={1}>
             <ConfigForm
                 title={`Configure: ${command.displayName ?? command.name}`}
-                fieldConfigs={fieldConfigs}
+                fieldConfigs={derivedFieldConfigs}
                 values={values}
                 selectedIndex={selectedFieldIndex}
                 focused={true}
-                onSelectionChange={(index) =>
-                    navigation.replace({ route: "config", params: { ...params, selectedFieldIndex: index } })
-                }
-                onEditField={onEditField}
-                onAction={handleAction}
+                onSelectionChange={setSelectedFieldIndex}
+                onEditField={handleEditField}
+                onAction={handleRun}
                 onKeyDown={handleKeyDown}
                 actionButton={
                     <ActionButton
                         label={command.actionLabel ?? "Run"}
-                        isSelected={selectedFieldIndex === fieldConfigs.length}
+                        isSelected={selectedFieldIndex === derivedFieldConfigs.length}
                     />
                 }
             />
         </box>
     );
 }
+
+// Self-register this screen
+registerScreen("config", ConfigScreen);

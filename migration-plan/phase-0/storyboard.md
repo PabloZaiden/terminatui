@@ -130,11 +130,18 @@ This design ensures:
    - ✅ Global shortcuts use Ctrl modifiers (Ctrl+Y, Ctrl+L, Ctrl+A) to avoid typing conflicts
    - ✅ Only ONE handler active at a time - no priority conflicts
    - ✅ Removed old priority-based useKeyboardHandler
-4) ⬜ Keep TuiApp global-only: back/escape (modal-first), logs toggle, global copy dispatch, status bar wiring, executor plumbing; rendering via registry lookups instead of hardcoded switches.
+   - ✅ EditorModal registers as active handler to block underlying screen
+4) ✅ Keep TuiApp global-only: back/escape (modal-first), logs toggle, global copy dispatch, status bar wiring, executor plumbing; rendering via registry lookups instead of hardcoded switches.
    - ✅ Global handler handles: Esc (back), Ctrl+Y (copy), Ctrl+L (logs toggle)
    - ✅ Screen-specific: Ctrl+A (CLI modal) handled by ConfigScreen
    - ✅ getClipboardContent if-chains replaced with ClipboardContext provider pattern
-   - ⬜ renderScreen switch still present (to be replaced with registry)
-   - ⬜ Modal rendering if-chains still present (to be replaced with registry)
-5) ⬜ Navigation wiring: screens/modals invoke navigation actions directly (push/replace/pop/openModal/closeModal) without TuiApp branching on route.
-6) ⬜ Validation: exercise all flows (select→config→run→results/error; back paths; logs toggle anywhere; CLI modal from config; property editor submit/cancel; copy in screens/modals) then `bun run build` and `bun run test`.
+   - ✅ Created registry.tsx with ScreenRegistry and ModalRegistry types
+   - ✅ Created renderScreenFromRegistry and renderModalsFromRegistry functions
+   - ✅ TuiApp now uses screenRegistry (useMemo) instead of switch statement
+   - ✅ TuiApp now uses modalRegistry (useMemo) instead of if-chains
+5) ✅ Navigation wiring: screens/modals invoke navigation actions directly (push/replace/pop/openModal/closeModal) without TuiApp branching on route.
+   - ✅ Navigation is passed to screens or accessed via useNavigation hook
+   - ✅ Screen renderers in registry close over navigation for callbacks
+6) ✅ Validation: exercise all flows (select→config→run→results/error; back paths; logs toggle anywhere; CLI modal from config; property editor submit/cancel; copy in screens/modals) then `bun run build` and `bun run test`.
+   - ✅ Build passes
+   - ✅ All 228 tests pass
