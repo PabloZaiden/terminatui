@@ -35,9 +35,7 @@ export function CommandSelector({
     breadcrumb,
 }: CommandSelectorProps) {
     // Active keyboard handler for navigation
-    useActiveKeyHandler((event) => {
-        const { key } = event;
-
+    useActiveKeyHandler((key) => {
         // Arrow key navigation
         if (key.name === "down") {
             const newIndex = Math.min(selectedIndex + 1, commands.length - 1);

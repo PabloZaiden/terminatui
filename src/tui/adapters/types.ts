@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 export type RendererType = "opentui" | "ink";
 
 export interface KeyboardEvent {
-    key: string;
+    name: string;
     sequence?: string;
     ctrl?: boolean;
     shift?: boolean;
@@ -22,7 +22,7 @@ export interface RendererConfig {
 }
 
 export interface Renderer {
-    initialize: () => void;
+    initialize: () => Promise<void>;
     render: (node: ReactNode) => void;
     destroy: () => void;
 

@@ -1,9 +1,7 @@
-import { createCliRenderer } from "@opentui/core";
-import { createRoot } from "@opentui/react";
+import { createRenderer } from "./adapters/factory.ts";
 import { Application, type ApplicationConfig } from "../core/application.ts";
 import type { AnyCommand } from "../core/command.ts";
 import { TuiApp } from "./TuiApp.tsx";
-import { Theme } from "./theme.ts";
 import { LogLevel } from "../core/logger.ts";
 import { createSettingsCommand } from "../builtins/settings.ts";
 import { loadPersistedParameters } from "./utils/parameterPersistence.ts";
@@ -79,14 +77,8 @@ export class TuiApplication extends Application {
         // Load and apply persisted settings (log-level, detailed-logs)
         this.loadPersistedSettings();
 
-        const renderer = await createCliRenderer({
+        const renderer = await createRenderer("opentui", {
             useAlternateScreen: true,
-            useConsole: false,
-            exitOnCtrlC: true,
-            backgroundColor: Theme.background,
-            useMouse: true,
-            enableMouseMovement: true,
-            openConsoleOnError: false,
         });
 
         return new Promise<void>((resolve) => {
@@ -95,8 +87,7 @@ export class TuiApplication extends Application {
                 resolve();
             };
 
-            const root = createRoot(renderer);
-            root.render(
+            renderer.render(
                 <TuiApp
                     name={this.name}
                     displayName={this.displayName}
@@ -105,8 +96,6 @@ export class TuiApplication extends Application {
                     onExit={handleExit}
                 />
             );
-
-            renderer.start();
         });
     }
 

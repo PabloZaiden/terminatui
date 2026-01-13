@@ -33,7 +33,7 @@ export function CliModal({
     // Handle Enter to close (Esc is handled globally)
     useActiveKeyHandler(
         (event) => {
-            if (event.key.name === "return" || event.key.name === "enter") {
+            if (event.name === "return" || event.name === "enter") {
                 onClose();
                 return true;
             }

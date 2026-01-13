@@ -51,6 +51,9 @@ export class StatusCommand extends Command<typeof statusOptions> {
                 count++;
                 AppContext.current.logger.info(`Applying configuration... (${count}/5)`);
                 if (count >= 5 || execCtx.signal.aborted) {
+                    if (count < 5) {
+                        AppContext.current.logger.warn("Status check aborted");
+                    }
                     clearInterval(interval);
                     resolve(undefined);
                 }

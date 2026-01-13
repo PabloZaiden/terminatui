@@ -5,7 +5,7 @@ import type { KeyboardAdapter, KeyboardEvent, KeyHandler } from "../types.ts";
 
 function normalizeKeyEvent(key: KeyEvent): KeyboardEvent {
     return {
-        key: key.name,
+        name: key.name,
         sequence: key.sequence,
         ctrl: key.ctrl,
         shift: key.shift,

@@ -1,6 +1,7 @@
+import type { ButtonProps } from "../semantic/types.ts";
 import { Theme } from "../theme.ts";
 
-interface ActionButtonProps {
+export interface ActionButtonProps {
     /** Button label */
     label: string;
     /** Whether this button is selected */
@@ -10,17 +11,27 @@ interface ActionButtonProps {
 }
 
 /**
- * Action button displayed at the bottom of a config form.
+ * @deprecated Use semantic `Button` via renderer adapter.
  */
 export function ActionButton({ label, isSelected, spinnerFrame }: ActionButtonProps) {
-    const prefix = isSelected ? "► " : "  ";
     const displayLabel = spinnerFrame ? `${spinnerFrame} ${label}...` : `[ ${label} ]`;
-    
-    if (isSelected) {
+
+    return (
+        <Button
+            label={displayLabel}
+            selected={isSelected}
+        />
+    );
+}
+
+export function Button({ label, selected, onActivate }: ButtonProps) {
+    const prefix = selected ? "► " : "  ";
+
+    if (selected) {
         return (
             <box marginTop={1}>
-                <text fg="#000000" bg={Theme.actionButton}>
-                    {prefix}{displayLabel}
+                <text fg="#000000" bg={Theme.actionButton} {...({ onClick: onActivate } as any)}>
+                    {prefix}{label}
                 </text>
             </box>
         );
@@ -28,8 +39,8 @@ export function ActionButton({ label, isSelected, spinnerFrame }: ActionButtonPr
 
     return (
         <box marginTop={1}>
-            <text fg={Theme.actionButton}>
-                {prefix}{displayLabel}
+            <text fg={Theme.actionButton} {...({ onClick: onActivate } as any)}>
+                {prefix}{label}
             </text>
         </box>
     );

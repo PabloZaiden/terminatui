@@ -65,9 +65,7 @@ function TuiAppContent() {
 
 
     // Global keyboard handler - only truly global shortcuts
-    useGlobalKeyHandler((event) => {
-        const { key } = event;
-
+    useGlobalKeyHandler((key) => {
         // Esc - back/close (delegates to navigation which delegates to screen)
         if (key.name === "escape") {
             navigation.goBack();
@@ -85,7 +83,7 @@ function TuiAppContent() {
 
         // Ctrl+L - toggle logs modal
         if (key.ctrl && key.name === "l") {
-            const isLogsOpen = navigation.modalStack.some(m => m.id === "logs");
+            const isLogsOpen = navigation.modalStack.some((m) => m.id === "logs");
             if (isLogsOpen) {
                 navigation.closeModal();
             } else {

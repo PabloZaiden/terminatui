@@ -1,9 +1,10 @@
 import { useRef, useEffect, type ReactNode } from "react";
 import type { ScrollBoxRenderable } from "@opentui/core";
 import { Theme } from "../theme.ts";
-import { FieldRow } from "./FieldRow.tsx";
-import { ActionButton } from "./ActionButton.tsx";
-import { useActiveKeyHandler, type KeyboardEvent } from "../hooks/useActiveKeyHandler.ts";
+import { Field } from "./FieldRow.tsx";
+import { Button } from "./ActionButton.tsx";
+import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
+import type { KeyboardEvent } from "../adapters/types.ts";
 import type { FieldConfig } from "./types.ts";
 
 interface ConfigFormProps {
@@ -77,13 +78,13 @@ export function ConfigForm({
 
     // Handle keyboard events (only when focused)
     useActiveKeyHandler(
-        (event) => {
+        (event: KeyboardEvent) => {
             // Let parent handle first if provided
             if (onKeyDown?.(event)) {
                 return true;
             }
 
-            const { key } = event;
+            const key = event;
 
             // Arrow key navigation
             if (key.name === "down") {
@@ -147,11 +148,11 @@ export function ConfigForm({
                         );
 
                         return (
-                            <FieldRow
+                            <Field
                                 key={field.key}
                                 label={field.label}
                                 value={displayValue}
-                                isSelected={isSelected}
+                                selected={isSelected}
                             />
                         );
                     })}
@@ -159,10 +160,10 @@ export function ConfigForm({
                     {additionalButtons.map((btn, idx) => {
                         const buttonSelectedIndex = fieldConfigs.length + idx;
                         return (
-                            <ActionButton
+                            <Button
                                 key={btn.label}
                                 label={btn.label}
-                                isSelected={selectedIndex === buttonSelectedIndex}
+                                selected={selectedIndex === buttonSelectedIndex}
                             />
                         );
                     })}

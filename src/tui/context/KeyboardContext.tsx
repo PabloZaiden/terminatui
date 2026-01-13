@@ -2,30 +2,26 @@ import {
     createContext,
     useContext,
     useCallback,
+    useEffect,
+    useMemo,
     useRef,
     type ReactNode,
 } from "react";
-import { useKeyboard } from "@opentui/react";
-import type { KeyEvent } from "@opentui/core";
+import type { KeyboardAdapter, KeyboardEvent, KeyHandler } from "../adapters/types.ts";
 
-/**
- * Keyboard event passed to handlers.
- */
-export interface KeyboardEvent {
-    /** The underlying OpenTUI KeyEvent */
-    key: KeyEvent;
+declare const globalThis: {
+    __tuiRendererKeyboard?: KeyboardAdapter;
+};
+
+function useRendererKeyboard(): KeyboardAdapter {
+    const keyboard = globalThis.__tuiRendererKeyboard;
+    if (!keyboard) {
+        throw new Error("KeyboardProvider used before renderer keyboard installed");
+    }
+    return keyboard;
 }
 
-/**
- * Handler function for keyboard events.
- * Return true if the key was handled, false to let it propagate.
- */
-export type KeyHandler = (event: KeyboardEvent) => boolean;
 
-/**
- * Global handler that processes keys before the active handler.
- * Return true if the key was handled (stops propagation to active handler).
- */
 export type GlobalKeyHandler = (event: KeyboardEvent) => boolean;
 
 interface KeyboardContextValue {
@@ -57,17 +53,15 @@ interface KeyboardProviderProps {
  * the active handler; when it closes, the previous handler is restored.
  */
 export function KeyboardProvider({ children }: KeyboardProviderProps) {
-    // Stack of handlers - topmost is active
+    const keyboard = useRendererKeyboard();
+
     const handlerStackRef = useRef<{ id: string; handler: KeyHandler }[]>([]);
     const globalHandlerRef = useRef<GlobalKeyHandler | null>(null);
 
     const setActiveHandler = useCallback((id: string, handler: KeyHandler) => {
-        // Remove existing handler with same id if present (for updates)
         handlerStackRef.current = handlerStackRef.current.filter((h) => h.id !== id);
-        // Push to stack (most recent = active)
         handlerStackRef.current.push({ id, handler });
 
-        // Return unregister function
         return () => {
             handlerStackRef.current = handlerStackRef.current.filter((h) => h.id !== id);
         };
@@ -77,27 +71,28 @@ export function KeyboardProvider({ children }: KeyboardProviderProps) {
         globalHandlerRef.current = handler;
     }, []);
 
-    // Single useKeyboard call that dispatches events
-    useKeyboard((key: KeyEvent) => {
-        const event: KeyboardEvent = { key };
-
-        // 1. Global handler gets first chance
-        if (globalHandlerRef.current) {
-            const handled = globalHandlerRef.current(event);
-            if (handled) {
-                return;
+    useEffect(() => {
+        keyboard.setGlobalHandler((event: KeyboardEvent) => {
+            if (globalHandlerRef.current?.(event)) {
+                return true;
             }
-        }
 
-        // 2. Active handler (topmost in stack) gets the key
-        const activeHandler = handlerStackRef.current[handlerStackRef.current.length - 1];
-        if (activeHandler) {
-            activeHandler.handler(event);
-        }
-    });
+            const activeHandler = handlerStackRef.current[handlerStackRef.current.length - 1];
+            if (activeHandler) {
+                return activeHandler.handler(event);
+            }
+
+            return false;
+        });
+    }, [keyboard]);
+
+    const value = useMemo<KeyboardContextValue>(
+        () => ({ setActiveHandler, setGlobalHandler }),
+        [setActiveHandler, setGlobalHandler]
+    );
 
     return (
-        <KeyboardContext.Provider value={{ setActiveHandler, setGlobalHandler }}>
+        <KeyboardContext.Provider value={value}>
             {children}
         </KeyboardContext.Provider>
     );

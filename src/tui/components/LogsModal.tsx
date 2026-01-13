@@ -24,7 +24,7 @@ export function LogsModal({
     // Handle Enter to close (Esc and Ctrl+L are handled globally)
     useActiveKeyHandler(
         (event) => {
-            if (event.key.name === "return" || event.key.name === "enter") {
+            if (event.name === "return" || event.name === "enter") {
                 onClose();
                 return true;
             }
