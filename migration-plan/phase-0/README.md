@@ -1,8 +1,8 @@
 # Phase 0: Architecture Improvements
 
-**Document Version:** 1.0  
-**Last Updated:** 2026-01-10  
-**Status:** In Progress (navigation stack, modal-first back handling, global copy/logs implemented; storyboard drafted for validation)
+**Document Version:** 1.1  
+**Last Updated:** 2026-01-12  
+**Status:** Phase 0A Complete - TuiApp is now screen-agnostic with self-registering screens/modals
 
 ---
 
@@ -81,14 +81,15 @@ Replace flat priority-based keyboard handling with component hierarchy bubbling.
 
 ## Next Steps
 
-1. Read [problem-analysis.md](./problem-analysis.md) to understand current issues
-2. Review [phase-0a-navigation.md](./phase-0a-navigation.md) for first implementation
-3. Complete Phase 0A tasks with validation
-4. Review [phase-0b-keyboard.md](./phase-0b-keyboard.md) for second implementation
-5. Complete Phase 0B tasks with validation
-6. Proceed to Phase 1 (semantic components migration)
+1. ~~Read [problem-analysis.md](./problem-analysis.md) to understand current issues~~
+2. ~~Review [phase-0a-navigation.md](./phase-0a-navigation.md) for first implementation~~
+3. ~~Complete Phase 0A tasks with validation~~
+4. **Manual testing** to verify all screen flows work correctly
+5. Review [phase-0b-keyboard.md](./phase-0b-keyboard.md) for next implementation
+6. Complete Phase 0B tasks with validation
+7. Proceed to Phase 1 (semantic components migration)
 
 ---
 
-**Last Updated:** 2026-01-10  
-**Status:** Ready for Implementation
+**Last Updated:** 2026-01-12  
+**Status:** Phase 0A Complete

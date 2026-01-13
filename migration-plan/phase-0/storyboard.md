@@ -2,6 +2,8 @@
 
 **Purpose**: Capture current screen/modal flows, global behaviors, and data sourcing so TuiApp can become screen-agnostic and each screen/modal can declare its own transitions and data (e.g., clipboard content).
 
+**Status**: ✅ COMPLETE - All items implemented and validated
+
 **Scope**: Screens (command-select at any depth, config, running, results, error) and overlays (property editor modal, CLI modal, logs modal). Global shortcuts and back behavior are included.
 
 ## Keyboard Architecture
@@ -145,3 +147,20 @@ This design ensures:
 6) ✅ Validation: exercise all flows (select→config→run→results/error; back paths; logs toggle anywhere; CLI modal from config; property editor submit/cancel; copy in screens/modals) then `bun run build` and `bun run test`.
    - ✅ Build passes
    - ✅ All 228 tests pass
+
+## Summary
+
+Phase 0A refactoring is complete. TuiApp is now fully screen-agnostic:
+
+| Component | Self-Registers | Uses Context |
+|-----------|---------------|--------------|
+| `CommandSelectScreen` | ✅ | `useTuiApp`, `useNavigation`, `useBackHandler` |
+| `ConfigScreen` | ✅ | `useTuiApp`, `useNavigation`, `useExecutor` |
+| `RunningScreen` | ✅ | `useNavigation`, `useExecutor`, `useBackHandler` |
+| `ResultsScreen` | ✅ | `useNavigation` |
+| `ErrorScreen` | ✅ | `useNavigation` |
+| `EditorModal` | ✅ | - |
+| `CliModal` | ✅ | - |
+| `LogsModal` | ✅ | - |
+
+**Next Step**: Manual testing to verify all flows work correctly, then Phase 0B if needed.

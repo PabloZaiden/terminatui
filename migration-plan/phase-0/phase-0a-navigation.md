@@ -1,6 +1,7 @@
+# Phase 0A: Stack-Based Navigation
 
 **Last Updated:** 2026-01-12  
-**Status:** In Progress (navigation stack, screens, modal stack, back handling complete; live logs copy via global shortcut; storyboard drafted)
+**Status:** ✅ COMPLETE - TuiApp is now fully screen-agnostic with self-registering components
 
 ---
 
@@ -198,6 +199,49 @@ openModal({ id: 'logs', params: { source: 'app' } });
 ## Notes
 - Navigation module no longer exports legacy `Screen` union; tests now validate generic API and typed entries.
 - Modal overlays share `ModalBase` for consistent styling (used by editor/cli/logs).
-- Completed: typed screens, TuiApp navigation + modal stack, modal-first back handling, global shortcuts (Esc back, Y copy) honoring active modal, live log copy uses logHistory.
-- Storyboard: drafted in `migration-plan/phase-0/storyboard.md` for validation (captures screens, modals, global behaviors, copy/back rules).
-- Remaining: validate storyboard, then refactor navigation to be screen-driven (screens/modals declare their transitions & data providers; TuiApp only orchestrates globals), then proceed to Phase 0B keyboard bubbling redesign per plan.
+- All screens and modals are now self-contained and self-registering.
+- TuiApp knows nothing about specific screens - uses registry lookups only.
+- Build passes and all 228 tests pass.
+
+## Architecture Achieved
+
+### Screen-Agnostic TuiApp (~150 lines)
+TuiApp now only handles:
+1. Setting up providers (contexts)
+2. Rendering current screen from registry (no knowledge of which screen)
+3. Rendering modals from registry
+4. Global shortcuts: Esc→goBack, Ctrl+Y→copy, Ctrl+L→logs
+
+### Self-Registering Components
+Each screen/modal:
+- Takes NO props (gets everything from context)
+- Uses hooks: `useTuiApp()`, `useNavigation()`, `useExecutor()`
+- Handles its own transitions
+- Self-registers at module load via `registerScreen()` / `registerModal()`
+
+### New Files Created
+| File | Purpose |
+|------|---------|
+| `src/tui/registry.tsx` | Global registries with `registerScreen()` and `registerModal()` |
+| `src/tui/context/ExecutorContext.tsx` | Shares command execution via `useExecutor()` |
+| `src/tui/context/TuiAppContext.tsx` | App-level info via `useTuiApp()` |
+| `src/tui/hooks/useBackHandler.ts` | Screens register their back behavior |
+| `src/tui/modals/EditorModal.tsx` | Self-registering wrapper |
+| `src/tui/modals/CliModal.tsx` | Self-registering wrapper |
+| `src/tui/modals/LogsModal.tsx` | Self-registering wrapper |
+
+### Key Type Signatures
+```typescript
+// Screen component - no props
+type ScreenComponent = () => ReactNode;
+
+// Modal component - receives params and onClose
+type ModalComponent<TParams> = (props: { params: TParams; onClose: () => void }) => ReactNode;
+
+// Back handler - return true if handled
+type BackHandler = () => boolean;
+```
+
+## Next Steps
+1. **Manual testing** - Verify all flows work correctly end-to-end
+2. **Phase 0B** - Component-chain keyboard handling (if still needed after current refactor)
