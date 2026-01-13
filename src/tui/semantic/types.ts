@@ -67,12 +67,14 @@ export interface ContainerProps extends LayoutProps {
 export interface ScrollViewRef {
     scrollToTop: () => void;
     scrollToBottom: () => void;
+    scrollToIndex: (index: number) => void;
 }
 
 export interface ScrollViewProps extends LayoutProps {
     axis?: "vertical" | "horizontal" | "both";
     stickyToEnd?: boolean;
     focused?: boolean;
+    scrollRef?: (ref: ScrollViewRef | null) => void;
     children?: ReactNode;
 }
 

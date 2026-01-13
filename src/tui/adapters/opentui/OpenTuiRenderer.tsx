@@ -5,9 +5,12 @@ import { Theme } from "../../theme.ts";
 import type { Renderer, RendererConfig } from "../types.ts";
 import { useOpenTuiKeyboardAdapter } from "./keyboard.ts";
 import { Button } from "./components/Button.tsx";
+import { Container } from "./components/Container.tsx";
 import { Field } from "./components/Field.tsx";
 import { MenuButton } from "./components/MenuButton.tsx";
 import { MenuItem } from "./components/MenuItem.tsx";
+import { Panel } from "./components/Panel.tsx";
+import { ScrollView as OpenTuiScrollView } from "./components/ScrollView.tsx";
 
 export class OpenTuiRenderer implements Renderer {
     private renderer: CliRenderer | null = null;
@@ -23,6 +26,9 @@ export class OpenTuiRenderer implements Renderer {
         Button,
         MenuButton,
         MenuItem,
+        Container,
+        Panel,
+        ScrollView: OpenTuiScrollView,
     };
 
     constructor(private readonly config: RendererConfig) {}

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { AnyCommand } from "../../core/command.ts";
 import type { FieldConfig } from "../components/types.ts";
 import { ConfigForm } from "../components/ConfigForm.tsx";
+import { Container } from "../semantic/Container.tsx";
 import { MenuButton } from "../semantic/MenuButton.tsx";
 import { schemaToFieldConfigs } from "../utils/schemaToFields.ts";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
@@ -130,7 +131,7 @@ export class ConfigScreen extends ScreenBase {
             }, [appName, commandPath, command.options, values, navigation]);
 
             return (
-                <box flexDirection="column" flexGrow={1}>
+                <Container flexDirection="column" flex={1}>
                     <ConfigForm
                         title={`Configure: ${command.displayName ?? command.name}`}
                         fieldConfigs={derivedFieldConfigs}
@@ -150,7 +151,7 @@ export class ConfigScreen extends ScreenBase {
                             />
                         }
                     />
-                </box>
+                </Container>
             );
         };
     }

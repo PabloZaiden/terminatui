@@ -1,9 +1,4 @@
-import {
-    forwardRef,
-    useImperativeHandle,
-    useRef,
-    type ReactNode,
-} from "react";
+import { useRef, type ReactNode } from "react";
 import type { ScrollBoxRenderable } from "@opentui/core";
 import type { ScrollViewProps, ScrollViewRef, Spacing } from "../../../semantic/types.ts";
 
@@ -24,39 +19,40 @@ function normalizePadding(padding: number | Spacing | undefined): any {
     };
 }
 
-export const ScrollView = forwardRef<ScrollViewRef, ScrollViewProps & { children?: ReactNode }>(
-    function ScrollView(
-        {
-            axis = "vertical",
-            stickyToEnd,
-            focused,
-            children,
-            flex,
-            width,
-            height,
-            flexDirection,
-            alignItems,
-            justifyContent,
-            gap,
-            padding,
-        },
-        ref
-    ) {
+export function ScrollView({
+    axis = "vertical",
+    stickyToEnd,
+    focused,
+    scrollRef: onScrollRef,
+    children,
+    flex,
+    width,
+    height,
+    flexDirection,
+    alignItems,
+    justifyContent,
+    gap,
+    padding,
+}: ScrollViewProps & { children?: ReactNode }) {
         const scrollRef = useRef<ScrollBoxRenderable>(null);
 
-        useImperativeHandle(
-            ref,
-            () => ({
-                scrollToTop: () => {
-                    scrollRef.current?.scrollTo(0);
-                },
-                scrollToBottom: () => {
-                    // No public "bottom" API in ScrollBoxRenderable; use large index.
-                    scrollRef.current?.scrollTo(Number.MAX_SAFE_INTEGER);
-                },
-            }),
-            []
-        );
+        const imperativeApi: ScrollViewRef = {
+            scrollToTop: () => {
+                scrollRef.current?.scrollTo(0);
+            },
+            scrollToBottom: () => {
+                // No public "bottom" API in ScrollBoxRenderable; use large index.
+                scrollRef.current?.scrollTo(Number.MAX_SAFE_INTEGER);
+            },
+            scrollToIndex: (index: number) => {
+                scrollRef.current?.scrollTo(index);
+            },
+        };
+
+        // Provide the imperative API via callback.
+        if (onScrollRef) {
+            onScrollRef(imperativeApi);
+        }
 
         const scrollY = axis === "vertical" || axis === "both";
         const scrollX = axis === "horizontal" || axis === "both";
@@ -83,5 +79,4 @@ export const ScrollView = forwardRef<ScrollViewRef, ScrollViewProps & { children
                 </box>
             </scrollbox>
         );
-    }
-);
+}

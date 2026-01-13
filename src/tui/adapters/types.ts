@@ -26,6 +26,10 @@ export interface RendererComponents {
     Button: (props: import("../semantic/types.ts").ButtonProps) => ReactNode;
     MenuButton: (props: import("../semantic/types.ts").MenuButtonProps) => ReactNode;
     MenuItem: (props: import("../semantic/types.ts").MenuItemProps) => ReactNode;
+
+    Container: (props: import("../semantic/types.ts").ContainerProps) => ReactNode;
+    Panel: (props: import("../semantic/types.ts").PanelProps) => ReactNode;
+    ScrollView: (props: import("../semantic/types.ts").ScrollViewProps) => ReactNode;
 }
 
 export interface Renderer {
