@@ -3,7 +3,7 @@ import type { FieldConfig } from "../components/types.ts";
 import type { ModalComponent } from "../registry.tsx";
 import { ModalBase } from "./ModalBase.ts";
 
-interface EditorModalParams {
+export interface EditorModalParams {
     fieldKey: string;
     currentValue: unknown;
     fieldConfigs: FieldConfig[];
@@ -15,8 +15,10 @@ interface EditorModalParams {
  * Property editor modal wrapper for registry.
  */
 export class EditorModal extends ModalBase<EditorModalParams> {
+    static readonly Id = "property-editor";
+
     getId(): string {
-        return "property-editor";
+        return EditorModal.Id;
     }
 
     override component(): ModalComponent<EditorModalParams> {

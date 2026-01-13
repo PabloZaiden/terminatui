@@ -20,7 +20,7 @@ export type ScreenComponent = () => ReactNode;
  * Modal component type.
  * Modals receive their params and a close function.
  */
-export type ModalComponent<TParams = unknown> = (props: {
+export type ModalComponent<TParams> = (props: {
     params: TParams;
     onClose: () => void;
 }) => ReactNode;
@@ -34,7 +34,7 @@ const screenRegistry = new Map<string, ScreenComponent>();
 /**
  * Modal registry - maps modal IDs to modal components.
  */
-const modalRegistry = new Map<string, ModalComponent>();
+const modalRegistry = new Map<string, ModalComponent<any>>();
 
 /**
  * Register a screen component for a route.
@@ -49,8 +49,8 @@ export function registerScreen(screen: ScreenBase): void {
  * Register a modal component for a modal ID.
  * Typically called at module load time.
  */
-export function registerModal<TParams = unknown>(modal: ModalBase<TParams>): void {
-    modalRegistry.set(modal.getId(), modal.component() as ModalComponent);
+export function registerModal<TParams>(modal: ModalBase<TParams>): void {
+    modalRegistry.set(modal.getId(), modal.component());
 }
 
 /**
@@ -65,7 +65,7 @@ export function getScreen(route: string): ScreenComponent | undefined {
  * Get a modal component by ID.
  * Returns undefined if not registered.
  */
-export function getModal(id: string): ModalComponent<unknown> | undefined {
+export function getModal<TParams>(id: string): ModalComponent<TParams> | undefined {
     return modalRegistry.get(id);
 }
 
