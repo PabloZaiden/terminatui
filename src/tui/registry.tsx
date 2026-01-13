@@ -1,4 +1,14 @@
 import type { ReactNode } from "react";
+import { ModalBase } from "./modals/ModalBase";
+import { CliModal } from "./modals/CliModal";
+import { EditorModal } from "./modals/EditorModal";
+import { LogsModal } from "./modals/LogsModal";
+import type { ScreenBase } from "./screens/ScreenBase";
+import { CommandSelectScreen } from "./screens/CommandSelectScreen";
+import { ConfigScreen } from "./screens/ConfigScreen";
+import { ErrorScreen } from "./screens/ErrorScreen";
+import { ResultsScreen } from "./screens/ResultsScreen";
+import { RunningScreen } from "./screens/RunningScreen";
 
 /**
  * Screen component type.
@@ -15,6 +25,7 @@ export type ModalComponent<TParams = unknown> = (props: {
     onClose: () => void;
 }) => ReactNode;
 
+
 /**
  * Screen registry - maps route names to screen components.
  */
@@ -23,25 +34,23 @@ const screenRegistry = new Map<string, ScreenComponent>();
 /**
  * Modal registry - maps modal IDs to modal components.
  */
-const modalRegistry = new Map<string, ModalComponent<unknown>>();
+const modalRegistry = new Map<string, ModalComponent>();
 
 /**
  * Register a screen component for a route.
  * Typically called at module load time.
  */
-export function registerScreen(route: string, component: ScreenComponent): void {
-    screenRegistry.set(route, component);
+
+export function registerScreen(screen: ScreenBase): void {
+    screenRegistry.set(screen.getRoute(), screen.component());
 }
 
 /**
  * Register a modal component for a modal ID.
  * Typically called at module load time.
  */
-export function registerModal<TParams = unknown>(
-    id: string,
-    component: ModalComponent<TParams>
-): void {
-    modalRegistry.set(id, component as ModalComponent<unknown>);
+export function registerModal<TParams = unknown>(modal: ModalBase<TParams>): void {
+    modalRegistry.set(modal.getId(), modal.component() as ModalComponent);
 }
 
 /**
@@ -72,4 +81,18 @@ export function getRegisteredScreens(): string[] {
  */
 export function getRegisteredModals(): string[] {
     return Array.from(modalRegistry.keys());
+}
+
+export function registerAllScreens(): void {
+    registerScreen(new CommandSelectScreen());
+    registerScreen(new ConfigScreen());
+    registerScreen(new RunningScreen());
+    registerScreen(new ResultsScreen());
+    registerScreen(new ErrorScreen());
+}
+
+export function registerAllModals(): void {
+    registerModal(new EditorModal());
+    registerModal(new CliModal());
+    registerModal(new LogsModal());
 }

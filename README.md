@@ -456,7 +456,7 @@ The built-in TUI provides:
 - **Command Selector** - Navigate and select commands with arrow keys
 - **Config Form** - Auto-generated forms from option schemas with field groups
 - **Field Editor** - Edit field values (text, number, boolean, enum)
-- **CLI Modal** - View equivalent CLI command (press `C`)
+- **CLI Args Button** - View equivalent CLI command from the config form
 - **Results Panel** - Display command results with custom rendering
 - **Logs Panel** - View application logs in real-time
 - **Clipboard Support** - Centralized copy with Ctrl+Y
@@ -468,9 +468,8 @@ The built-in TUI provides:
 | Key | Action |
 |-----|--------|
 | ↑/↓ | Navigate fields/commands |
-| Enter | Edit field / Execute command |
+| Enter | Edit field / Execute command / Press button |
 | Tab | Cycle focus between panels |
-| C | Show CLI command modal |
 | L | Toggle logs panel |
 | Ctrl+Y | Copy current content to clipboard |
 | Esc | Back / Cancel running command |

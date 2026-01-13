@@ -14,7 +14,6 @@ The keyboard system uses a **single-active-handler model** to prevent key confli
    - `Esc`: back/close modal
    - `Ctrl+Y`: copy from active view
    - `Ctrl+L`: toggle logs modal
-   - `Ctrl+A`: show CLI command (on config screen only)
 
 2. **Active handler** (topmost screen/modal) gets remaining keys:
    - Only ONE handler is active at a time
@@ -38,7 +37,7 @@ This design ensures:
   - `Esc`: back (modal-first, then screen pop, exit at root).
   - `Ctrl+Y`: copy from active view (top modal if present; otherwise current screen). Active view decides what to provide; logs use live `logHistory`.
   - `Ctrl+L`: toggle logs modal (available anywhere; shows live logHistory while open).
-   - `Ctrl+A`: open CLI modal (handled by ConfigScreen, not global).
+
 - **Active view data** (used by global copy/status):
   - Modals: logs (logHistory), CLI (command string provided by modal), property editor (no copy content).
   - Screens: results (command-provided clipboard content), error (message), config (values JSON), others: none.
@@ -55,11 +54,11 @@ This design ensures:
 
 ### Config
 - **On edit field**: open property editor modal with field key/value/configs; submit updates values and replaces config entry; cancel closes.
+- **On CLI Args button**: open CLI modal with built command string.
 - **On run/action**: push running screen with command, path, values; executor drives results/error replacement.
-- **On `Ctrl+A`**: open CLI modal with built command string.
 - **On back**: pop to previous screen (typically command-select).
 - **Modals available**: property editor, CLI, logs.
-- **Keys handled**: ↑↓ navigation, Enter to edit/run
+- **Keys handled**: ↑↓ navigation, Enter to edit/run/press buttons
 
 ### Running
 - **On success**: replace with results screen (includes command, path, values, result).
@@ -86,7 +85,7 @@ This design ensures:
 - **Keys handled**: input/select components handle their own keys internally
 
 ### CLI Modal
-- **Open from**: `Ctrl+A` on config screen.
+- **Open from**: CLI Args button on config screen.
 - **Close**: Enter or Esc.
 - **Clipboard**: command string (via global `Ctrl+Y`).
 - **Keys handled**: Enter to close
@@ -129,13 +128,13 @@ This design ensures:
    - ✅ Rewrote KeyboardContext for global + active handler model
    - ✅ Created useGlobalKeyHandler for app-wide shortcuts
    - ✅ Created useActiveKeyHandler for screen/modal key handling
-   - ✅ Global shortcuts use Ctrl modifiers (Ctrl+Y, Ctrl+L, Ctrl+A) to avoid typing conflicts
+   - ✅ Global shortcuts use Ctrl modifiers (Ctrl+Y, Ctrl+L) to avoid typing conflicts
    - ✅ Only ONE handler active at a time - no priority conflicts
    - ✅ Removed old priority-based useKeyboardHandler
    - ✅ EditorModal registers as active handler to block underlying screen
 4) ✅ Keep TuiApp global-only: back/escape (modal-first), logs toggle, global copy dispatch, status bar wiring, executor plumbing; rendering via registry lookups instead of hardcoded switches.
    - ✅ Global handler handles: Esc (back), Ctrl+Y (copy), Ctrl+L (logs toggle)
-   - ✅ Screen-specific: Ctrl+A (CLI modal) handled by ConfigScreen
+   - ✅ Screen-specific: CLI Args button on ConfigScreen opens CLI modal
    - ✅ getClipboardContent if-chains replaced with ClipboardContext provider pattern
    - ✅ Created registry.tsx with ScreenRegistry and ModalRegistry types
    - ✅ Created renderScreenFromRegistry and renderModalsFromRegistry functions
