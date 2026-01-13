@@ -15,11 +15,14 @@ import type { OptionSchema, OptionValues } from "../../types/command.ts";
 import { ScreenBase } from "./ScreenBase.ts";
 import type { EditorModalParams } from "../modals/EditorModal.tsx";
 import { type CliModalParams } from "../modals/CliModal.tsx";
+import { RunningScreen, type RunningParams } from "./RunningScreen.tsx";
+import { type ErrorParams, ErrorScreen } from "./ErrorScreen.tsx";
+import { type ResultsParams, ResultsScreen } from "./ResultsScreen.tsx";
 
 /**
  * Screen state stored in navigation params.
  */
-interface ConfigParams {
+export interface ConfigParams {
     command: AnyCommand;
     commandPath: string[];
     values: Record<string, unknown>;
@@ -31,8 +34,9 @@ interface ConfigParams {
  * Fully self-contained - gets all data from context and handles its own transitions.
  */
 export class ConfigScreen extends ScreenBase {
+    static readonly Id = "config";
     getRoute(): string {
-        return "config";
+        return ConfigScreen.Id;
     }
 
     override component(): ScreenComponent {
@@ -70,7 +74,7 @@ export class ConfigScreen extends ScreenBase {
                 savePersistedParameters(appName, command.name, values);
                 
                 // Push to running screen
-                navigation.push("running", {
+                navigation.push<RunningParams>(RunningScreen.Id, {
                     command,
                     commandPath,
                     values,
@@ -87,7 +91,7 @@ export class ConfigScreen extends ScreenBase {
                 
                 if (outcome.success) {
                     // Replace running with results
-                    navigation.replace("results", {
+                    navigation.replace<ResultsParams>(ResultsScreen.Id, {
                         command,
                         commandPath,
                         values,
@@ -95,7 +99,7 @@ export class ConfigScreen extends ScreenBase {
                     });
                 } else {
                     // Replace running with error
-                    navigation.replace("error", {
+                    navigation.replace<ErrorParams>(ErrorScreen.Id, {
                         command,
                         commandPath,
                         values,
@@ -112,7 +116,7 @@ export class ConfigScreen extends ScreenBase {
                     fieldConfigs: derivedFieldConfigs,
                     onSubmit: (value: unknown) => {
                         const nextValues = { ...values, [fieldKey]: value };
-                        navigation.replace("config", { ...params, values: nextValues });
+                        navigation.replace<ConfigParams>(ConfigScreen.Id, { ...params, values: nextValues });
                         navigation.closeModal();
                     },
                     onCancel: () => navigation.closeModal(),

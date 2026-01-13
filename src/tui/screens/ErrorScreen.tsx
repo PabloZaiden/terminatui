@@ -9,7 +9,7 @@ import { ScreenBase } from "./ScreenBase.ts";
 /**
  * Screen state stored in navigation params.
  */
-interface ErrorParams {
+export interface ErrorParams {
     command: AnyCommand;
     commandPath: string[];
     values: Record<string, unknown>;
@@ -21,8 +21,10 @@ interface ErrorParams {
  * Fully self-contained - gets all data from context and handles its own transitions.
  */
 export class ErrorScreen extends ScreenBase {
+    static readonly Id = "error";
+
     getRoute(): string {
-        return "error";
+        return ErrorScreen.Id;
     }
 
     override component(): ScreenComponent {

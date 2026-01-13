@@ -9,11 +9,12 @@ import { loadPersistedParameters } from "../utils/parameterPersistence.ts";
 import { schemaToFieldConfigs } from "../utils/schemaToFields.ts";
 import type { OptionDef, OptionSchema } from "../../types/command.ts";
 import { ScreenBase } from "./ScreenBase.ts";
+import { type ConfigParams, ConfigScreen } from "./ConfigScreen.tsx";
 
 /**
  * Screen state stored in navigation params.
  */
-interface CommandSelectParams {
+export interface CommandSelectParams {
     commandPath: string[];
 }
 
@@ -22,8 +23,10 @@ interface CommandSelectParams {
  * Fully self-contained - gets all data from context and handles its own transitions.
  */
 export class CommandSelectScreen extends ScreenBase {
+    static readonly Id = "command-select";
+
     getRoute(): string {
-        return "command-select";
+        return CommandSelectScreen.Id;
     }
 
     override component(): ScreenComponent {
@@ -88,12 +91,12 @@ export class CommandSelectScreen extends ScreenBase {
             const handleSelect = useCallback((cmd: AnyCommand) => {
                 // If command has runnable subcommands, navigate deeper
                 if (cmd.subCommands && cmd.subCommands.some((c) => c.supportsTui())) {
-                    navigation.replace("command-select", { commandPath: [...commandPath, cmd.name] });
+                    navigation.replace<CommandSelectParams>(CommandSelectScreen.Id, { commandPath: [...commandPath, cmd.name] });
                     return;
                 }
 
                 // Otherwise, push to config screen
-                navigation.push("config", {
+                navigation.push<ConfigParams>(ConfigScreen.Id, {
                     command: cmd,
                     commandPath: [...commandPath, cmd.name],
                     values: initializeConfigValues(name, cmd),
@@ -105,7 +108,7 @@ export class CommandSelectScreen extends ScreenBase {
             useBackHandler(useCallback(() => {
                 if (commandPath.length > 0) {
                     // Go up one level
-                    navigation.replace("command-select", { commandPath: commandPath.slice(0, -1) });
+                    navigation.replace<CommandSelectParams>(CommandSelectScreen.Id, { commandPath: commandPath.slice(0, -1) });
                     return true; // We handled it
                 }
                 // At root - let navigation call onExit

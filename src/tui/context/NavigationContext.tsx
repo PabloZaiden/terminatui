@@ -56,8 +56,8 @@ export interface NavigationAPI {
     setBackHandler: (handler: BackHandler | null) => void;
 }
 
-type NavigationProviderProps = {
-    initialScreen: ScreenEntry;
+type NavigationProviderProps<TParams = unknown> = {
+    initialScreen: ScreenEntry<TParams>;
     children: ReactNode;
     /** Called when we can't go back anymore (at root with empty stack) */
     onExit?: () => void;
@@ -108,11 +108,11 @@ function navigationReducer(
 
 const NavigationContext = createContext<NavigationAPI | null>(null);
 
-export function NavigationProvider({
+export function NavigationProvider<TParams = unknown>({
     initialScreen,
     children,
     onExit,
-}: NavigationProviderProps) {
+}: NavigationProviderProps<TParams>) {
     const [state, dispatch] = useReducer(navigationReducer, {
         stack: [initialScreen],
         modalStack: [],

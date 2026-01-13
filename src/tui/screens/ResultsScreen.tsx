@@ -9,7 +9,7 @@ import { ScreenBase } from "./ScreenBase.ts";
 /**
  * Screen state stored in navigation params.
  */
-interface ResultsParams {
+export interface ResultsParams {
     command: AnyCommand;
     commandPath: string[];
     values: Record<string, unknown>;
@@ -17,8 +17,10 @@ interface ResultsParams {
 }
 
 export class ResultsScreen extends ScreenBase {
+    static readonly Id = "results";
+
     getRoute(): string {
-        return "results";
+        return ResultsScreen.Id;
     }
     /**
      * Results screen - shows command execution results.

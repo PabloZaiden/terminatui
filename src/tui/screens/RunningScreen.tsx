@@ -10,7 +10,7 @@ import { ScreenBase } from "./ScreenBase.ts";
 /**
  * Screen state stored in navigation params.
  */
-interface RunningParams {
+export interface RunningParams {
     command: AnyCommand;
     commandPath: string[];
     values: Record<string, unknown>;
@@ -21,8 +21,9 @@ interface RunningParams {
  * Fully self-contained - gets all data from context and handles its own transitions.
  */
 export class RunningScreen extends ScreenBase {
+    static readonly Id = "running";
     getRoute(): string {
-        return "running";
+        return RunningScreen.Id;
     }
 
     override component(): ScreenComponent {
