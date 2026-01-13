@@ -42,6 +42,8 @@ export function Select<TValue extends string>({
                     }
                 }
 
+                // Only submit when OpenTUI triggers selection (Enter).
+                // Arrow navigation uses onChange only.
                 onSubmit?.();
             }}
             showScrollIndicator={false}

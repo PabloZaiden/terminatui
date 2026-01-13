@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import type { SelectOption } from "@opentui/core";
 import { Theme } from "../theme.ts";
 import type { FieldConfig } from "./types.ts";
 import { ModalBase } from "./ModalBase.tsx";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
+import { Select } from "../semantic/Select.tsx";
+import { TextInput } from "../semantic/TextInput.tsx";
 
 export interface EditorModalParams {
     fieldKey: string;
@@ -42,9 +43,11 @@ export function EditorModal({
         if (fieldKey && visible) {
             setInputValue(String(currentValue ?? ""));
 
-            // For enums, find current index
+            // For enums/booleans, find current index
             const fieldConfig = fieldConfigs.find((f) => f.key === fieldKey);
-            if (fieldConfig?.options) {
+            if (fieldConfig?.type === "boolean") {
+                setSelectIndex(currentValue ? 1 : 0);
+            } else if (fieldConfig?.options) {
                 const idx = fieldConfig.options.findIndex((o) => o.value === currentValue);
                 setSelectIndex(idx >= 0 ? idx : 0);
             }
@@ -71,8 +74,6 @@ export function EditorModal({
         return null;
     }
 
-    const isEnum = fieldConfig.type === "enum" && fieldConfig.options;
-    const isBoolean = fieldConfig.type === "boolean";
     const isNumber = fieldConfig.type === "number";
 
     const handleInputSubmit = (value: string) => {
@@ -83,74 +84,57 @@ export function EditorModal({
         }
     };
 
-    const handleSelectIndexChange = (index: number, _option: SelectOption | null) => {
-        setSelectIndex(index);
-    };
+    const selectOptions =
+        fieldConfig.type === "boolean"
+            ? [
+                  { label: "False", value: "false" },
+                  { label: "True", value: "true" },
+              ]
+            : fieldConfig.type === "enum"
+              ? (fieldConfig.options ?? []).map((o) => ({
+                    label: o.name,
+                    value: String(o.value),
+                }))
+              : null;
 
-    const handleSelectSubmit = (_index: number, option: SelectOption | null) => {
-        if (option) {
-            onSubmit(option.value);
+    const usesSelect = selectOptions !== null;
+
+    const handleSelectSubmit = () => {
+        const selected = selectOptions?.[selectIndex];
+        if (!selected) {
+            return;
         }
-    };
 
-    const handleBooleanSubmit = (_index: number, option: SelectOption | null) => {
-        if (option) {
-            onSubmit(option.value === true);
+        if (fieldConfig.type === "boolean") {
+            onSubmit(selected.value === "true");
+            return;
         }
-    };
 
-    // Boolean uses select with True/False options
-    const booleanOptions: SelectOption[] = [
-        { name: "False", description: "", value: false },
-        { name: "True", description: "", value: true },
-    ];
+        onSubmit(selected.value);
+    };
 
     return (
         <ModalBase title={`Edit: ${fieldConfig.label}`} width="60%" height={12} top={4} left={6}>
-            {isEnum && fieldConfig.options && (
-                <select
-                    options={fieldConfig.options.map((o) => ({
-                        name: o.name,
-                        value: o.value,
-                        description: "",
-                    }))}
-                    selectedIndex={selectIndex}
+            {usesSelect && selectOptions && (
+                <Select
+                    options={selectOptions}
+                    value={selectOptions[selectIndex]?.value ?? selectOptions[0]?.value ?? ""}
                     focused={true}
-                    onChange={handleSelectIndexChange}
-                    onSelect={handleSelectSubmit}
-                    showScrollIndicator={true}
-                    showDescription={false}
-                    height={6}
-                    width="100%"
-                    wrapSelection={true}
-                    selectedBackgroundColor="#61afef"
-                    selectedTextColor="#1e2127"
+                    onChange={(next) => {
+                        const idx = selectOptions.findIndex((o) => o.value === next);
+                        setSelectIndex(idx >= 0 ? idx : 0);
+                    }}
+                    onSubmit={handleSelectSubmit}
                 />
             )}
 
-            {isBoolean && (
-                <select
-                    options={booleanOptions}
-                    selectedIndex={currentValue ? 1 : 0}
-                    focused={true}
-                    onSelect={handleBooleanSubmit}
-                    showScrollIndicator={false}
-                    showDescription={false}
-                    height={2}
-                    width="100%"
-                    wrapSelection={true}
-                    selectedBackgroundColor="#61afef"
-                    selectedTextColor="#1e2127"
-                />
-            )}
-
-            {!isEnum && !isBoolean && (
-                <input
+            {!usesSelect && (
+                <TextInput
                     value={inputValue}
                     placeholder={fieldConfig.placeholder ?? `Enter ${fieldConfig.label.toLowerCase()}...`}
                     focused={true}
-                    onInput={(value) => setInputValue(value)}
-                    onSubmit={handleInputSubmit}
+                    onChange={(value) => setInputValue(value)}
+                    onSubmit={() => handleInputSubmit(inputValue)}
                 />
             )}
 

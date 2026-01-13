@@ -11,6 +11,8 @@ import { MenuButton } from "./components/MenuButton.tsx";
 import { MenuItem } from "./components/MenuItem.tsx";
 import { Panel } from "./components/Panel.tsx";
 import { ScrollView as OpenTuiScrollView } from "./components/ScrollView.tsx";
+import { Select } from "./components/Select.tsx";
+import { TextInput } from "./components/TextInput.tsx";
 
 export class OpenTuiRenderer implements Renderer {
     private renderer: CliRenderer | null = null;
@@ -29,6 +31,8 @@ export class OpenTuiRenderer implements Renderer {
         Container,
         Panel,
         ScrollView: OpenTuiScrollView,
+        Select,
+        TextInput,
     };
 
     constructor(private readonly config: RendererConfig) {}

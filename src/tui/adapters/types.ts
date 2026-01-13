@@ -30,6 +30,9 @@ export interface RendererComponents {
     Container: (props: import("../semantic/types.ts").ContainerProps) => ReactNode;
     Panel: (props: import("../semantic/types.ts").PanelProps) => ReactNode;
     ScrollView: (props: import("../semantic/types.ts").ScrollViewProps) => ReactNode;
+
+    TextInput: (props: import("../semantic/types.ts").TextInputProps) => ReactNode;
+    Select: (props: import("../semantic/types.ts").SelectProps) => ReactNode;
 }
 
 export interface Renderer {
