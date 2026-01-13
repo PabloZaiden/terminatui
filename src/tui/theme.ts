@@ -11,7 +11,7 @@ const semanticColors = {
     text: "#d6dde6",
     mutedText: "#a8b3c1",
     inverseText: "#0b0c10",
-
+    
     border: "#2c2f36",
     focusBorder: "#5da9e9",
 

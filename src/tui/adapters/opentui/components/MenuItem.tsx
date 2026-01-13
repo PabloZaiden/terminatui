@@ -20,7 +20,7 @@ export function MenuItem({
                 {prefix}{displayLabel}
             </text>
             {description ? (
-                <text fg={Theme.colors.mutedText}>
+                <text fg={selected ? Theme.colors.text : Theme.colors.inverseText}>
                     {"    "}{description}
                 </text>
             ) : null}
