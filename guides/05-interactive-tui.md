@@ -133,9 +133,9 @@ bun src/index.ts
 This opens an interactive interface:
 - Use ↑/↓ to navigate fields
 - Press Enter to edit a field
+- Navigate to "CLI Args" button and press Enter to see the CLI command
 - Press Enter on "Start Task" to run
 - Press Esc to go back
-- Press C to see the CLI command
 
 ## TUI Metadata Reference
 
@@ -175,9 +175,8 @@ class MyCommand extends Command {
 | Key | Action |
 |-----|--------|
 | ↑/↓ | Navigate fields |
-| Enter | Edit field / Run |
+| Enter | Edit field / Press button / Run |
 | Tab | Cycle focus |
-| C | Show CLI command |
 | L | Toggle logs |
 | Ctrl+Y | Copy to clipboard |
 | Esc | Back / Cancel |
