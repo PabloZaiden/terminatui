@@ -69,13 +69,13 @@
   - [ ] Replace `<box>` with `<Overlay>`
   - [ ] Use `<TextInput>` and `<Select>` semantic components
   - [ ] Use `<Panel>` for modal container
-  - [ ] Update keyboard handler to use adapter (consume handled keys; let unhandled bubble for globals like copy)
+  - [ ] Update keyboard handler to use adapter (consume handled keys; unhandled falls through to global shortcuts like copy)
   - [ ] Test enum/boolean/text editing
 - [ ] Refactor `CliModal.tsx`
   - [ ] Replace `<box>` with `<Overlay>`
   - [ ] Use `<ScrollView>` for horizontal scrolling
   - [ ] Use `<Code>` for command display
-  - [ ] Update keyboard handler (same bubbling guidance)
+  - [ ] Update keyboard handler (same stack/global fall-through guidance)
   - [ ] Test command display and copy
 - [ ] Implement `Logs` modal using semantic Overlay + ScrollView (replaces LogsPanel)
   - [ ] Sticky to end, colorized lines
@@ -121,13 +121,13 @@
   - [ ] Use `<Field>` components
   - [ ] Remove ScrollBoxRenderable ref type
   - [ ] Use ScrollViewRef instead
-  - [ ] Update keyboard handler to use adapter (bubbling, no priority flags)
+  - [ ] Update keyboard handler to use adapter (stack-based, no priority flags)
   - [ ] Test field navigation
   - [ ] Test scrolling to selected field
 - [ ] Refactor `CommandSelector.tsx`
   - [ ] Replace `<box>` with `<Panel>` and `<Container>`
   - [ ] Use semantic components for command items
-  - [ ] Update keyboard handler (bubbling)
+  - [ ] Update keyboard handler (stack-based)
   - [ ] Test command navigation
   - [ ] Test subcommand breadcrumbs
 
@@ -150,7 +150,7 @@
   - [ ] Test command-select/config/running/results/error flows via nav stack
   - [ ] Test modal interactions (logs/editor/CLI) via modal stack
   - [ ] Test focus cycling
-  - [ ] Test all keyboard shortcuts (bubbling, modal-first, copy modal-first)
+  - [ ] Test all keyboard shortcuts (stack-based, modal-first, global fall-through)
 
 **Validation:**
 - All application flows work
@@ -187,8 +187,8 @@
   - [ ] Remove direct OpenTUI imports
   - [ ] Use keyboard adapter
   - [ ] Update KeyEvent type references
-  - [ ] Use Phase 0B focus-tree/bubbling (no priority enum)
-  - [ ] Modal capture via root focusable; unhandled keys bubble
+  - [ ] Use stack-based handler model (global first, then active/topmost)
+  - [ ] Unhandled keys fall through to global shortcuts
 
 **Validation:**
 - Keyboard events work correctly

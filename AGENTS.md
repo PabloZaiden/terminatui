@@ -31,3 +31,8 @@ test("hello world", () => {
 ```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+
+## General guidelines
+
+- Always prefer simplicity, usability and top level type safety over cleverness.
+- Don't create index.ts files that re-export things from other files. Always import directly from the file you need.

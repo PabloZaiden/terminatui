@@ -1,21 +1,15 @@
-import { useEffect, useState } from "react";
 import type { AnyCommand } from "../core/command.ts";
-import type { LogEvent } from "../core/logger.ts";
-import { AppContext } from "../core/context.ts";
 import { useClipboard } from "./hooks/useClipboard.ts";
 import { KeyboardProvider } from "./context/KeyboardContext.tsx";
 import { useGlobalKeyHandler } from "./hooks/useGlobalKeyHandler.ts";
+import { LogsProvider } from "./context/LogsContext.tsx";
 import { NavigationProvider, useNavigation } from "./context/NavigationContext.tsx";
 import { ClipboardProviderComponent, useClipboardContext } from "./context/ClipboardContext.tsx";
 import { TuiAppContextProvider, useTuiApp } from "./context/TuiAppContext.tsx";
 import { ExecutorProvider, useExecutor } from "./context/ExecutorContext.tsx";
 import { Header } from "./components/Header.tsx";
 import { StatusBar } from "./components/StatusBar.tsx";
-import { getScreen, getModal } from "./registry.tsx";
-
-// Register screens and modals
-import { registerAllScreens, registerAllModals } from "./registry.tsx";
-import type { LogsModalParams } from "./modals/LogsModal.tsx";
+import { getScreen, getModal, registerAllModals, registerAllScreens } from "./registry.tsx";
 import { CommandSelectScreen, type CommandSelectParams } from "./screens/CommandSelectScreen.tsx";
 
 // Register all screens and modals at module load
@@ -41,14 +35,16 @@ export function TuiApp({ name, displayName, version, commands, onExit }: TuiAppP
                     commands={commands}
                     onExit={onExit}
                 >
-                    <ExecutorProvider>
-                        <NavigationProvider<CommandSelectParams>
-                            initialScreen={{ route: CommandSelectScreen.Id, params: { commandPath: [] } }}
-                            onExit={onExit}
-                        >
-                            <TuiAppContent />
-                        </NavigationProvider>
-                    </ExecutorProvider>
+                    <LogsProvider>
+                        <ExecutorProvider>
+                            <NavigationProvider<CommandSelectParams>
+                                initialScreen={{ route: CommandSelectScreen.Id, params: { commandPath: [] } }}
+                                onExit={onExit}
+                            >
+                                <TuiAppContent />
+                            </NavigationProvider>
+                        </ExecutorProvider>
+                    </LogsProvider>
                 </TuiAppContextProvider>
             </ClipboardProviderComponent>
         </KeyboardProvider>
@@ -66,17 +62,7 @@ function TuiAppContent() {
     const clipboard = useClipboardContext();
     const { copyWithMessage, lastAction } = useClipboard();
     
-    const [logHistory, setLogHistory] = useState<LogEvent[]>([]);
 
-    // Subscribe to log events
-    useEffect(() => {
-        const unsubscribe = AppContext.current.logger.onLogEvent((event: LogEvent) => {
-            setLogHistory((prev) => [...prev, event]);
-        });
-        return () => {
-            unsubscribe?.();
-        };
-    }, []);
 
     // Global keyboard handler - only truly global shortcuts
     useGlobalKeyHandler((event) => {
@@ -103,7 +89,8 @@ function TuiAppContent() {
             if (isLogsOpen) {
                 navigation.closeModal();
             } else {
-                navigation.openModal<LogsModalParams>("logs", { logs: logHistory });
+                 navigation.openModal("logs", {});
+
             }
             return true;
         }
@@ -133,17 +120,19 @@ function TuiAppContent() {
             />
 
             {/* Render modals from registry */}
-            {navigation.modalStack.map((modal, idx) => {
-                const ModalComponent = getModal(modal.id);
-                if (!ModalComponent) return null;
-                return (
-                    <ModalComponent
-                        key={`modal-${modal.id}-${idx}`}
-                        params={modal.params}
-                        onClose={() => navigation.closeModal()}
-                    />
-                );
-            })}
+             {navigation.modalStack.map((modal, idx) => {
+                 const ModalComponent = getModal(modal.id);
+                 if (!ModalComponent) return null;
+
+                 return (
+                     <ModalComponent
+                         key={`modal-${modal.id}-${idx}`}
+                         params={modal.params}
+                         onClose={() => navigation.closeModal()}
+                     />
+                 );
+             })}
+
         </box>
     );
 }

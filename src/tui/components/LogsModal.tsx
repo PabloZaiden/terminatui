@@ -3,12 +3,10 @@ import { Theme } from "../theme.ts";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 import { LogColors } from "./logColors.ts";
-import type { LogEvent } from "../../core/logger.ts";
 import { ModalBase } from "./ModalBase.tsx";
+import { useLogs } from "../context/LogsContext.tsx";
 
 interface LogsModalProps {
-    /** Log entries to display */
-    logs: LogEvent[];
     /** Whether the panel is visible */
     visible: boolean;
     /** Callback when the modal is closed */
@@ -19,10 +17,10 @@ interface LogsModalProps {
  * Panel displaying log entries with color-coded levels.
  */
 export function LogsModal({
-    logs,
     visible,
     onClose,
 }: LogsModalProps) {
+    const { logs } = useLogs();
     // Handle Enter to close (Esc and Ctrl+L are handled globally)
     useActiveKeyHandler(
         (event) => {

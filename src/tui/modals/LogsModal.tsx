@@ -1,11 +1,8 @@
 import { LogsModal as LogsModalComponent } from "../components/LogsModal.tsx";
-import type { LogEvent } from "../../core/logger.ts";
 import { ModalBase } from "./ModalBase.ts";
 import type { ModalComponent } from "../registry.tsx";
 
-export interface LogsModalParams {
-    logs: LogEvent[];
-}
+export interface LogsModalParams {}
 
 /**
  * Logs modal wrapper for registry.
@@ -19,10 +16,9 @@ export class LogsModal extends ModalBase<LogsModalParams> {
     }
 
     override component(): ModalComponent<LogsModalParams> {
-        return function LogsModalComponentWrapper({ params, onClose }: { params: LogsModalParams; onClose: () => void; }) {
+        return function LogsModalComponentWrapper({ params: _params, onClose }: { params: LogsModalParams; onClose: () => void; }) {
             return (
                 <LogsModalComponent
-                    logs={params.logs}
                     visible={true}
                     onClose={onClose}
                 />

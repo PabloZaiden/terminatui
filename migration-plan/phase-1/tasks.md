@@ -27,7 +27,6 @@ Build the abstraction layer using OpenTUI as the initial renderer implementation
 - [ ] Create `src/tui/semantic/` directory
 - [ ] Create `src/tui/semantic/components/` directory
 - [ ] Create `src/tui/semantic/types.ts` file
-- [ ] Create `src/tui/semantic/index.ts` file
 - [ ] Create `src/tui/adapters/` directory
 - [ ] Create `src/tui/adapters/types.ts` file
 - [ ] Create `src/tui/adapters/opentui/` directory
@@ -36,7 +35,7 @@ Build the abstraction layer using OpenTUI as the initial renderer implementation
 
 **Validation:**
 - Directory structure matches the design
-- All directories have index.ts files for exports
+- No new `index.ts` barrel export files (per repo guidelines)
 
 ---
 
@@ -211,8 +210,8 @@ Build the abstraction layer using OpenTUI as the initial renderer implementation
 - [ ] Define `KeyboardEvent` interface (key, ctrl, shift, meta, sequence)
 - [ ] Implement OpenTUI keyboard adapter in `adapters/opentui/keyboard.ts`
 - [ ] Create `useKeyboardInput(handler)` hook wrapper
-- [ ] Port existing focus tree system from Phase 0B (bubbling, modal-first)
-- [ ] Ensure modal handlers consume only handled keys; unhandled bubble to global (e.g., copy)
+- [ ] Implement adapter to mimic **current stack-based behavior** (global handler first, then topmost active handler)
+- [ ] Ensure modal handlers consume only handled keys; unhandled keys fall through to global shortcuts
 - [ ] Test keyboard event normalization
 
 **Validation:**
@@ -227,7 +226,7 @@ Build the abstraction layer using OpenTUI as the initial renderer implementation
 **Description:** Create renderer initialization and factory system.
 
 **Actions:**
-- [ ] Implement `createRenderer()` factory in `adapters/index.ts`
+- [ ] Implement `createRenderer()` factory in `adapters/factory.ts` (no barrel export `index.ts`)
 - [ ] Create OpenTUI renderer class in `adapters/opentui/OpenTUIRenderer.tsx`
   - [ ] Implement `initialize()` method
   - [ ] Implement `render()` method
@@ -244,20 +243,17 @@ Build the abstraction layer using OpenTUI as the initial renderer implementation
 
 ---
 
-## Task 1.10: Export Semantic Components
+## Task 1.10: Public Imports (No Barrels)
 
-**Description:** Create public exports for semantic components.
+**Description:** Ensure the new semantic layer can be imported without adding `index.ts` barrel files.
 
 **Actions:**
-- [ ] Update `src/tui/semantic/index.ts` with all component exports
-- [ ] Export component types
-- [ ] Export theme utilities
-- [ ] Add JSDoc documentation
-- [ ] Create example usage snippets
+- [ ] Import components/types directly from their files (no re-export layer)
+- [ ] Update existing imports during Phase 2 to point at concrete paths
+- [ ] Add brief usage snippet(s) in docs if needed
 
 **Validation:**
-- All components importable from `@pablozaiden/terminatui/tui`
-- TypeScript types work correctly
+- TypeScript types resolve correctly without barrel files
 - No renderer-specific exports leak
 
 ---
