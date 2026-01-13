@@ -213,14 +213,15 @@
 **Actions:**
 - [ ] Export all components from `adapters/ink/components/index.ts`
 - [ ] Update InkRenderer to provide components
-- [ ] Set up KeyboardProvider with Ink adapter
+- [ ] Set up KeyboardProvider with Ink adapter (focus-tree/bubbling, modal-first, unhandled keys bubble)
 - [ ] Test component mounting/unmounting
 - [ ] Verify component hierarchy works
 
 **Validation:**
 - All components accessible via Ink renderer
-- Keyboard provider works
+- Keyboard provider works with bubbling/modal stack semantics
 - Components render in hierarchy
+- Global shortcuts (e.g., copy) still reachable when modals are open if unhandled by modal
 
 ### Task 3.9: Update Renderer Factory
 
@@ -267,12 +268,12 @@
   - [ ] Command configuration forms
   - [ ] Field editing (all types)
   - [ ] Command execution
-  - [ ] Log panel display and scrolling
+  - [ ] Logs modal display and scrolling (no panel)
   - [ ] Result panel display
-  - [ ] All modals (CLI, Editor)
-  - [ ] All keyboard shortcuts
+  - [ ] All modals (CLI, Editor, Logs)
+  - [ ] All keyboard shortcuts (bubbling, modal-first)
   - [ ] Focus cycling
-  - [ ] Clipboard operations
+  - [ ] Clipboard operations (modal content first, else screen)
   - [ ] Command cancellation
 - [ ] Document any differences from OpenTUI version
 - [ ] Fix critical issues
@@ -283,6 +284,7 @@
 - Visual appearance acceptable
 - Performance adequate
 - No critical bugs
+- Shortcuts/copy behave with modal-first rules
 
 ### Task 3.12: Cross-Platform Testing
 

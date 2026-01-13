@@ -4,23 +4,10 @@ import { Application, type ApplicationConfig } from "../core/application.ts";
 import type { AnyCommand } from "../core/command.ts";
 import { TuiApp } from "./TuiApp.tsx";
 import { Theme } from "./theme.ts";
-import type { LogSource, LogEvent } from "./hooks/index.ts";
-import { LogLevel as TuiLogLevel } from "./hooks/index.ts";
-import { LogLevel as CoreLogLevel, type LogEvent as CoreLogEvent } from "../core/logger.ts";
-import type { FieldConfig } from "./components/types.ts";
+import { LogLevel } from "../core/logger.ts";
 import { createSettingsCommand } from "../builtins/settings.ts";
 import { loadPersistedParameters } from "./utils/parameterPersistence.ts";
-
-/**
- * Custom field configuration for TUI forms.
- * Allows adding application-specific fields that aren't part of command options.
- */
-export interface CustomField extends FieldConfig {
-    /** Default value for the field */
-    default?: unknown;
-    /** Called when the field value changes */
-    onChange?: (value: unknown, allValues: Record<string, unknown>) => void;
-}
+import { AppContext } from "../core/context.ts";
 
 /**
  * Extended configuration for TUI-enabled applications.
@@ -28,10 +15,6 @@ export interface CustomField extends FieldConfig {
 export interface TuiApplicationConfig extends ApplicationConfig {
     /** Enable interactive TUI mode */
     enableTui?: boolean;
-    /** Log source for TUI log panel */
-    logSource?: LogSource;
-    /** Custom fields to add to the TUI form */
-    customFields?: CustomField[];
 }
 
 /**
@@ -58,14 +41,10 @@ export interface TuiApplicationConfig extends ApplicationConfig {
  */
 export class TuiApplication extends Application {
     private readonly enableTui: boolean;
-    private readonly logSource?: LogSource;
-    private readonly customFields?: CustomField[];
 
     constructor(config: TuiApplicationConfig) {
         super(config);
         this.enableTui = config.enableTui ?? true;
-        this.logSource = config.logSource;
-        this.customFields = config.customFields;
     }
 
     /**
@@ -77,7 +56,7 @@ export class TuiApplication extends Application {
     override async run(argv: string[] = process.argv.slice(2)): Promise<void> {
         // Check for --interactive or -i flag
         const hasInteractiveFlag = argv.includes("--interactive") || argv.includes("-i");
-        const filteredArgs = argv.filter((arg) => arg !== "--interactive" && arg !== "-i");
+        let filteredArgs = argv.filter((arg) => arg !== "--interactive" && arg !== "-i");
 
         // Launch TUI if:
         // 1. Explicit --interactive flag, or
@@ -87,7 +66,6 @@ export class TuiApplication extends Application {
             return;
         }
 
-        // Otherwise run CLI mode
         await super.run(filteredArgs);
     }
 
@@ -101,13 +79,6 @@ export class TuiApplication extends Application {
         // Load and apply persisted settings (log-level, detailed-logs)
         this.loadPersistedSettings();
 
-        // Enable TUI mode on the logger so logs go to the event emitter
-        // instead of stderr (which would corrupt the TUI display)
-        this.context.logger.setTuiMode(true);
-
-        // Create a log source from the logger if one wasn't provided
-        const logSource = this.logSource ?? this.createLogSourceFromLogger();
-
         const renderer = await createCliRenderer({
             useAlternateScreen: true,
             useConsole: false,
@@ -120,8 +91,6 @@ export class TuiApplication extends Application {
 
         return new Promise<void>((resolve) => {
             const handleExit = () => {
-                // Restore CLI mode on exit
-                this.context.logger.setTuiMode(false);
                 renderer.destroy();
                 resolve();
             };
@@ -133,47 +102,12 @@ export class TuiApplication extends Application {
                     displayName={this.displayName}
                     version={this.version}
                     commands={commands}
-                    context={this.context}
-                    logSource={logSource}
-                    customFields={this.customFields}
                     onExit={handleExit}
                 />
             );
 
             renderer.start();
         });
-    }
-
-    /**
-     * Create a LogSource adapter from the application logger.
-     */
-    private createLogSourceFromLogger(): LogSource {
-        const logger = this.context.logger;
-        
-        // Map core log levels to TUI log levels
-        const mapLogLevel = (level: CoreLogLevel): TuiLogLevel => {
-            switch (level) {
-                case CoreLogLevel.Silly: return TuiLogLevel.Silly;
-                case CoreLogLevel.Trace: return TuiLogLevel.Trace;
-                case CoreLogLevel.Debug: return TuiLogLevel.Debug;
-                case CoreLogLevel.Info: return TuiLogLevel.Info;
-                case CoreLogLevel.Warn: return TuiLogLevel.Warn;
-                case CoreLogLevel.Error: return TuiLogLevel.Error;
-                case CoreLogLevel.Fatal: return TuiLogLevel.Fatal;
-                default: return TuiLogLevel.Info;
-            }
-        };
-
-        return {
-            subscribe: (callback: (event: LogEvent) => void) => {
-                return logger.onLogEvent((coreEvent: CoreLogEvent) => {
-                    callback({
-                        level: mapLogLevel(coreEvent.level),
-                        message: coreEvent.message,
-                    });
-                });
-            },
-        };
     }
 
     /**
@@ -187,17 +121,15 @@ export class TuiApplication extends Application {
             // Apply log-level if set
             if (settings["log-level"]) {
                 const levelStr = String(settings["log-level"]).toLowerCase();
-                const level = Object.entries(CoreLogLevel).find(
-                    ([key, val]) => typeof val === "number" && key.toLowerCase() === levelStr
-                )?.[1] as CoreLogLevel | undefined;
+                const level = LogLevel[levelStr as keyof typeof LogLevel];
                 if (level !== undefined) {
-                    this.context.logger.setMinLevel(level);
+                    AppContext.current.logger.setMinLevel(level);
                 }
             }
-            
+
             // Apply detailed-logs if set
             if (settings["detailed-logs"] !== undefined) {
-                this.context.logger.setDetailed(Boolean(settings["detailed-logs"]));
+                AppContext.current.logger.setDetailed(Boolean(settings["detailed-logs"]));
             }
         } catch {
             // Silently ignore errors loading settings

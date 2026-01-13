@@ -211,13 +211,14 @@ Build the abstraction layer using OpenTUI as the initial renderer implementation
 - [ ] Define `KeyboardEvent` interface (key, ctrl, shift, meta, sequence)
 - [ ] Implement OpenTUI keyboard adapter in `adapters/opentui/keyboard.ts`
 - [ ] Create `useKeyboardInput(handler)` hook wrapper
-- [ ] Port existing focus tree system from Phase 0B
+- [ ] Port existing focus tree system from Phase 0B (bubbling, modal-first)
+- [ ] Ensure modal handlers consume only handled keys; unhandled bubble to global (e.g., copy)
 - [ ] Test keyboard event normalization
 
 **Validation:**
 - Keyboard events normalized to common format
-- Focus tree system works correctly
-- Modal capture prevents event bubbling
+- Focus tree system works correctly (modal-first, bubbling to root)
+- Global shortcuts (e.g., copy) still reachable when modals are open if unhandled by modal
 
 ---
 
@@ -233,12 +234,13 @@ Build the abstraction layer using OpenTUI as the initial renderer implementation
   - [ ] Implement `destroy()` method
   - [ ] Handle alternate screen, theme, config
 - [ ] Export semantic components from adapter
-- [ ] Wire up keyboard provider
+- [ ] Wire up keyboard provider (uses Phase 0B bubbling + modal-first behavior)
 
 **Validation:**
 - Factory can create OpenTUI renderer
 - Renderer initializes correctly
 - Cleanup on destroy works
+- Keyboard provider integration preserves bubbling/global shortcuts with modals
 
 ---
 

@@ -49,8 +49,8 @@ Contains:
 
 **Approach:** 
 0. **Phase 0 (Architecture):** Fix navigation and keyboard handling
-   - 0A: Stack-based navigation
-   - 0B: Component-chain keyboard bubbling
+   - 0A: Stack-based navigation ✅
+   - 0B: Component-chain keyboard bubbling ⏸️ (deferred - current stack-based model sufficient)
 1. Build semantic components (Panel, Field, ScrollView, etc.)
 2. Implement OpenTUI adapter for semantic components
 3. Refactor existing code to use semantic layer
@@ -68,8 +68,8 @@ Contains:
 
 | Phase | Goal | Status |
 |-------|------|--------|
-| **Phase 0A** | Stack-based navigation (architecture improvement) | Not Started |
-| **Phase 0B** | Component-chain keyboard handling (architecture improvement) | Not Started |
+| **Phase 0A** | Stack-based navigation (architecture improvement) | ✅ Complete |
+| **Phase 0B** | Component-chain keyboard handling (architecture improvement) | ⏸️ Deferred (not needed) |
 | **Phase 1** | Create semantic component library (OpenTUI impl) | Not Started |
 | **Phase 2** | Refactor existing components to use semantic layer | Not Started |
 | **Phase 3** | Implement Ink adapter | Not Started |
@@ -119,16 +119,13 @@ Each component abstracts rendering details so adapters can implement them differ
 - [x] Requirements documented
 - [x] Architecture designed
 - [x] Tasks broken down
-- [ ] Implementation not started
+- [x] Phase 0A complete: Screen-agnostic TuiApp with self-registering screens/modals
 
 **Next Steps:**
-1. Review and approve architecture improvements plan
-2. **Complete Phase 0A: Stack-based navigation** ([tasks](./phase-0/phase-0a-navigation.md))
-3. **Complete Phase 0B: Component-chain keyboard handling** ([tasks](./phase-0/phase-0b-keyboard.md))
-4. Review and approve rendering migration evaluation
-5. Begin Phase 1 implementation ([tasks](./phase-1/tasks.md))
+1. **Manual testing** to verify all flows work correctly
+2. Begin Phase 1 implementation ([tasks](./phase-1/tasks.md))
 
-**Current Focus:** [Phase 0A - Stack-Based Navigation](./phase-0/phase-0a-navigation.md)
+**Current Focus:** [Phase 1 - Semantic Component Library](./phase-1/README.md)
 
 ## 🔍 Key Documents to Read (In Order)
 
@@ -193,6 +190,6 @@ Refer to:
 
 ---
 
-**Last Updated:** 2026-01-10  
-**Documents Version:** 1.0  
-**Status:** Ready for Review and Implementation
+**Last Updated:** 2026-01-12  
+**Documents Version:** 1.1  
+**Status:** Phase 0A Complete - Ready for Phase 0B

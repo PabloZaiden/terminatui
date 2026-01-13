@@ -22,7 +22,7 @@ Build the abstraction layer using OpenTUI as the initial renderer implementation
 
 - ✅ New semantic component definitions and types
 - ✅ OpenTUI adapter implementation for all 12 components
-- ✅ Keyboard input adapter
+- ✅ Keyboard input adapter (works with Phase 0B focus/bubbling + modal stack)
 - ✅ Renderer interface and factory
 - ✅ Updated theme system
 - ✅ Tests for semantic components

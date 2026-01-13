@@ -2,7 +2,7 @@ import { useRef, useEffect, type ReactNode } from "react";
 import type { ScrollBoxRenderable } from "@opentui/core";
 import { Theme } from "../theme.ts";
 import { FieldRow } from "./FieldRow.tsx";
-import { useKeyboardHandler, KeyboardPriority } from "../hooks/useKeyboardHandler.ts";
+import { useActiveKeyHandler, type KeyboardEvent } from "../hooks/useActiveKeyHandler.ts";
 import type { FieldConfig } from "./types.ts";
 
 interface ConfigFormProps {
@@ -26,6 +26,8 @@ interface ConfigFormProps {
     getDisplayValue?: (key: string, value: unknown, type: string) => string;
     /** The action button component */
     actionButton: ReactNode;
+    /** Optional handler for additional keys (called before default handling) */
+    onKeyDown?: (event: KeyboardEvent) => boolean;
 }
 
 /**
@@ -56,6 +58,7 @@ export function ConfigForm({
     onAction,
     getDisplayValue = defaultGetDisplayValue,
     actionButton,
+    onKeyDown,
 }: ConfigFormProps) {
     const borderColor = focused ? Theme.borderFocused : Theme.border;
     const scrollboxRef = useRef<ScrollBoxRenderable>(null);
@@ -68,24 +71,27 @@ export function ConfigForm({
         }
     }, [selectedIndex]);
 
-    // Handle keyboard events at Focused priority (only when focused)
-    useKeyboardHandler(
+    // Handle keyboard events (only when focused)
+    useActiveKeyHandler(
         (event) => {
+            // Let parent handle first if provided
+            if (onKeyDown?.(event)) {
+                return true;
+            }
+
             const { key } = event;
 
             // Arrow key navigation
             if (key.name === "down") {
                 const newIndex = Math.min(selectedIndex + 1, totalFields - 1);
                 onSelectionChange(newIndex);
-                event.stopPropagation();
-                return;
+                return true;
             }
 
             if (key.name === "up") {
                 const newIndex = Math.max(selectedIndex - 1, 0);
                 onSelectionChange(newIndex);
-                event.stopPropagation();
-                return;
+                return true;
             }
 
             // Enter to edit field or run action
@@ -98,11 +104,11 @@ export function ConfigForm({
                         onEditField(fieldConfig.key);
                     }
                 }
-                event.stopPropagation();
-                return;
+                return true;
             }
+
+            return false;
         },
-        KeyboardPriority.Focused,
         { enabled: focused }
     );
 

@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import type { AppContext } from "./context.ts";
 import type { OptionSchema, OptionValues } from "../types/command.ts";
 
 /**
@@ -93,7 +92,7 @@ export type AnyCommand = Command<any, any>;
  *   description = "Run the application";
  *   options = runOptions;
  * 
- *   async buildConfig(ctx: AppContext, opts: OptionValues<typeof runOptions>): Promise<RunConfig> {
+ *   async buildConfig(opts: OptionValues<typeof runOptions>): Promise<RunConfig> {
  *     const repoPath = path.resolve(opts.repo);
  *     if (!existsSync(repoPath)) {
  *       throw new ConfigValidationError(`Repository not found: ${repoPath}`, "repo");
@@ -101,7 +100,7 @@ export type AnyCommand = Command<any, any>;
  *     return { repoPath, iterations: parseInt(opts.iterations) };
  *   }
  * 
- *   async execute(ctx: AppContext, config: RunConfig) {
+ *   async execute(config: RunConfig) {
  *     // config is already validated
  *     return { success: true, data: result };
  *   }
@@ -153,24 +152,23 @@ export abstract class Command<
    * @throws ConfigValidationError if validation fails
    * @returns The validated configuration object
    */
-  buildConfig?(ctx: AppContext, opts: OptionValues<TOptions>): Promise<TConfig> | TConfig;
+  buildConfig?(opts: OptionValues<TOptions>): Promise<TConfig> | TConfig;
 
   /**
    * Execute the command.
    * The framework will call this method for both CLI and TUI modes.
    * 
-   * @param ctx - Application context
    * @param config - The configuration object (from buildConfig, or raw options if buildConfig is not implemented)
    * @param execCtx - Execution context with abort signal for cancellation support
    * @returns Optional result for display in TUI results panel
    */
-  abstract execute(ctx: AppContext, config: TConfig, execCtx?: CommandExecutionContext): Promise<CommandResult | void> | CommandResult | void;
+  abstract execute(config: TConfig, execCtx?: CommandExecutionContext): Promise<CommandResult | void> | CommandResult | void;
 
   /**
    * Called before buildConfig. Use for early validation, resource acquisition, etc.
    * If this throws, buildConfig and execute will not be called but afterExecute will still run.
    */
-  beforeExecute?(ctx: AppContext, opts: OptionValues<TOptions>): Promise<void> | void;
+  beforeExecute?(opts: OptionValues<TOptions>): Promise<void> | void;
 
   /**
    * Called after execute, even if execute threw an error.
@@ -178,7 +176,6 @@ export abstract class Command<
    * @param error The error thrown by beforeExecute, buildConfig, or execute, if any
    */
   afterExecute?(
-    ctx: AppContext,
     opts: OptionValues<TOptions>,
     error?: Error
   ): Promise<void> | void;

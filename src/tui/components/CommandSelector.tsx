@@ -1,5 +1,5 @@
 import { Theme } from "../theme.ts";
-import { useKeyboardHandler, KeyboardPriority } from "../hooks/useKeyboardHandler.ts";
+import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import type { Command } from "../../core/command.ts";
 
 interface CommandItem {
@@ -20,8 +20,6 @@ interface CommandSelectorProps {
     onSelectionChange: (index: number) => void;
     /** Called when a command is selected */
     onSelect: (command: Command) => void;
-    /** Called when user wants to exit */
-    onExit: () => void;
     /** Breadcrumb path for nested commands */
     breadcrumb?: string[];
 }
@@ -34,48 +32,36 @@ export function CommandSelector({
     selectedIndex,
     onSelectionChange,
     onSelect,
-    onExit,
     breadcrumb,
 }: CommandSelectorProps) {
-    // Keyboard handler for navigation
-    useKeyboardHandler(
-        (event) => {
-            const { key } = event;
+    // Active keyboard handler for navigation
+    useActiveKeyHandler((event) => {
+        const { key } = event;
 
-            // Arrow key navigation
-            if (key.name === "down") {
-                const newIndex = Math.min(selectedIndex + 1, commands.length - 1);
-                onSelectionChange(newIndex);
-                event.stopPropagation();
-                return;
-            }
+        // Arrow key navigation
+        if (key.name === "down") {
+            const newIndex = Math.min(selectedIndex + 1, commands.length - 1);
+            onSelectionChange(newIndex);
+            return true;
+        }
 
-            if (key.name === "up") {
-                const newIndex = Math.max(selectedIndex - 1, 0);
-                onSelectionChange(newIndex);
-                event.stopPropagation();
-                return;
-            }
+        if (key.name === "up") {
+            const newIndex = Math.max(selectedIndex - 1, 0);
+            onSelectionChange(newIndex);
+            return true;
+        }
 
-            // Enter to select command
-            if (key.name === "return" || key.name === "enter") {
-                const selected = commands[selectedIndex];
-                if (selected) {
-                    onSelect(selected.command);
-                }
-                event.stopPropagation();
-                return;
+        // Enter to select command
+        if (key.name === "return" || key.name === "enter") {
+            const selected = commands[selectedIndex];
+            if (selected) {
+                onSelect(selected.command);
             }
+            return true;
+        }
 
-            // Escape to exit or go back
-            if (key.name === "escape") {
-                onExit();
-                event.stopPropagation();
-                return;
-            }
-        },
-        KeyboardPriority.Focused
-    );
+        return false;
+    });
 
     const title = breadcrumb?.length 
         ? `Select Command (${breadcrumb.join(" › ")})`

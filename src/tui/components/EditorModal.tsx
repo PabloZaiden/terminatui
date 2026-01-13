@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import type { SelectOption } from "@opentui/core";
 import { Theme } from "../theme.ts";
-import { useKeyboardHandler, KeyboardPriority } from "../hooks/useKeyboardHandler.ts";
 import type { FieldConfig } from "./types.ts";
+import { ModalBase } from "./ModalBase.tsx";
+import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 
 interface EditorModalProps {
     /** The key of the field being edited */
@@ -22,13 +23,17 @@ interface EditorModalProps {
 /**
  * Modal for editing field values.
  * Supports text, number, enum, and boolean types.
+ * 
+ * Note: This modal uses native OpenTUI input/select components that handle
+ * keyboard events internally. The modal registers as the active handler to
+ * block the underlying screen from receiving events, even though most key
+ * handling is done by the native components.
  */
 export function EditorModal({
     fieldKey,
     currentValue,
     visible,
     onSubmit,
-    onCancel,
     fieldConfigs,
 }: EditorModalProps) {
     const [inputValue, setInputValue] = useState("");
@@ -48,15 +53,15 @@ export function EditorModal({
         }
     }, [fieldKey, currentValue, visible, fieldConfigs]);
 
-    // Modal keyboard handler - blocks all keys from bubbling out of the modal
-    useKeyboardHandler(
-        (event) => {
-            if (event.key.name === "escape") {
-                onCancel();
-            }
+    // Register as active handler to block underlying screen from receiving events.
+    // The native input/select components handle Enter internally via onSubmit/onSelect,
+    // so we don't need to handle it here. We just need to be the active handler.
+    useActiveKeyHandler(
+        () => {
+            // Let native components handle everything - we're just blocking the screen below
+            return false;
         },
-        KeyboardPriority.Modal,
-        { enabled: visible, modal: true }
+        { enabled: visible && fieldKey !== null }
     );
 
     if (!visible || !fieldKey) {
@@ -103,25 +108,7 @@ export function EditorModal({
     ];
 
     return (
-        <box
-            position="absolute"
-            top={4}
-            left={6}
-            width="60%"
-            height={12}
-            backgroundColor={Theme.overlay}
-            border={true}
-            borderStyle="rounded"
-            borderColor={Theme.overlayTitle}
-            padding={1}
-            flexDirection="column"
-            gap={1}
-            zIndex={20}
-        >
-            <text fg={Theme.overlayTitle}>
-                <strong>Edit: {fieldConfig.label}</strong>
-            </text>
-
+        <ModalBase title={`Edit: ${fieldConfig.label}`} width="60%" height={12} top={4} left={6}>
             {isEnum && fieldConfig.options && (
                 <select
                     options={fieldConfig.options.map((o) => ({
@@ -172,6 +159,6 @@ export function EditorModal({
             <text fg={Theme.statusText}>
                 Enter to save, Esc to cancel
             </text>
-        </box>
+        </ModalBase>
     );
 }

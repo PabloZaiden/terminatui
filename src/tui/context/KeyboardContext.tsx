@@ -9,43 +9,37 @@ import { useKeyboard } from "@opentui/react";
 import type { KeyEvent } from "@opentui/core";
 
 /**
- * Priority levels for keyboard event handlers.
- * Higher priority handlers are called first.
- */
-export enum KeyboardPriority {
-    /** Modal/overlay handlers - highest priority, intercept first */
-    Modal = 100,
-    /** Focused section handlers - handle section-specific keys */
-    Focused = 50,
-    /** Global handlers - app-wide shortcuts, lowest priority */
-    Global = 0,
-}
-
-/**
- * Extended keyboard event with custom stop propagation.
- * Use `stopPropagation()` to prevent lower-priority handlers from receiving the event.
- * Use `key.preventDefault()` only when you want to also block OpenTUI primitives.
+ * Keyboard event passed to handlers.
  */
 export interface KeyboardEvent {
     /** The underlying OpenTUI KeyEvent */
     key: KeyEvent;
-    /** Stop propagation to lower-priority handlers in our system */
-    stopPropagation: () => void;
-    /** Whether propagation was stopped */
-    stopped: boolean;
 }
 
-export type KeyboardHandler = (event: KeyboardEvent) => void;
+/**
+ * Handler function for keyboard events.
+ * Return true if the key was handled, false to let it propagate.
+ */
+export type KeyHandler = (event: KeyboardEvent) => boolean;
 
-interface RegisteredHandler {
-    id: string;
-    handler: KeyboardHandler;
-    priority: KeyboardPriority;
-}
+/**
+ * Global handler that processes keys before the active handler.
+ * Return true if the key was handled (stops propagation to active handler).
+ */
+export type GlobalKeyHandler = (event: KeyboardEvent) => boolean;
 
 interface KeyboardContextValue {
-    register: (id: string, handler: KeyboardHandler, priority: KeyboardPriority) => void;
-    unregister: (id: string) => void;
+    /**
+     * Set the active handler (only one at a time - the topmost screen/modal).
+     * Returns unregister function.
+     */
+    setActiveHandler: (id: string, handler: KeyHandler) => () => void;
+
+    /**
+     * Set the global handler (processed before active handler).
+     * Only one global handler is supported.
+     */
+    setGlobalHandler: (handler: GlobalKeyHandler) => void;
 }
 
 const KeyboardContext = createContext<KeyboardContextValue | null>(null);
@@ -55,58 +49,62 @@ interface KeyboardProviderProps {
 }
 
 /**
- * Provider that coordinates all keyboard handlers via a single useKeyboard call.
- * Handlers are invoked in descending priority order (highest first).
- * Propagation stops when a handler calls `stopPropagation()`.
+ * Provider that coordinates keyboard handling with a simple model:
+ * 1. Global handler processes keys first (for app-wide shortcuts like Ctrl+L, Ctrl+Y, Esc)
+ * 2. If not handled, the active handler (topmost screen/modal) gets the key
+ * 
+ * Only ONE active handler is registered at a time - when a modal opens, it becomes
+ * the active handler; when it closes, the previous handler is restored.
  */
 export function KeyboardProvider({ children }: KeyboardProviderProps) {
-    const handlersRef = useRef<RegisteredHandler[]>([]);
+    // Stack of handlers - topmost is active
+    const handlerStackRef = useRef<{ id: string; handler: KeyHandler }[]>([]);
+    const globalHandlerRef = useRef<GlobalKeyHandler | null>(null);
 
-    const register = useCallback(
-        (id: string, handler: KeyboardHandler, priority: KeyboardPriority) => {
-            // Remove existing handler with same id (if any)
-            handlersRef.current = handlersRef.current.filter((h) => h.id !== id);
-            // Add new handler
-            handlersRef.current.push({ id, handler, priority });
-            // Sort by priority descending (highest first)
-            handlersRef.current.sort((a, b) => b.priority - a.priority);
-        },
-        []
-    );
+    const setActiveHandler = useCallback((id: string, handler: KeyHandler) => {
+        // Remove existing handler with same id if present (for updates)
+        handlerStackRef.current = handlerStackRef.current.filter((h) => h.id !== id);
+        // Push to stack (most recent = active)
+        handlerStackRef.current.push({ id, handler });
 
-    const unregister = useCallback((id: string) => {
-        handlersRef.current = handlersRef.current.filter((h) => h.id !== id);
+        // Return unregister function
+        return () => {
+            handlerStackRef.current = handlerStackRef.current.filter((h) => h.id !== id);
+        };
     }, []);
 
-    // Single useKeyboard call that dispatches to all registered handlers
-    useKeyboard((key: KeyEvent) => {
-        // Create our wrapper event with custom stop propagation
-        const event: KeyboardEvent = {
-            key,
-            stopped: false,
-            stopPropagation() {
-                this.stopped = true;
-            },
-        };
+    const setGlobalHandler = useCallback((handler: GlobalKeyHandler) => {
+        globalHandlerRef.current = handler;
+    }, []);
 
-        for (const { handler } of handlersRef.current) {
-            // Stop if our propagation was stopped or if preventDefault was called
-            if (event.stopped || key.defaultPrevented) {
-                break;
+    // Single useKeyboard call that dispatches events
+    useKeyboard((key: KeyEvent) => {
+        const event: KeyboardEvent = { key };
+
+        // 1. Global handler gets first chance
+        if (globalHandlerRef.current) {
+            const handled = globalHandlerRef.current(event);
+            if (handled) {
+                return;
             }
-            handler(event);
+        }
+
+        // 2. Active handler (topmost in stack) gets the key
+        const activeHandler = handlerStackRef.current[handlerStackRef.current.length - 1];
+        if (activeHandler) {
+            activeHandler.handler(event);
         }
     });
 
     return (
-        <KeyboardContext.Provider value={{ register, unregister }}>
+        <KeyboardContext.Provider value={{ setActiveHandler, setGlobalHandler }}>
             {children}
         </KeyboardContext.Provider>
     );
 }
 
 /**
- * Access the keyboard context for handler registration.
+ * Access the keyboard context.
  * @throws Error if used outside of KeyboardProvider
  */
 export function useKeyboardContext(): KeyboardContextValue {

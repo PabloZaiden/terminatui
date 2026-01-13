@@ -1,10 +1,6 @@
-import { 
-    Command, 
-    type AppContext, 
-    type OptionSchema, 
-    type OptionValues,
-    type CommandResult 
-} from "../../../src/index.ts";
+import { Command, type CommandExecutionContext, type CommandResult } from "../../../src/core/command";
+import { AppContext } from "../../../src/core/context";
+import type { OptionSchema, OptionValues } from "../../../src/types/command";
 
 const statusOptions = {
     detailed: {
@@ -26,9 +22,9 @@ export class StatusCommand extends Command<typeof statusOptions> {
     override readonly actionLabel = "Check Status";
     override readonly immediateExecution = true; // No required fields
 
-    override async execute(ctx: AppContext, opts: OptionValues<typeof statusOptions>): Promise<CommandResult> {
-        const result = await this.getStatus(opts);
-        ctx.logger.info(result.message || "Status check complete");
+    override async execute(opts: OptionValues<typeof statusOptions>, execCtx : CommandExecutionContext): Promise<CommandResult> {
+        const result = await this.getStatus(opts, execCtx);
+        AppContext.current.logger.info(result.message || "Status check complete");
         return result;
     }
 
@@ -45,11 +41,21 @@ export class StatusCommand extends Command<typeof statusOptions> {
         ].join("\n");
     }
 
-    private async getStatus(opts: OptionValues<typeof statusOptions>): Promise<CommandResult> {
+    private async getStatus(opts: OptionValues<typeof statusOptions>, execCtx: CommandExecutionContext): Promise<CommandResult> {
         const detailed = opts.detailed as boolean;
         
         // Simulate some async work
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise(resolve => {
+            let count = 0;
+            let interval = setInterval(() => {
+                count++;
+                AppContext.current.logger.info(`Applying configuration... (${count}/5)`);
+                if (count >= 5 || execCtx.signal.aborted) {
+                    clearInterval(interval);
+                    resolve(undefined);
+                }
+            }, 1000);
+        });
 
         const memMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
         const uptimeSec = Math.round(process.uptime());

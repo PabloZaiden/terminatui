@@ -1,6 +1,5 @@
 import { describe, test, expect } from "bun:test";
 import { Command, type CommandResult } from "../core/command.ts";
-import type { AppContext } from "../core/context.ts";
 import type { OptionSchema, OptionValues } from "../types/command.ts";
 
 // Test command with options
@@ -14,7 +13,6 @@ class TestCommand extends Command<{ name: { type: "string"; description: string 
   executedWith: OptionValues<typeof this.options> | null = null;
 
   override async execute(
-    _ctx: AppContext,
     opts: OptionValues<typeof this.options>
   ): Promise<CommandResult> {
     this.executedWith = opts;
@@ -30,7 +28,7 @@ class SimpleCommand extends Command<OptionSchema> {
 
   executed = false;
 
-  override async execute(_ctx: AppContext): Promise<CommandResult> {
+  override async execute(): Promise<CommandResult> {
     this.executed = true;
     return { success: true, message: "Done" };
   }

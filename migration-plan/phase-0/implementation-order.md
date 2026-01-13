@@ -6,9 +6,9 @@
 
 ## Implementation Order
 
-The two phases must be completed **sequentially**:
+The two phases must be completed **sequentially**, with a storyboard checkpoint between them:
 
-### Phase 0A First: Stack-Based Navigation
+### Phase 0A First: Stack-Based Navigation (completed)
 **Document:** [phase-0a-navigation.md](./phase-0a-navigation.md)
 
 **Rationale:**
@@ -17,16 +17,25 @@ The two phases must be completed **sequentially**:
 - Screen components provide natural boundaries for keyboard handlers
 - Easier to validate navigation independently
 
-### Phase 0B Second: Component-Chain Keyboard
+### Storyboard Checkpoint (after Phase 0A, before Phase 0B)
+**Document:** [storyboard.md](./storyboard.md)
+- Capture screen/modal flows, global behaviors, copy/back rules, and data providers so TuiApp can become screen-agnostic.
+- Must be validated before Phase 0B.
+
+### Navigation Refactor (post-storyboard, pre-0B)
+- Refactor TuiApp to be screen-driven: screens/modals declare transitions and data providers (e.g., clipboard content); TuiApp handles only global concerns (back, logs toggle, global copy) and orchestrates navigation without per-screen branching.
+- Outcome: removes hardcoded per-route logic from TuiApp; enables Phase 0B focus-tree work.
+
+### Phase 0B Second: Component-Chain Keyboard (next up)
 **Document:** [phase-0b-keyboard.md](./phase-0b-keyboard.md)
 
 **Rationale:**
-- Depends on screen components from Phase 0A
+- Depends on screen components from Phase 0A, validated storyboard, and navigation refactor
 - Screen hierarchy makes focus tree clearer
 - Can reference screen types instead of mode enum
 - Benefits from simplified state management
 
-**⚠️ DO NOT start Phase 0B until Phase 0A is complete and validated.**
+**⚠️ Next:** Validate storyboard, refactor navigation per storyboard, then implement focus-tree bubbling per Phase 0B plan.
 
 ---
 
@@ -42,7 +51,7 @@ The two phases must be completed **sequentially**:
 ✅ **Navigation**
 - Forward/back navigation works correctly
 - Screen state preserved in stack
-- Modals push/pop on stack correctly
+- Modals managed via modal stack (modal-first close), screens via screen stack
 
 ✅ **Screen Components**
 - Each screen encapsulates its own logic
@@ -123,10 +132,11 @@ After implementing each task, perform manual validation:
 
 ### Phase 0B Specific Testing
 1. Test each keyboard shortcut in each screen
-2. Verify modal input capture (background shouldn't respond)
+2. Verify modal input capture (background shouldn't respond to handled keys)
 3. Test field navigation (up/down/tab)
 4. Verify focus indicators visible and correct
 5. Test unhandled keys bubble correctly (e.g., 'c' from field → screen handler)
+6. Test copy shortcut with and without modal open (modal content first, else screen)
 
 ### When Validation Fails
 1. **Document the issue**: What's broken? When does it happen?

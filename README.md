@@ -12,7 +12,7 @@ A type-safe, class-based framework for building CLI and TUI applications in Type
 - **Nested subcommands** - Hierarchical command structures with path resolution
 - **Lifecycle hooks** - `beforeExecute()` and `afterExecute()` hooks on commands
 - **Service container** - `AppContext` provides dependency injection for services
-- **Integrated logging** - Logger with TUI-aware output handling
+- **Integrated logging** - Logger with TUI-aware output handling (live log modal with global copy shortcut)
 - **Cancellation support** - AbortSignal-based cancellation for long-running commands
 - **Config validation** - `buildConfig()` hook for transforming and validating options
 
@@ -21,6 +21,10 @@ A type-safe, class-based framework for building CLI and TUI applications in Type
 ```bash
 bun add @pablozaiden/terminatui
 ```
+
+## Status
+
+- **Current focus:** Phase 0A navigation refactor completed (stack navigation, modal-first back, global shortcuts including copy-from-active-modal; live log copy uses current log history). Phase 0B (keyboard bubbling) not started yet.
 
 ## Quick Start
 

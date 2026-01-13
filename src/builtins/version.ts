@@ -1,5 +1,4 @@
 import { Command } from "../core/command.ts";
-import type { AppContext } from "../core/context.ts";
 import { colors } from "../cli/output/colors.ts";
 import type { OptionSchema } from "../types/command.ts";
 
@@ -54,7 +53,7 @@ export class VersionCommand extends Command<OptionSchema> {
     return formatVersion(this.appVersion, this.commitHash);
   }
 
-  override async execute(_ctx: AppContext): Promise<void> {
+  override async execute(): Promise<void> {
     const versionDisplay = this.getFormattedVersion();
     console.log(`${colors.bold(this.appName)} ${colors.dim(`v${versionDisplay}`)}`);
   }

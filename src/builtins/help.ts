@@ -1,5 +1,4 @@
 import { Command, type AnyCommand } from "../core/command.ts";
-import type { AppContext } from "../core/context.ts";
 import { generateCommandHelp, generateAppHelp } from "../core/help.ts";
 import type { OptionSchema } from "../types/command.ts";
 
@@ -40,7 +39,7 @@ export class HelpCommand extends Command<OptionSchema> {
     return false;
   }
 
-  override async execute(_ctx: AppContext): Promise<void> {
+  override async execute(): Promise<void> {
     let helpText: string;
 
     if (this.parentCommand) {

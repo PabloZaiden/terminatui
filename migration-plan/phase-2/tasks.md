@@ -62,42 +62,38 @@
 
 **Description:** Update modals to use Overlay semantic component.
 
-**Components:** EditorModal, CliModal
+**Components:** EditorModal, CliModal, Logs (modal)
 
 **Actions:**
 - [ ] Refactor `EditorModal.tsx`
   - [ ] Replace `<box>` with `<Overlay>`
   - [ ] Use `<TextInput>` and `<Select>` semantic components
   - [ ] Use `<Panel>` for modal container
-  - [ ] Update keyboard handler to use adapter
+  - [ ] Update keyboard handler to use adapter (consume handled keys; let unhandled bubble for globals like copy)
   - [ ] Test enum/boolean/text editing
 - [ ] Refactor `CliModal.tsx`
   - [ ] Replace `<box>` with `<Overlay>`
   - [ ] Use `<ScrollView>` for horizontal scrolling
   - [ ] Use `<Code>` for command display
-  - [ ] Update keyboard handler
+  - [ ] Update keyboard handler (same bubbling guidance)
   - [ ] Test command display and copy
+- [ ] Implement `Logs` modal using semantic Overlay + ScrollView (replaces LogsPanel)
+  - [ ] Sticky to end, colorized lines
+  - [ ] Keyboard handler: close on escape/enter/l; copy logs; let unhandled bubble
 
 **Validation:**
 - Modals overlay correctly
 - Input components work
-- Keyboard shortcuts functional
-- Modal can be dismissed
+- Keyboard shortcuts functional (modal-first, unhandled bubble)
+- Modals can be dismissed; copy works in modals
 
 ### Task 2.4: Refactor Panel Components
 
 **Description:** Update components that use scrolling and complex layouts.
 
-**Components:** LogsPanel, ResultsPanel
+**Components:** ResultsPanel (logs now modal-based)
 
 **Actions:**
-- [ ] Refactor `LogsPanel.tsx`
-  - [ ] Replace `<box>` with `<Panel>`
-  - [ ] Use `<ScrollView>` with stickyToEnd
-  - [ ] Use `<Label>` for log lines
-  - [ ] Preserve log color coding
-  - [ ] Test auto-scroll to bottom
-  - [ ] Test large log volumes
 - [ ] Refactor `ResultsPanel.tsx`
   - [ ] Replace `<box>` with `<Panel>`
   - [ ] Use `<ScrollView>` for results
@@ -108,9 +104,9 @@
 
 **Validation:**
 - Scrolling works smoothly
-- Log colors correct
 - Results display properly
 - Custom renderers work
+- Logs are handled via modal, not inline panel
 
 ### Task 2.5: Refactor Form Components
 
@@ -125,20 +121,20 @@
   - [ ] Use `<Field>` components
   - [ ] Remove ScrollBoxRenderable ref type
   - [ ] Use ScrollViewRef instead
-  - [ ] Update keyboard handler to use adapter
+  - [ ] Update keyboard handler to use adapter (bubbling, no priority flags)
   - [ ] Test field navigation
   - [ ] Test scrolling to selected field
 - [ ] Refactor `CommandSelector.tsx`
   - [ ] Replace `<box>` with `<Panel>` and `<Container>`
   - [ ] Use semantic components for command items
-  - [ ] Update keyboard handler
+  - [ ] Update keyboard handler (bubbling)
   - [ ] Test command navigation
   - [ ] Test subcommand breadcrumbs
 
 **Validation:**
 - Field navigation works
 - Scrolling keeps selected item visible
-- Keyboard shortcuts work
+- Keyboard shortcuts work with bubbling model
 - Form submission works
 
 ### Task 2.6: Refactor Main TUI Component
@@ -150,16 +146,18 @@
   - [ ] Replace all `<box>` with `<Container>`
   - [ ] Update all child component props
   - [ ] Ensure layout still correct
-  - [ ] Test all modes (CommandSelect, Config, Running, Results, Error)
-  - [ ] Test modal interactions
+  - [ ] Use navigation + modal stacks (no mode enum); screens consume params/meta
+  - [ ] Test command-select/config/running/results/error flows via nav stack
+  - [ ] Test modal interactions (logs/editor/CLI) via modal stack
   - [ ] Test focus cycling
-  - [ ] Test all keyboard shortcuts
+  - [ ] Test all keyboard shortcuts (bubbling, modal-first, copy modal-first)
 
 **Validation:**
-- All application modes work
+- All application flows work
 - Layout matches original
 - No regressions in functionality
 - Smooth transitions between states
+- Copy/back shortcuts honor modal-first behavior
 
 ### Task 2.7: Update TuiApplication Renderer Initialization
 
@@ -189,13 +187,13 @@
   - [ ] Remove direct OpenTUI imports
   - [ ] Use keyboard adapter
   - [ ] Update KeyEvent type references
-  - [ ] Test priority system still works
-  - [ ] Test modal capture
+  - [ ] Use Phase 0B focus-tree/bubbling (no priority enum)
+  - [ ] Modal capture via root focusable; unhandled keys bubble
 
 **Validation:**
 - Keyboard events work correctly
-- Priority ordering maintained
-- Stop propagation works
+- Bubbling model preserved (handled returns true)
+- Modal capture works; unhandled can reach global shortcuts (copy/back)
 
 ### Task 2.9: Update Hook Exports
 

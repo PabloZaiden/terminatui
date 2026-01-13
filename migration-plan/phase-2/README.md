@@ -24,7 +24,7 @@ Update all existing TUI components to use the new semantic component library ins
 - ✅ All 13 component files refactored
 - ✅ TuiApp.tsx using semantic components
 - ✅ TuiApplication.tsx using renderer factory
-- ✅ Keyboard handlers using keyboard adapter
+- ✅ Keyboard handlers using keyboard adapter (Phase 0B bubbling, modal-aware)
 - ✅ Full application working with semantic layer
 
 ---

@@ -1,14 +1,95 @@
 # Phase 0B: Component-Chain Keyboard Handling
 
-**Last Updated:** 2026-01-10  
-**Status:** Ready for Implementation  
-**Prerequisites:** Phase 0A must be complete
+**Last Updated:** 2026-01-12  
+**Status:** ⏸️ NOT PLANNED FOR NOW  
+**Prerequisites:** Phase 0A navigation stack and modal-first back handling completed; storyboard validated
 
 ---
 
-## Goal
+## Decision: Deferred
+
+Phase 0B has been evaluated and **deferred** as part of the Phase 0A refactoring. The current keyboard architecture is sufficient for the migration to proceed.
+
+### What Was Originally Planned
+
+Replace flat priority-based keyboard handling with component hierarchy-aware bubbling (focus tree) that mirrors the component tree structure.
+
+### What Was Actually Implemented (in Phase 0A)
+
+A simpler **stack-based active handler** model:
+
+```
+Global Handler (TuiApp)
+    ↓ (if not handled)
+Active Handler (topmost screen/modal in stack)
+```
+
+- **`useGlobalKeyHandler`**: App-wide shortcuts (Esc, Ctrl+Y, Ctrl+L) processed first
+- **`useActiveKeyHandler`**: Screen/modal registers as active handler; stack-based so modals automatically take precedence
+- **No priority conflicts**: Most recent handler wins
+- **No mode checks**: Global handler is truly global; screens handle their own logic
+
+### Why This Is Sufficient
+
+| Original Problem | Current Status |
+|------------------|----------------|
+| Mode-aware global handler with complex logic | ✅ **SOLVED** - Global handler only handles 3 shortcuts, no mode checks |
+| Priority-based conflicts | ✅ **SOLVED** - Stack model means topmost handler wins |
+| Manual focus management | ✅ **SOLVED** - Handlers auto-register via hooks |
+| No component hierarchy bubbling | ⚠️ **NOT NEEDED** - Screens are leaf nodes for keyboard; no deep nesting |
+
+### Why Bubbling Isn't Needed Now
+
+1. **Screens handle all their keys** - Each screen (CommandSelect, Config, Running, etc.) handles its own keyboard shortcuts in one place
+2. **No deeply nested keyboard components** - There are no child components within screens that need independent keyboard handling with bubbling
+3. **Modals work correctly** - Modal stack ensures modals capture keys; global shortcuts still work via the global handler
+4. **Complexity not justified** - Building a full focus tree adds significant complexity for minimal benefit
+
+### When To Revisit
+
+Consider implementing Phase 0B if:
+- Screens become complex with nested components needing independent keyboard handling
+- Reusable form components need to handle Tab/Enter while letting parent screens handle other shortcuts
+- Editor modal gets complex with multiple focusable input areas
+
+### Current Keyboard Architecture Summary
+
+```typescript
+// Global handler (TuiApp only)
+useGlobalKeyHandler((event) => {
+    if (key.name === "escape") { goBack(); return true; }
+    if (key.ctrl && key.name === "y") { copy(); return true; }
+    if (key.ctrl && key.name === "l") { toggleLogs(); return true; }
+    return false; // Let active handler process
+});
+
+// Active handler (screens/modals)
+useActiveKeyHandler((event) => {
+    // Handle screen-specific keys
+    if (event.key.name === "return") { onSelect(); return true; }
+    return false;
+}, { enabled: visible });
+```
+
+---
+
+## Original Proposal (For Reference)
+
+The following sections document the original Phase 0B proposal, preserved for future reference if this work is revisited.
+
+---
+
+## Original Goal
 
 Replace flat priority-based keyboard handling with component hierarchy-aware bubbling that mirrors the component tree structure.
+
+---
+
+## Original Proposed Solution
+
+### 1. Focus Tree Concept
+
+Each component can be **focusable** and register keyboard handlers. The focus tree reflects the component hierarchy:
 
 ---
 
@@ -107,19 +188,20 @@ useEffect(() => {
 
 ### 4. Modal Capture
 
-Modals capture all input by being the root focus node while visible:
+Modals sit on top of the modal stack and register as root-level focusables while visible. They should consume only the keys they actually handle (escape/enter/submit/etc.), and let unhandled keys bubble so global shortcuts (e.g., copy) can still work when appropriate.
 
 ```typescript
 // EditorModal.tsx
 useEffect(() => {
     if (visible) {
-        // Register as root-level focusable (parentId: null)
-        // This makes modal the root of the focus tree
-        registerFocusable('editor-modal', handler, null);
+        registerFocusable('editor-modal', handler, null); // root-level
         setFocus('editor-modal');
     }
     return () => unregisterFocusable('editor-modal');
 }, [visible]);
+
+const handled = handler.handle(event);
+// Return true only when actually handled; else false to bubble to app/global
 ```
 
 ---
@@ -184,13 +266,14 @@ useEffect(() => {
 **Actions:**
 - [ ] Remove mode-aware global keyboard handler
 - [ ] Create TuiApp-level handler (registered as root)
-- [ ] Handle app-wide shortcuts (escape to exit at root level)
+- [ ] Handle app-wide shortcuts (escape to exit at root level; copy uses currentModal→current screen data)
 - [ ] Remove `enabled` flags and mode checks
 - [ ] Simplify to only handle truly global shortcuts
 
 **Validation Checkpoint:**
 ```
 ✓ App-level shortcuts work (escape to exit at top level)
+✓ Global copy works regardless of modal visibility (modal content first, else screen)
 ✓ No mode-specific logic in TuiApp handler
 ✓ Handlers in screens receive events first
 ```
@@ -245,19 +328,17 @@ useEffect(() => {
   - [ ] Register with CommandSelectScreen as parent
 - [ ] Update EditorModal handler
   - [ ] Register as root-level (parentId: null) for capture
-  - [ ] Handle all input events
-  - [ ] Prevent bubbling to background
+  - [ ] Handle escape/enter/submit; let unhandled keys bubble (so global copy/back can run)
 - [ ] Update CliModal handler
   - [ ] Register as root-level for capture
-  - [ ] Handle escape/enter/y
-  - [ ] Prevent bubbling to background
+  - [ ] Handle escape/enter/y; let unhandled keys bubble
 
 **Validation Checkpoint:**
 ```
 ✓ Form navigation works correctly
 ✓ Field selection works
 ✓ Enter opens editor modal
-✓ Modal captures all input (no bubbling to background)
+✓ Modal captures needed keys but allows unhandled to bubble (global copy/back still work)
 ✓ Closing modal restores focus to previous component
 ✓ No duplicate handler registrations
 ```
@@ -294,10 +375,11 @@ After implementing all tasks, perform comprehensive validation:
 
 ### Keyboard Testing
 1. Test each keyboard shortcut in each screen
-2. Verify modal input capture (background shouldn't respond)
+2. Verify modal input capture (background shouldn't respond to handled keys)
 3. Test field navigation (up/down/tab)
 4. Verify focus indicators visible and correct
 5. Test unhandled keys bubble correctly (e.g., 'c' from field → screen handler)
+6. Test copy shortcut with and without modal open (modal content first, else screen)
 
 ### Focus Tree Testing
 1. Verify focus tree structure matches component hierarchy
