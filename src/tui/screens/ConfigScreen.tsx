@@ -70,13 +70,10 @@ export class ConfigScreen extends ScreenBase {
                 savePersistedParameters(appName, command.name, values);
                 
                 // Push to running screen
-                navigation.push({
-                    route: "running",
-                    params: {
-                        command,
-                        commandPath,
-                        values,
-                    },
+                navigation.push("running", {
+                    command,
+                    commandPath,
+                    values,
                 });
                 
                 // Execute the command
@@ -90,25 +87,19 @@ export class ConfigScreen extends ScreenBase {
                 
                 if (outcome.success) {
                     // Replace running with results
-                    navigation.replace({
-                        route: "results",
-                        params: {
-                            command,
-                            commandPath,
-                            values,
-                            result: outcome.result ?? null,
-                        },
+                    navigation.replace("results", {
+                        command,
+                        commandPath,
+                        values,
+                        result: outcome.result ?? null,
                     });
                 } else {
                     // Replace running with error
-                    navigation.replace({
-                        route: "error",
-                        params: {
-                            command,
-                            commandPath,
-                            values,
-                            error: outcome.error ?? new Error("Unknown error"),
-                        },
+                    navigation.replace("error", {
+                        command,
+                        commandPath,
+                        values,
+                        error: outcome.error ?? new Error("Unknown error"),
                     });
                 }
             }, [appName, command, commandPath, values, navigation, executor]);
@@ -121,10 +112,7 @@ export class ConfigScreen extends ScreenBase {
                     fieldConfigs: derivedFieldConfigs,
                     onSubmit: (value: unknown) => {
                         const nextValues = { ...values, [fieldKey]: value };
-                        navigation.replace({
-                            route: "config",
-                            params: { ...params, values: nextValues },
-                        });
+                        navigation.replace("config", { ...params, values: nextValues });
                         navigation.closeModal();
                     },
                     onCancel: () => navigation.closeModal(),

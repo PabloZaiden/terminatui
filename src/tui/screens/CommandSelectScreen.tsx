@@ -88,22 +88,16 @@ export class CommandSelectScreen extends ScreenBase {
             const handleSelect = useCallback((cmd: AnyCommand) => {
                 // If command has runnable subcommands, navigate deeper
                 if (cmd.subCommands && cmd.subCommands.some((c) => c.supportsTui())) {
-                    navigation.replace({
-                        route: "command-select",
-                        params: { commandPath: [...commandPath, cmd.name] },
-                    });
+                    navigation.replace("command-select", { commandPath: [...commandPath, cmd.name] });
                     return;
                 }
 
                 // Otherwise, push to config screen
-                navigation.push({
-                    route: "config",
-                    params: {
-                        command: cmd,
-                        commandPath: [...commandPath, cmd.name],
-                        values: initializeConfigValues(name, cmd),
-                        fieldConfigs: schemaToFieldConfigs(cmd.options),
-                    },
+                navigation.push("config", {
+                    command: cmd,
+                    commandPath: [...commandPath, cmd.name],
+                    values: initializeConfigValues(name, cmd),
+                    fieldConfigs: schemaToFieldConfigs(cmd.options),
                 });
             }, [navigation, commandPath, name]);
 
@@ -111,10 +105,7 @@ export class CommandSelectScreen extends ScreenBase {
             useBackHandler(useCallback(() => {
                 if (commandPath.length > 0) {
                     // Go up one level
-                    navigation.replace({
-                        route: "command-select",
-                        params: { commandPath: commandPath.slice(0, -1) },
-                    });
+                    navigation.replace("command-select", { commandPath: commandPath.slice(0, -1) });
                     return true; // We handled it
                 }
                 // At root - let navigation call onExit
