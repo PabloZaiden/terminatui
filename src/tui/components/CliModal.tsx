@@ -1,5 +1,7 @@
 import { Theme } from "../theme.ts";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
+import { Container } from "../semantic/Container.tsx";
+import { ScrollView } from "../semantic/ScrollView.tsx";
 import { ModalBase } from "./ModalBase.tsx";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 
@@ -48,11 +50,13 @@ export function CliModal({
 
     return (
         <ModalBase title="CLI Command" width="80%" height={10} top={4} left={4}>
-            <scrollbox scrollX={true} height={3}>
-                <text fg={Theme.value}>
-                    {command}
-                </text>
-            </scrollbox>
+            <ScrollView axis="horizontal" height={3}>
+                <Container>
+                    <text fg={Theme.value}>
+                        {command}
+                    </text>
+                </Container>
+            </ScrollView>
 
             <text fg={Theme.statusText}>
                 Enter or Esc to close

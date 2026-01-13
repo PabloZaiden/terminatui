@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { Theme } from "../theme.ts";
 import type { CommandResult } from "../../core/command.ts";
+import { Container } from "../semantic/Container.tsx";
+import { Panel } from "../semantic/Panel.tsx";
+import { ScrollView } from "../semantic/ScrollView.tsx";
 
 interface ResultsPanelProps {
     /** The result to display */
@@ -22,21 +25,20 @@ export function ResultsPanel({
     focused,
     renderResult,
 }: ResultsPanelProps) {
-    const borderColor = focused ? Theme.borderFocused : Theme.border;
 
     // Determine content to display
     let content: ReactNode;
 
     if (error) {
         content = (
-            <box flexDirection="column" gap={1}>
+            <Container flexDirection="column" gap={1}>
                 <text fg={Theme.error}>
                     <strong>Error</strong>
                 </text>
                 <text fg={Theme.error}>
                     {error.message}
                 </text>
-            </box>
+            </Container>
         );
     } else if (result) {
         if (renderResult) {
@@ -55,7 +57,7 @@ export function ResultsPanel({
         } else {
             // Default JSON display
             content = (
-                <box flexDirection="column" gap={1}>
+            <Container flexDirection="column" gap={1}>
                     {result.message && (
                         <text fg={result.success ? Theme.success : Theme.error}>
                             {result.message}
@@ -66,7 +68,7 @@ export function ResultsPanel({
                             {JSON.stringify(result.data, null, 2)}
                         </text>
                     )}
-                </box>
+            </Container>
             );
         }
     } else {
@@ -76,18 +78,18 @@ export function ResultsPanel({
     }
 
     return (
-        <box
-            flexDirection="column"
-            border={true}
-            borderStyle="rounded"
-            borderColor={borderColor}
+        <Panel
             title="Results"
+            focused={focused}
+            flex={1}
             padding={1}
-            flexGrow={1}
+            flexDirection="column"
         >
-            <scrollbox scrollY={true} flexGrow={1} focused={focused}>
-                {content}
-            </scrollbox>
-        </box>
+            <ScrollView axis="vertical" flex={1} focused={focused}>
+                <Container flexDirection="column">
+                    {content}
+                </Container>
+            </ScrollView>
+        </Panel>
     );
 }

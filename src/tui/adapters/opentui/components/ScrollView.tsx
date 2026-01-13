@@ -54,8 +54,11 @@ export function ScrollView({
             onScrollRef(imperativeApi);
         }
 
-        const scrollY = axis === "vertical" || axis === "both";
-        const scrollX = axis === "horizontal" || axis === "both";
+    const scrollY = axis === "vertical" || axis === "both";
+    const scrollX = axis === "horizontal" || axis === "both";
+
+    const resolvedStickyToEnd = stickyToEnd ? true : undefined;
+
 
         return (
             <scrollbox
@@ -63,7 +66,7 @@ export function ScrollView({
                 scrollY={scrollY}
                 scrollX={scrollX}
                 focused={focused}
-                {...({ stickyToEnd } as any)}
+                {...({ stickyToEnd: resolvedStickyToEnd } as any)}
                 flexGrow={flex}
                 width={width as any}
                 height={height as any}

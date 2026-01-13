@@ -1,4 +1,6 @@
 import { useCallback } from "react";
+import { Container } from "../semantic/Container.tsx";
+import { ScrollView } from "../semantic/ScrollView.tsx";
 import { Theme } from "../theme.ts";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
@@ -50,14 +52,8 @@ export function LogsModal({
 
     return (
         <ModalBase title={title} top={4} bottom={4} left={4} right={4}>
-            <scrollbox
-                scrollY={true}
-                flexGrow={1}
-                stickyScroll={true}
-                stickyStart="bottom"
-                focused={true}
-            >
-                <box flexDirection="column" gap={0}>
+            <ScrollView axis="vertical" flex={1} stickyToEnd={true} focused={true}>
+                <Container flexDirection="column" gap={0}>
                     {logs.map((log, idx) => {
                         const color = LogColors[log.level] ?? Theme.statusText;
                         const sanitized = Bun.stripANSI(log.message).trim();
@@ -72,8 +68,8 @@ export function LogsModal({
                     {logs.length === 0 && (
                         <text fg={Theme.label}>No logs yet...</text>
                     )}
-                </box>
-            </scrollbox>
+                </Container>
+            </ScrollView>
         </ModalBase>
     );
 }
