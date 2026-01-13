@@ -49,8 +49,8 @@ Contains:
 
 **Approach:** 
 0. **Phase 0 (Architecture):** Fix navigation and keyboard handling
-   - 0A: Stack-based navigation
-   - 0B: Component-chain keyboard bubbling
+   - 0A: Stack-based navigation ✅
+   - 0B: Component-chain keyboard bubbling ⏸️ (deferred - current stack-based model sufficient)
 1. Build semantic components (Panel, Field, ScrollView, etc.)
 2. Implement OpenTUI adapter for semantic components
 3. Refactor existing code to use semantic layer
@@ -69,7 +69,7 @@ Contains:
 | Phase | Goal | Status |
 |-------|------|--------|
 | **Phase 0A** | Stack-based navigation (architecture improvement) | ✅ Complete |
-| **Phase 0B** | Component-chain keyboard handling (architecture improvement) | Not Started |
+| **Phase 0B** | Component-chain keyboard handling (architecture improvement) | ⏸️ Deferred (not needed) |
 | **Phase 1** | Create semantic component library (OpenTUI impl) | Not Started |
 | **Phase 2** | Refactor existing components to use semantic layer | Not Started |
 | **Phase 3** | Implement Ink adapter | Not Started |
@@ -123,11 +123,9 @@ Each component abstracts rendering details so adapters can implement them differ
 
 **Next Steps:**
 1. **Manual testing** to verify all flows work correctly
-2. **Complete Phase 0B: Component-chain keyboard handling** ([tasks](./phase-0/phase-0b-keyboard.md))
-3. Review and approve rendering migration evaluation
-4. Begin Phase 1 implementation ([tasks](./phase-1/tasks.md))
+2. Begin Phase 1 implementation ([tasks](./phase-1/tasks.md))
 
-**Current Focus:** [Phase 0B - Component-Chain Keyboard Handling](./phase-0/phase-0b-keyboard.md)
+**Current Focus:** [Phase 1 - Semantic Component Library](./phase-1/README.md)
 
 ## 🔍 Key Documents to Read (In Order)
 

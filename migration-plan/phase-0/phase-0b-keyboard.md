@@ -1,14 +1,95 @@
 # Phase 0B: Component-Chain Keyboard Handling
 
-**Last Updated:** 2026-01-10  
-**Status:** Ready for Implementation  
+**Last Updated:** 2026-01-12  
+**Status:** ⏸️ NOT PLANNED FOR NOW  
 **Prerequisites:** Phase 0A navigation stack and modal-first back handling completed; storyboard validated
 
 ---
 
-## Goal
+## Decision: Deferred
+
+Phase 0B has been evaluated and **deferred** as part of the Phase 0A refactoring. The current keyboard architecture is sufficient for the migration to proceed.
+
+### What Was Originally Planned
+
+Replace flat priority-based keyboard handling with component hierarchy-aware bubbling (focus tree) that mirrors the component tree structure.
+
+### What Was Actually Implemented (in Phase 0A)
+
+A simpler **stack-based active handler** model:
+
+```
+Global Handler (TuiApp)
+    ↓ (if not handled)
+Active Handler (topmost screen/modal in stack)
+```
+
+- **`useGlobalKeyHandler`**: App-wide shortcuts (Esc, Ctrl+Y, Ctrl+L) processed first
+- **`useActiveKeyHandler`**: Screen/modal registers as active handler; stack-based so modals automatically take precedence
+- **No priority conflicts**: Most recent handler wins
+- **No mode checks**: Global handler is truly global; screens handle their own logic
+
+### Why This Is Sufficient
+
+| Original Problem | Current Status |
+|------------------|----------------|
+| Mode-aware global handler with complex logic | ✅ **SOLVED** - Global handler only handles 3 shortcuts, no mode checks |
+| Priority-based conflicts | ✅ **SOLVED** - Stack model means topmost handler wins |
+| Manual focus management | ✅ **SOLVED** - Handlers auto-register via hooks |
+| No component hierarchy bubbling | ⚠️ **NOT NEEDED** - Screens are leaf nodes for keyboard; no deep nesting |
+
+### Why Bubbling Isn't Needed Now
+
+1. **Screens handle all their keys** - Each screen (CommandSelect, Config, Running, etc.) handles its own keyboard shortcuts in one place
+2. **No deeply nested keyboard components** - There are no child components within screens that need independent keyboard handling with bubbling
+3. **Modals work correctly** - Modal stack ensures modals capture keys; global shortcuts still work via the global handler
+4. **Complexity not justified** - Building a full focus tree adds significant complexity for minimal benefit
+
+### When To Revisit
+
+Consider implementing Phase 0B if:
+- Screens become complex with nested components needing independent keyboard handling
+- Reusable form components need to handle Tab/Enter while letting parent screens handle other shortcuts
+- Editor modal gets complex with multiple focusable input areas
+
+### Current Keyboard Architecture Summary
+
+```typescript
+// Global handler (TuiApp only)
+useGlobalKeyHandler((event) => {
+    if (key.name === "escape") { goBack(); return true; }
+    if (key.ctrl && key.name === "y") { copy(); return true; }
+    if (key.ctrl && key.name === "l") { toggleLogs(); return true; }
+    return false; // Let active handler process
+});
+
+// Active handler (screens/modals)
+useActiveKeyHandler((event) => {
+    // Handle screen-specific keys
+    if (event.key.name === "return") { onSelect(); return true; }
+    return false;
+}, { enabled: visible });
+```
+
+---
+
+## Original Proposal (For Reference)
+
+The following sections document the original Phase 0B proposal, preserved for future reference if this work is revisited.
+
+---
+
+## Original Goal
 
 Replace flat priority-based keyboard handling with component hierarchy-aware bubbling that mirrors the component tree structure.
+
+---
+
+## Original Proposed Solution
+
+### 1. Focus Tree Concept
+
+Each component can be **focusable** and register keyboard handlers. The focus tree reflects the component hierarchy:
 
 ---
 
