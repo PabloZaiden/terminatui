@@ -107,9 +107,9 @@ pop(); // That's it!
 
 **Opening a modal (stacked allowed):**
 ```typescript
-openModal({ id: 'editor', params: { field: fieldName, value: currentValue } });
+openModal<EditorModalParams>({ id: 'editor', params: { field: fieldName, value: currentValue } });
 // Another modal on top (e.g., logs over editor)
-openModal({ id: 'logs', params: { source: 'app' } });
+openModal<LogsModalParams>({ id: 'logs', params: { source: 'app' } });
 // Back/escape closes logs first, then editor, then screens
 ```
 
