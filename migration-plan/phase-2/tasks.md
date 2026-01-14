@@ -9,7 +9,7 @@
 - Keyboard handlers using keyboard adapter
 - Full application working with semantic layer
 
-### Task 2.1: Refactor Simple Components
+### Task 2.1: Refactor Simple Components (Mostly Done)
 
 **Description:** Start with components that have no dependencies on other components.
 
@@ -26,12 +26,12 @@
   - [ ] Replace `<text>` with `<Button>` semantic component
   - [ ] Use semantic colors for selection state
   - [ ] Test button interaction
-- [ ] Refactor `Header.tsx`
+- [x] Refactor `Header.tsx`
   - [ ] Replace `<box>` with `<Container>`
   - [ ] Replace `<text>` with `<Label>`
   - [ ] Use semantic layout props
   - [ ] Test breadcrumb rendering
-- [ ] Refactor `StatusBar.tsx`
+- [x] Refactor `StatusBar.tsx`
   - [ ] Replace `<box>` with `<Container>` and `<Panel>`
   - [ ] Replace `<text>` with `<Label>`
   - [ ] Update spinner integration
@@ -124,7 +124,7 @@
   - [ ] Update keyboard handler to use adapter (stack-based, no priority flags)
   - [ ] Test field navigation
   - [ ] Test scrolling to selected field
-- [ ] Refactor `CommandSelector.tsx`
+- [x] Refactor `CommandSelector.tsx`
   - [ ] Replace `<box>` with `<Panel>` and `<Container>`
   - [ ] Use semantic components for command items
   - [ ] Update keyboard handler (stack-based)

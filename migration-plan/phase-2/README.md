@@ -1,6 +1,6 @@
 # Phase 2: Refactor Existing Components to Use Semantic Layer
 
-**Last Updated:** 2026-01-10  
+**Last Updated:** 2026-01-14  
 **Prerequisites:** Phase 1 must be complete
 
 ---
@@ -21,11 +21,14 @@ Update all existing TUI components to use the new semantic component library ins
 
 ## Deliverables
 
-- ✅ All 13 component files refactored
-- ✅ TuiApp.tsx using semantic components
-- ✅ TuiApplication.tsx using renderer factory
-- ✅ Keyboard handlers using keyboard adapter (Phase 0B bubbling, modal-aware)
-- ✅ Full application working with semantic layer
+- ✅ Semantic component layer in use throughout core UI
+- ✅ TuiApp.tsx uses semantic layer for Header/StatusBar/CommandSelector, etc.
+- ✅ Modals render without dimming the whole screen
+- ✅ Status bar text no longer corrupts (removed control characters)
+- ✅ Global background is painted explicitly at root
+- ✅ OpenTUI adapter uses direction-specific padding props
+- ✅ StatusBar stabilized (fixed height) to avoid "falling" during editor modal open
+- ✅ Full application working with semantic layer (OpenTUI renderer)
 
 ---
 
@@ -47,16 +50,28 @@ Complete task breakdown with checklists:
 
 ---
 
+## Phase 2 Remaining Work
+
+Most of Phase 2 is complete. What’s typically left before moving to Phase 3:
+
+- Reduce remaining raw OpenTUI primitive usage in app/components (currently still used for a small amount of layout glue where semantic equivalents are missing).
+- Migrate any remaining components still using raw `<box>/<text>`.
+- Do a final parity sweep across screens:
+  - command selection
+  - config form (including editor modal)
+  - results view
+  - logs modal / CLI modal
+- Confirm `bun run build` and `bun run test` pass.
+
 ## Phase 2 Completion Checklist
 
 Before proceeding to Phase 3, verify:
 
-✅ All 11 tasks completed  
-✅ All components refactored  
-✅ No direct OpenTUI primitives used  
-✅ Application works identically to before  
-✅ No visual regressions  
-✅ No performance regressions  
+✅ Application runs via semantic layer  
+✅ OpenTUI usage is isolated to the adapter  
+✅ Visual parity acceptable (no major layout glitches)  
+✅ Modals behave correctly (no fullscreen dim regression)  
+✅ Status bar stable and readable  
 ✅ Tests passing  
 ✅ Build succeeds  
 
