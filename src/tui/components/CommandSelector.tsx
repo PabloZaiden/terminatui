@@ -1,6 +1,6 @@
-import { Theme } from "../theme.ts";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import type { Command } from "../../core/command.ts";
+import { Theme } from "../theme.ts";
 import { MenuItem } from "../semantic/MenuItem.tsx";
 
 interface CommandItem {
@@ -92,7 +92,6 @@ export function CommandSelector({
                         const label = item.label ?? item.command.displayName ?? item.command.name;
                         const description = item.description ?? item.command.description;
 
-                        // Show mode indicators
                         const modeIndicator = getModeIndicator(item.command);
 
                         return (
@@ -110,7 +109,7 @@ export function CommandSelector({
             </box>
 
             <text fg={Theme.label}>
-                ↑↓ Navigate • Enter Select • Esc {breadcrumb?.length ? "Back" : "Exit"}
+                ↑/↓ Navigate • Enter Select • Esc {breadcrumb?.length ? "Back" : "Exit"}
             </text>
         </box>
     );

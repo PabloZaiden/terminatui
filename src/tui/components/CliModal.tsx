@@ -1,9 +1,10 @@
-import { Theme } from "../theme.ts";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { Container } from "../semantic/Container.tsx";
 import { ScrollView } from "../semantic/ScrollView.tsx";
 import { ModalBase } from "./ModalBase.tsx";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
+import { Label } from "../semantic/Label.tsx";
+import { Value } from "../semantic/Value.tsx";
 
 export interface CliModalParams {
     command: string;
@@ -52,15 +53,11 @@ export function CliModal({
         <ModalBase title="CLI Command" width="80%" height={10} top={4} left={4}>
             <ScrollView axis="horizontal" height={3}>
                 <Container>
-                    <text fg={Theme.value}>
-                        {command}
-                    </text>
+                    <Value>{command}</Value>
                 </Container>
             </ScrollView>
 
-            <text fg={Theme.statusText}>
-                Enter or Esc to close
-            </text>
+            <Label color="mutedText">Enter or Esc to close</Label>
         </ModalBase>
     );
 }

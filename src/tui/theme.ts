@@ -5,11 +5,12 @@
  * (e.g. "error", "mutedText", "selectionBackground") rather than hardcoding colors.
  */
 const semanticColors = {
-    background: "#0b0c10",
-    panelBackground: "#0b0c10",
+    background: "#0f1117",
+    panelBackground: "#0f1117",
+    overlay: "#101218",
 
     text: "#d6dde6",
-    mutedText: "#a8b3c1",
+    mutedText: "#666666",
     inverseText: "#0b0c10",
     
     border: "#2c2f36",
@@ -49,7 +50,7 @@ export const Theme = {
     actionButton: semanticColors.primary,
     header: semanticColors.mutedText,
     statusText: semanticColors.text,
-    overlay: semanticColors.panelBackground,
+    overlay: semanticColors.overlay,
     overlayTitle: semanticColors.warning,
     error: semanticColors.error,
     success: semanticColors.success,

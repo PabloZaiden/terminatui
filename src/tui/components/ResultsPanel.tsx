@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
-import { Theme } from "../theme.ts";
 import type { CommandResult } from "../../core/command.ts";
 import { Container } from "../semantic/Container.tsx";
 import { Panel } from "../semantic/Panel.tsx";
 import { ScrollView } from "../semantic/ScrollView.tsx";
+import { Label } from "../semantic/Label.tsx";
+import { Value } from "../semantic/Value.tsx";
 
 interface ResultsPanelProps {
     /** The result to display */
@@ -32,12 +33,10 @@ export function ResultsPanel({
     if (error) {
         content = (
             <Container flexDirection="column" gap={1}>
-                <text fg={Theme.error}>
-                    <strong>Error</strong>
-                </text>
-                <text fg={Theme.error}>
-                    {error.message}
-                </text>
+                <Label color="error" bold>
+                    Error
+                </Label>
+                <Label color="error">{error.message}</Label>
             </Container>
         );
     } else if (result) {
@@ -46,35 +45,25 @@ export function ResultsPanel({
 
             if (typeof customContent === "string" || typeof customContent === "number" || typeof customContent === "boolean") {
                 // Wrap primitive results so the renderer gets a text node
-                content = (
-                    <text fg={Theme.value}>
-                        {String(customContent)}
-                    </text>
-                );
+                content = <Value>{String(customContent)}</Value>;
             } else {
                 content = customContent as ReactNode;
             }
         } else {
             // Default JSON display
             content = (
-            <Container flexDirection="column" gap={1}>
+                <Container flexDirection="column" gap={1}>
                     {result.message && (
-                        <text fg={result.success ? Theme.success : Theme.error}>
-                            {result.message}
-                        </text>
+                        <Label color={result.success ? "success" : "error"}>{result.message}</Label>
                     )}
                     {result.data !== undefined && result.data !== null && (
-                        <text fg={Theme.value}>
-                            {JSON.stringify(result.data, null, 2)}
-                        </text>
+                        <Value>{JSON.stringify(result.data, null, 2)}</Value>
                     )}
-            </Container>
+                </Container>
             );
         }
     } else {
-        content = (
-            <text fg={Theme.label}>No results yet...</text>
-        );
+        content = <Label color="mutedText">No results yet...</Label>;
     }
 
     return (

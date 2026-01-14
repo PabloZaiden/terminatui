@@ -9,6 +9,8 @@ import { TuiAppContextProvider, useTuiApp } from "./context/TuiAppContext.tsx";
 import { ExecutorProvider, useExecutor } from "./context/ExecutorContext.tsx";
 import { Header } from "./components/Header.tsx";
 import { StatusBar } from "./components/StatusBar.tsx";
+import { Container } from "./semantic/Container.tsx";
+import { Theme } from "./theme.ts";
 import { getScreen, getModal, registerAllModals, registerAllScreens } from "./registry.tsx";
 import { CommandSelectScreen, type CommandSelectParams } from "./screens/CommandSelectScreen.tsx";
 
@@ -104,33 +106,34 @@ function TuiAppContent() {
     const breadcrumb = params?.commandPath;
 
     return (
-        <box flexDirection="column" flexGrow={1} padding={1}>
-            <Header name={displayName ?? name} version={version} breadcrumb={breadcrumb} />
+        <box flexDirection="column" flexGrow={1} padding={1} backgroundColor={Theme.colors.background}>
+            <Container flexDirection="column" flex={1}>
+                <Header name={displayName ?? name} version={version} breadcrumb={breadcrumb} />
 
-            <box flexDirection="column" flexGrow={1}>
+            <Container flexDirection="column" flex={1}>
                 {ScreenComponent ? <ScreenComponent /> : null}
-            </box>
+            </Container>
 
             <StatusBar
-                status={lastAction ?? (executor.isExecuting ? "Executing..." : "Ready")}
+                status={lastAction || (executor.isExecuting ? "Executing..." : "Ready")}
                 isRunning={executor.isExecuting}
-                shortcuts="Esc Back • Ctrl + Y Copy • Ctrl + L Logs"
+                shortcuts="Esc Back • Ctrl+Y Copy • Ctrl+L Logs"
             />
 
             {/* Render modals from registry */}
-             {navigation.modalStack.map((modal, idx) => {
-                 const ModalComponent = getModal(modal.id);
-                 if (!ModalComponent) return null;
+            {navigation.modalStack.map((modal, idx) => {
+                const ModalComponent = getModal(modal.id);
+                if (!ModalComponent) return null;
 
-                 return (
-                     <ModalComponent
-                         key={`modal-${modal.id}-${idx}`}
-                         params={modal.params}
-                         onClose={() => navigation.closeModal()}
-                     />
-                 );
-             })}
-
+                return (
+                    <ModalComponent
+                        key={`modal-${modal.id}-${idx}`}
+                        params={modal.params}
+                        onClose={() => navigation.closeModal()}
+                    />
+                );
+            })}
+            </Container>
         </box>
     );
 }

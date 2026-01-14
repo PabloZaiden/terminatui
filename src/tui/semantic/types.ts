@@ -53,10 +53,13 @@ export interface LayoutProps {
     padding?: number | Spacing;
 }
 
+export type PanelSurface = "panel" | "overlay";
+
 export interface PanelProps extends LayoutProps {
     title?: string;
     focused?: boolean;
     border?: boolean;
+    surface?: PanelSurface;
     children?: ReactNode;
 }
 

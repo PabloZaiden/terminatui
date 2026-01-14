@@ -1,4 +1,5 @@
-import { Theme } from "../theme.ts";
+import { Container } from "../semantic/Container.tsx";
+import { Label } from "../semantic/Label.tsx";
 
 interface HeaderProps {
     /** Application name */
@@ -13,19 +14,15 @@ interface HeaderProps {
  * Application header with name, version, and optional breadcrumb.
  */
 export function Header({ name, version, breadcrumb }: HeaderProps) {
-    const breadcrumbStr = breadcrumb?.length 
-        ? ` › ${breadcrumb.join(" › ")}`
-        : "";
+    const breadcrumbStr = breadcrumb?.length ? ` › ${breadcrumb.join(" › ")}` : "";
 
     return (
-        <box flexDirection="row" justifyContent="space-between" marginBottom={1}>
-            <text fg={Theme.header}>
-                <strong>{name}</strong>
+        <Container flexDirection="row" justifyContent="space-between" padding={{ bottom: 1 }}>
+            <Label color="mutedText" bold>
+                {name}
                 {breadcrumbStr}
-            </text>
-            <text fg={Theme.label}>
-                v{version}
-            </text>
-        </box>
+            </Label>
+            <Label color="mutedText">v{version}</Label>
+        </Container>
     );
 }

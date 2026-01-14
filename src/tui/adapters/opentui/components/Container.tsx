@@ -32,6 +32,7 @@ export function Container({
     return (
         <box
             flexGrow={flex}
+            flexShrink={flex === undefined ? undefined : 1}
             width={width as any}
             height={height as any}
             flexDirection={flexDirection as any}

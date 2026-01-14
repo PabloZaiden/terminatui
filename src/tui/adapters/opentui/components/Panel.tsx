@@ -23,6 +23,7 @@ export function Panel({
     title,
     focused,
     border = true,
+    surface = "panel",
     children,
     flex,
     width,
@@ -33,11 +34,18 @@ export function Panel({
     gap,
     padding,
 }: PanelProps & { children?: ReactNode }) {
+    const backgroundColor = surface === "overlay" ? Theme.overlay : Theme.colors.panelBackground;
+
+    // Match the old modal implementation:
+    // - modal borders were always `Theme.overlayTitle`
+    // - typical panels use focused/unfocused border colors
+    const borderColor = surface === "overlay" ? Theme.overlayTitle : focused ? Theme.borderFocused : Theme.border;
+
     return (
         <box
             border={border}
             borderStyle={border ? "rounded" : undefined}
-            borderColor={focused ? Theme.borderFocused : Theme.border}
+            borderColor={borderColor}
             title={title}
             padding={normalizePadding(padding)}
             flexGrow={flex}
@@ -47,7 +55,7 @@ export function Panel({
             alignItems={alignItems as any}
             justifyContent={justifyContent as any}
             gap={gap}
-            backgroundColor={Theme.colors.panelBackground}
+            backgroundColor={backgroundColor}
         >
             {children}
         </box>

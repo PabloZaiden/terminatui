@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 import { Container } from "../semantic/Container.tsx";
 import { ScrollView } from "../semantic/ScrollView.tsx";
-import { Theme } from "../theme.ts";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
+import { Label } from "../semantic/Label.tsx";
 import { LogColors } from "./logColors.ts";
 import { ModalBase } from "./ModalBase.tsx";
 import { useLogs } from "../context/LogsContext.tsx";
@@ -55,18 +55,18 @@ export function LogsModal({
             <ScrollView axis="vertical" flex={1} stickyToEnd={true} focused={true}>
                 <Container flexDirection="column" gap={0}>
                     {logs.map((log, idx) => {
-                        const color = LogColors[log.level] ?? Theme.statusText;
+                        const color = LogColors[log.level] ?? "#ffffff";
                         const sanitized = Bun.stripANSI(log.message).trim();
 
                         return (
-                            <text key={`${log.timestamp.getTime()}-${idx}`} fg={color}>
-                                {sanitized}
-                            </text>
+                            <Label key={`${log.timestamp.getTime()}-${idx}`}>
+                                <span fg={color}>{sanitized}</span>
+                            </Label>
                         );
                     })}
 
                     {logs.length === 0 && (
-                        <text fg={Theme.label}>No logs yet...</text>
+                        <Label color="mutedText">No logs yet...</Label>
                     )}
                 </Container>
             </ScrollView>

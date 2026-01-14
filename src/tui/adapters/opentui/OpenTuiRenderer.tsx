@@ -5,14 +5,19 @@ import { Theme } from "../../theme.ts";
 import type { Renderer, RendererConfig } from "../types.ts";
 import { useOpenTuiKeyboardAdapter } from "./keyboard.ts";
 import { Button } from "./components/Button.tsx";
+import { Code } from "./components/Code.tsx";
+import { CodeHighlight } from "./components/CodeHighlight.tsx";
 import { Container } from "./components/Container.tsx";
 import { Field } from "./components/Field.tsx";
+import { Label } from "./components/Label.tsx";
 import { MenuButton } from "./components/MenuButton.tsx";
 import { MenuItem } from "./components/MenuItem.tsx";
+import { Overlay } from "./components/Overlay.tsx";
 import { Panel } from "./components/Panel.tsx";
 import { ScrollView as OpenTuiScrollView } from "./components/ScrollView.tsx";
 import { Select } from "./components/Select.tsx";
 import { TextInput } from "./components/TextInput.tsx";
+import { Value } from "./components/Value.tsx";
 
 export class OpenTuiRenderer implements Renderer {
     private renderer: CliRenderer | null = null;
@@ -31,6 +36,13 @@ export class OpenTuiRenderer implements Renderer {
         Container,
         Panel,
         ScrollView: OpenTuiScrollView,
+
+        Overlay,
+        Label,
+        Value,
+        Code,
+        CodeHighlight,
+
         Select,
         TextInput,
     };

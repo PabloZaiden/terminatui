@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Theme } from "../theme.ts";
 import type { FieldConfig } from "./types.ts";
 import { ModalBase } from "./ModalBase.tsx";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { Select } from "../semantic/Select.tsx";
 import { TextInput } from "../semantic/TextInput.tsx";
+import { Label } from "../semantic/Label.tsx";
 
 export interface EditorModalParams {
     fieldKey: string;
@@ -138,9 +138,7 @@ export function EditorModal({
                 />
             )}
 
-            <text fg={Theme.statusText}>
-                Enter to save, Esc to cancel
-            </text>
+            <Label color="mutedText">Enter to save, Esc to cancel</Label>
         </ModalBase>
     );
 }

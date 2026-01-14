@@ -1,6 +1,8 @@
+import type { ReactNode } from "react";
 import { Command, type CommandResult } from "../../../src/core/command";
 import { AppContext } from "../../../src/core/context";
 import type { OptionSchema, OptionValues } from "../../../src/types/command";
+import { JsonHighlight } from "../../../src/tui/components/JsonHighlight.tsx";
 
 const greetOptions = {
     name: {
@@ -49,9 +51,13 @@ export class GreetCommand extends Command<typeof greetOptions> {
         AppContext.current.logger.info(greeting);
         return {
             success: true,
-            data: { greeting, timestamp: new Date().toISOString() },
+            data: { greeting, timestamp: new Date().toISOString(), meta: { loud: opts.loud, times: opts.times } },
             message: greeting,
         };
+    }
+
+    override renderResult(result: CommandResult): ReactNode {
+        return JsonHighlight({ value: result.data });
     }
 
     override getClipboardContent(result: CommandResult): string | undefined {
