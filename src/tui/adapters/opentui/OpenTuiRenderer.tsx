@@ -1,6 +1,6 @@
 import { createCliRenderer, type CliRenderer } from "@opentui/core";
 import { createRoot, type Root } from "@opentui/react";
-import type { ReactNode } from "react";
+import { useLayoutEffect, type ReactNode } from "react";
 import { Theme } from "../../theme.ts";
 import type { Renderer, RendererConfig } from "../types.ts";
 import { useOpenTuiKeyboardAdapter } from "./keyboard.ts";
@@ -24,9 +24,15 @@ export class OpenTuiRenderer implements Renderer {
     private renderer: CliRenderer | null = null;
     private root: Root | null = null;
 
+    private activeKeyboardAdapter: Renderer["keyboard"] | null = null;
+
     public keyboard: Renderer["keyboard"] = {
-        setActiveHandler: () => () => {},
-        setGlobalHandler: () => () => {},
+        setActiveHandler: (id, handler) => {
+            return this.activeKeyboardAdapter?.setActiveHandler(id, handler) ?? (() => {});
+        },
+        setGlobalHandler: (handler) => {
+            return this.activeKeyboardAdapter?.setGlobalHandler(handler) ?? (() => {});
+        },
     };
 
     public components: Renderer["components"] = {
@@ -73,7 +79,7 @@ export class OpenTuiRenderer implements Renderer {
         this.root.render(
             <KeyboardBridge
                 onReady={(keyboard) => {
-                    this.keyboard = keyboard;
+                    this.activeKeyboardAdapter = keyboard;
                 }}
             >
                 {node}
@@ -98,6 +104,10 @@ function KeyboardBridge({
     onReady: (keyboard: ReturnType<typeof useOpenTuiKeyboardAdapter>) => void;
 }) {
     const keyboard = useOpenTuiKeyboardAdapter();
-    onReady(keyboard);
+
+    useLayoutEffect(() => {
+        onReady(keyboard);
+    }, [onReady, keyboard]);
+
     return <>{children}</>;
 }

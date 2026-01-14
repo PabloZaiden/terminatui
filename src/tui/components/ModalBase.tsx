@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Panel } from "../semantic/Panel.tsx";
 import { Container } from "../semantic/Container.tsx";
-import { Label } from "../semantic/Label.tsx";
 import { Overlay } from "../semantic/Overlay.tsx";
 
 type Dim = number | `${number}%` | "auto";
