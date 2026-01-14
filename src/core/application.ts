@@ -13,6 +13,7 @@ import {
 import { parseArgs, type ParseArgsConfig } from "util";
 import { createVersionCommand } from "../builtins/version.ts";
 import { createHelpCommandForParent, createRootHelpCommand } from "../builtins/help.ts";
+import { KNOWN_COMMANDS, RESERVED_TOP_LEVEL_COMMAND_NAMES } from "./knownCommands.ts";
 
 /**
  * Global options available on all commands.
@@ -112,6 +113,8 @@ export class Application {
    * Register commands and inject help subcommands.
    */
   private registerCommands(commands: AnyCommand[]): void {
+    this.assertNoReservedCommands(commands);
+
     // Register version command at top level
     this.registry.register(createVersionCommand(this.name, this.version, this.commitHash));
 
@@ -123,6 +126,33 @@ export class Application {
 
     // Register root help command
     this.registry.register(createRootHelpCommand(commands, this.name, this.version));
+  }
+
+  private assertNoReservedCommands(commands: AnyCommand[]): void {
+    for (const command of commands) {
+      this.assertNoReservedCommand(command, []);
+    }
+  }
+
+  private assertNoReservedCommand(command: AnyCommand, path: string[]): void {
+    if (RESERVED_TOP_LEVEL_COMMAND_NAMES.has(command.name as never)) {
+      throw new Error(
+        `Command name '${command.name}' is reserved by Terminatui and cannot be registered`
+      );
+    }
+
+    if (command.subCommands) {
+      for (const subCommand of command.subCommands) {
+        if (subCommand.name === KNOWN_COMMANDS.help) {
+          const commandPath = [...path, command.name].join(" ");
+          throw new Error(
+            `Subcommand name '${KNOWN_COMMANDS.help}' is reserved and is automatically injected (found under '${commandPath}')`
+          );
+        }
+
+        this.assertNoReservedCommand(subCommand, [...path, command.name]);
+      }
+    }
   }
 
   /**
@@ -141,11 +171,12 @@ export class Application {
     command.subCommands.push(helpCmd);
 
     // Recursively inject into subcommands
-    for (const subCommand of command.subCommands) {
-      if (subCommand.name !== "help") {
-        this.injectHelpCommand(subCommand);
+      for (const subCommand of command.subCommands) {
+        if (subCommand.name !== KNOWN_COMMANDS.help) {
+          this.injectHelpCommand(subCommand);
+        }
       }
-    }
+
   }
 
   /**
@@ -196,7 +227,7 @@ export class Application {
       }
 
       // Check for unknown command in path
-      if (remainingPath.length > 0 && remainingPath[0] !== "help") {
+      if (remainingPath.length > 0 && remainingPath[0] !== KNOWN_COMMANDS.help) {
         AppContext.current.logger.error(`Unknown command: ${remainingPath.join(" ")}`);
         process.exitCode = 1;
         return;

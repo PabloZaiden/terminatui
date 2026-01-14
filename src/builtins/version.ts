@@ -32,6 +32,7 @@ function formatVersion(version: string, commitHash?: string): string {
 export class VersionCommand extends Command<OptionSchema> {
   readonly name = "version";
   readonly description = "Show version information";
+  override readonly tuiHidden = true;
   readonly options = {} as const;
   readonly aliases = ["--version", "-v"];
 

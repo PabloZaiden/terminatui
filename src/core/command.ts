@@ -140,6 +140,9 @@ export abstract class Command<
   /** Whether this command runs immediately without config screen (like "check") */
   immediateExecution?: boolean;
 
+  /** If true, this command should not appear in the TUI command list. */
+  tuiHidden?: boolean;
+
   /**
    * Build and validate a configuration object from parsed options.
    * 
@@ -247,7 +250,24 @@ export abstract class Command<
    * Called by the framework during registration.
    */
   validate(): void {
-    // No validation needed - execute is abstract and required
+    this.validateSubCommands();
+  }
+
+  private validateSubCommands(): void {
+    if (!this.subCommands || this.subCommands.length === 0) {
+      return;
+    }
+
+    const names = new Set<string>();
+    for (const subCommand of this.subCommands) {
+      if (names.has(subCommand.name)) {
+        throw new Error(
+          `Duplicate subcommand '${subCommand.name}' under '${this.name}'`
+        );
+      }
+      names.add(subCommand.name);
+      subCommand.validate();
+    }
   }
 
   /**

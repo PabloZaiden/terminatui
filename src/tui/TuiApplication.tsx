@@ -5,6 +5,7 @@ import type { AnyCommand } from "../core/command.ts";
 import { TuiRoot } from "./TuiRoot.tsx";
 import { LogLevel } from "../core/logger.ts";
 import { createSettingsCommand } from "../builtins/settings.ts";
+import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 import { loadPersistedParameters } from "./utils/parameterPersistence.ts";
 import { AppContext } from "../core/context.ts";
 
@@ -108,7 +109,7 @@ export class TuiApplication extends Application {
      */
     private loadPersistedSettings(): void {
         try {
-            const settings = loadPersistedParameters(this.name, "settings");
+            const settings = loadPersistedParameters(this.name, KNOWN_COMMANDS.settings);
             
             // Apply log-level if set
             if (settings["log-level"]) {
@@ -136,15 +137,16 @@ export class TuiApplication extends Application {
         const userCommands = this.registry
             .list()
             .filter((cmd) => {
-                // Exclude version and help from main menu
-                if (cmd.name === "version" || cmd.name === "help") {
+                // Exclude internal/built-in commands from the TUI main menu
+                if (cmd.tuiHidden) {
                     return false;
                 }
-                // Exclude settings if already defined by user (they shouldn't)
-                if (cmd.name === "settings") {
+
+                // Extra safety: keep known internal command names out
+                if (cmd.name === KNOWN_COMMANDS.help || cmd.name === KNOWN_COMMANDS.version || cmd.name === KNOWN_COMMANDS.settings) {
                     return false;
                 }
-                // Include commands that have options or execute methods
+
                 return true;
             });
 

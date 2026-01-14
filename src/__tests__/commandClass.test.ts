@@ -98,6 +98,12 @@ describe("Command", () => {
       const cmd = new TestCommand();
       expect(() => cmd.validate()).not.toThrow();
     });
+
+    test("throws for duplicate subcommand names", () => {
+      const cmd = new TestCommand();
+      cmd.subCommands = [new SimpleCommand(), new SimpleCommand()];
+      expect(() => cmd.validate()).toThrow(/duplicate subcommand/i);
+    });
   });
 
   describe("subcommands", () => {

@@ -1,5 +1,6 @@
 import { Command, type AnyCommand } from "../core/command.ts";
 import { generateCommandHelp, generateAppHelp } from "../core/help.ts";
+import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 import type { OptionSchema } from "../types/command.ts";
 
 /**
@@ -10,8 +11,9 @@ import type { OptionSchema } from "../types/command.ts";
  * be instantiated directly.
  */
 export class HelpCommand extends Command<OptionSchema> {
-  readonly name = "help";
+  readonly name = KNOWN_COMMANDS.help;
   readonly description = "Show help for this command";
+  override readonly tuiHidden = true;
   readonly options = {} as const;
 
   private parentCommand: AnyCommand | null = null;

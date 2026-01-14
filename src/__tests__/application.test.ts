@@ -4,6 +4,7 @@ import { Command } from "../core/command.ts";
 import type { OptionSchema, OptionValues, OptionDef } from "../types/command.ts";
 import { LogLevel } from "../core/logger.ts";
 import { AppContext } from "../core/context.ts";
+import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 
 // Define a proper option schema
 const testOptions = {
@@ -42,6 +43,52 @@ class TuiCommand extends Command<OptionSchema> {
 
 describe("Application", () => {
   describe("constructor", () => {
+    test("rejects reserved top-level command names", () => {
+      class ReservedCommand extends Command<OptionSchema> {
+        readonly name = KNOWN_COMMANDS.help;
+        readonly description = "tries to override built-in";
+        readonly options = {};
+
+        override async execute(): Promise<void> {}
+      }
+
+      expect(() => {
+        new Application({
+          name: "test-app",
+          version: "1.0.0",
+          commands: [new ReservedCommand()],
+        });
+      }).toThrow(/reserved/i);
+    });
+
+    test("rejects user-defined 'help' subcommands", () => {
+      class SubCommand extends Command<OptionSchema> {
+        readonly name = KNOWN_COMMANDS.help;
+        readonly description = "user help";
+        readonly options = {};
+
+        override async execute(): Promise<void> {}
+      }
+
+      class ParentCommand extends Command<OptionSchema> {
+        readonly name = "parent";
+        readonly description = "parent";
+        readonly options = {};
+
+        override subCommands = [new SubCommand()];
+
+        override async execute(): Promise<void> {}
+      }
+
+      expect(() => {
+        new Application({
+          name: "test-app",
+          version: "1.0.0",
+          commands: [new ParentCommand()],
+        });
+      }).toThrow(/automatically injected/i);
+    });
+
     test("creates application with name and version", () => {
       const app = new Application({
         name: "test-app",
@@ -89,7 +136,7 @@ describe("Application", () => {
         version: "1.0.0",
         commands: [],
       });
-      expect(app.registry.has("help")).toBe(true);
+      expect(app.registry.has(KNOWN_COMMANDS.help)).toBe(true);
     });
 
     test("injects help subcommand into commands", () => {
@@ -101,7 +148,7 @@ describe("Application", () => {
         commands: [cmd],
       });
       expect(cmd.subCommands).toBeDefined();
-      expect(cmd.subCommands?.some((c) => c.name === "help")).toBe(true);
+      expect(cmd.subCommands?.some((c) => c.name === KNOWN_COMMANDS.help)).toBe(true);
     });
   });
 
