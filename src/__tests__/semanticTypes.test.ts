@@ -1,11 +1,8 @@
 import { test, expect } from "bun:test";
-import type { ThemeConfig } from "../tui/semantic/types.ts";
-import { Theme } from "../tui/theme.ts";
+import { SemanticColors } from "../tui/theme.ts";
 
-test("Theme provides semantic colors", () => {
-    const theme: ThemeConfig = Theme;
-
-    expect(theme.colors.background).toBeTypeOf("string");
-    expect(theme.colors.border).toBeTypeOf("string");
-    expect(theme.colors.value).toBeTypeOf("string");
+test("SemanticColors provides required semantic colors", () => {
+    expect(SemanticColors.background).toBeTypeOf("string");
+    expect(SemanticColors.border).toBeTypeOf("string");
+    expect(SemanticColors.value).toBeTypeOf("string");
 });

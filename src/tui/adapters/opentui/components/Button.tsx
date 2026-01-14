@@ -1,9 +1,9 @@
 import type { ButtonProps } from "../../../semantic/types.ts";
-import { Theme } from "../../../theme.ts";
+import { SemanticColors } from "../../../theme.ts";
 
 export function Button({ label, selected, onActivate }: ButtonProps) {
-    const fg = selected ? Theme.colors.selectionText : Theme.colors.text;
-    const bg = selected ? Theme.colors.selectionBackground : undefined;
+    const fg = selected ? SemanticColors.selectionText : SemanticColors.text;
+    const bg = selected ? SemanticColors.selectionBackground : undefined;
 
     return (
         <text fg={fg} bg={bg} {...({ onClick: onActivate } as any)}>

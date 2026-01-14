@@ -1,7 +1,7 @@
 import { createCliRenderer, type CliRenderer } from "@opentui/core";
 import { createRoot, type Root } from "@opentui/react";
 import { useLayoutEffect, type ReactNode } from "react";
-import { Theme } from "../../theme.ts";
+import { SemanticColors } from "../../theme.ts";
 import type { Renderer, RendererConfig } from "../types.ts";
 import { useOpenTuiKeyboardAdapter } from "./keyboard.ts";
 import { Button } from "./components/Button.tsx";
@@ -62,7 +62,7 @@ export class OpenTuiRenderer implements Renderer {
             useAlternateScreen: this.config.useAlternateScreen ?? true,
             useConsole: false,
             exitOnCtrlC: true,
-            backgroundColor: Theme.background,
+            backgroundColor: SemanticColors.background,
             useMouse: true,
             enableMouseMovement: true,
             openConsoleOnError: false,

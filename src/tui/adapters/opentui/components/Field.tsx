@@ -1,10 +1,10 @@
 import type { FieldProps } from "../../../semantic/types.ts";
-import { Theme } from "../../../theme.ts";
+import { SemanticColors } from "../../../theme.ts";
 
 export function Field({ label, value, selected, onActivate }: FieldProps) {
     const prefix = selected ? "► " : "  ";
-    const labelColor = selected ? Theme.borderFocused : Theme.label;
-    const valueColor = selected ? Theme.value : Theme.statusText;
+    const labelColor = selected ? SemanticColors.focusBorder : SemanticColors.mutedText;
+    const valueColor = selected ? SemanticColors.value : SemanticColors.text;
 
     return (
         <box flexDirection="row" gap={1} {...({ onClick: onActivate } as any)}>

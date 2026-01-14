@@ -1,5 +1,6 @@
 import type { SelectProps } from "../../../semantic/types.ts";
 import type { SelectOption as OpenTuiSelectOption } from "@opentui/core";
+import { SemanticColors } from "../../../theme.ts";
 
 export function Select<TValue extends string>({
     options,
@@ -51,8 +52,8 @@ export function Select<TValue extends string>({
             height={Math.min(options.length, 10)}
             width="100%"
             wrapSelection={true}
-            selectedBackgroundColor="#61afef"
-            selectedTextColor="#1e2127"
+            selectedBackgroundColor={SemanticColors.focusBorder}
+            selectedTextColor={SemanticColors.inverseText}
         />
     );
 }

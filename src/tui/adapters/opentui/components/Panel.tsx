@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { PanelProps, Spacing } from "../../../semantic/types.ts";
-import { Theme } from "../../../theme.ts";
+import { SemanticColors } from "../../../theme.ts";
 
 function normalizePadding(
     padding: number | Spacing | undefined,
@@ -45,12 +45,9 @@ export function Panel({
     padding,
     noShrink,
 }: PanelProps & { children?: ReactNode }) {
-    const backgroundColor = surface === "overlay" ? Theme.overlay : Theme.colors.panelBackground;
+    const backgroundColor = surface === "overlay" ? SemanticColors.overlay : SemanticColors.panelBackground;
 
-    // Match the old modal implementation:
-    // - modal borders were always `Theme.overlayTitle`
-    // - typical panels use focused/unfocused border colors
-    const borderColor = surface === "overlay" ? Theme.overlayTitle : focused ? Theme.borderFocused : Theme.border;
+    const borderColor = surface === "overlay" ? SemanticColors.warning : focused ? SemanticColors.focusBorder : SemanticColors.border;
 
     const resolvedPadding = normalizePadding(padding, { dense });
 

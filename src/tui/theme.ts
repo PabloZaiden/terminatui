@@ -4,7 +4,7 @@
  * This is intentionally semantic: UI code should reference meanings
  * (e.g. "error", "mutedText", "selectionBackground") rather than hardcoding colors.
  */
-const semanticColors = {
+export const SemanticColors = {
     background: "#0f1117",
     panelBackground: "#0f1117",
     overlay: "#101218",
@@ -30,32 +30,4 @@ const semanticColors = {
     selectionText: "#0b0c10",
 } as const;
 
-/**
- * Backwards-compatible theme export.
- *
- * Existing code reads flat properties (e.g. `Theme.borderFocused`).
- * New semantic components should prefer `Theme.colors.*`.
- */
-export const Theme = {
-    // New semantic shape
-    colors: semanticColors,
-
-    // Legacy flat shape
-    background: semanticColors.background,
-    border: semanticColors.border,
-    borderFocused: semanticColors.focusBorder,
-    borderSelected: semanticColors.primary,
-    label: semanticColors.mutedText,
-    value: semanticColors.value,
-    actionButton: semanticColors.primary,
-    header: semanticColors.mutedText,
-    statusText: semanticColors.text,
-    overlay: semanticColors.overlay,
-    overlayTitle: semanticColors.warning,
-    error: semanticColors.error,
-    success: semanticColors.success,
-    warning: semanticColors.warning,
-} as const;
-
-export type ThemeConfig = typeof Theme;
-export type ThemeColors = typeof semanticColors;
+export type ThemeColors = typeof SemanticColors;

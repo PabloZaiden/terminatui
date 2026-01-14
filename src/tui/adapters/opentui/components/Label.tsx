@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import type { LabelProps } from "../../../semantic/types.ts";
-import { Theme } from "../../../theme.ts";
+import { SemanticColors } from "../../../theme.ts";
 
 export function Label({ color = "text", bold, italic, wrap, children }: LabelProps & { children: ReactNode }) {
-    const fg = Theme.colors[color] ?? Theme.colors.text;
+    const fg = SemanticColors[color] ?? SemanticColors.text;
 
     const content = bold ? <strong>{children}</strong> : children;
 

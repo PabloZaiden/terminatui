@@ -11,8 +11,6 @@ export interface Spacing {
     left?: number;
 }
 
-export type SemanticColor = keyof ThemeConfig["colors"];
-
 export interface ThemeConfig {
     colors: {
         background: string;
@@ -39,6 +37,8 @@ export interface ThemeConfig {
         selectionText: string;
     };
 }
+
+export type SemanticColor = keyof ThemeConfig["colors"];
 
 export interface LayoutProps {
     flex?: number;

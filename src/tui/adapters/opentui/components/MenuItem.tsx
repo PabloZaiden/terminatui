@@ -1,5 +1,5 @@
 import type { MenuItemProps } from "../../../semantic/types.ts";
-import { Theme } from "../../../theme.ts";
+import { SemanticColors } from "../../../theme.ts";
 
 export function MenuItem({
     label,
@@ -11,8 +11,8 @@ export function MenuItem({
     const prefix = selected ? "► " : "  ";
     const displayLabel = suffix ? `${label} ${suffix}` : label;
 
-    const fg = selected ? Theme.colors.selectionText : Theme.colors.text;
-    const bg = selected ? Theme.colors.selectionBackground : undefined;
+    const fg = selected ? SemanticColors.selectionText : SemanticColors.text;
+    const bg = selected ? SemanticColors.selectionBackground : undefined;
 
     return (
         <box flexDirection="column">
@@ -20,7 +20,7 @@ export function MenuItem({
                 {prefix}{displayLabel}
             </text>
             {description ? (
-                <text fg={selected ? Theme.colors.text : Theme.colors.mutedText}>
+                <text fg={selected ? SemanticColors.text : SemanticColors.mutedText}>
                     {"    "}{description}
                 </text>
             ) : null}
