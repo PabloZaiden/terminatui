@@ -32,6 +32,7 @@ export interface RendererComponents {
     ScrollView: (props: import("../semantic/types.ts").ScrollViewProps) => ReactNode;
 
     Overlay: (props: import("../semantic/types.ts").OverlayProps) => ReactNode;
+    Spacer: (props: import("../semantic/types.ts").SpacerProps) => ReactNode;
 
     Label: (props: import("../semantic/types.ts").LabelProps) => ReactNode;
     Value: (props: import("../semantic/types.ts").ValueProps) => ReactNode;

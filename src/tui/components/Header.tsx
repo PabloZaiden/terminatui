@@ -1,5 +1,6 @@
 import { Container } from "../semantic/Container.tsx";
 import { Label } from "../semantic/Label.tsx";
+import { Spacer } from "../semantic/Spacer.tsx";
 
 interface HeaderProps {
     /** Application name */
@@ -17,7 +18,7 @@ export function Header({ name, version, breadcrumb }: HeaderProps) {
     const breadcrumbStr = breadcrumb?.length ? ` › ${breadcrumb.join(" › ")}` : "";
 
     return (
-        <box flexDirection="column" flexShrink={0}>
+        <Container flexDirection="column" noShrink>
             <Container flexDirection="row" justifyContent="space-between">
                 <Label color="mutedText" bold>
                     {name}
@@ -25,7 +26,7 @@ export function Header({ name, version, breadcrumb }: HeaderProps) {
                 </Label>
                 <Label color="mutedText">v{version}</Label>
             </Container>
-            <box height={1} flexShrink={0} />
-        </box>
+            <Spacer size={1} />
+        </Container>
     );
 }

@@ -51,6 +51,9 @@ export interface LayoutProps {
 
     gap?: number;
     padding?: number | Spacing;
+
+    /** When set, should prevent the node from shrinking in flex layouts. */
+    noShrink?: boolean;
 }
 
 export type PanelSurface = "panel" | "overlay";
@@ -88,7 +91,18 @@ export interface ScrollViewProps extends LayoutProps {
 export interface OverlayProps {
     zIndex?: number;
     dim?: boolean;
+    top?: number | string;
+    left?: number | string;
+    right?: number | string;
+    bottom?: number | string;
+    width?: number | string;
+    height?: number | string;
     children?: ReactNode;
+}
+
+export interface SpacerProps {
+    size: number;
+    axis?: "horizontal" | "vertical";
 }
 
 

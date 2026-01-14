@@ -10,7 +10,7 @@ import { ExecutorProvider, useExecutor } from "./context/ExecutorContext.tsx";
 import { Header } from "./components/Header.tsx";
 import { StatusBar } from "./components/StatusBar.tsx";
 import { Container } from "./semantic/Container.tsx";
-import { Theme } from "./theme.ts";
+import { Panel } from "./semantic/Panel.tsx";
 import { getScreen, getModal, registerAllModals, registerAllScreens } from "./registry.tsx";
 import { CommandSelectScreen, type CommandSelectParams } from "./screens/CommandSelectScreen.tsx";
 
@@ -106,7 +106,7 @@ function TuiAppContent() {
     const breadcrumb = params?.commandPath;
 
     return (
-        <box flexDirection="column" flexGrow={1} padding={1} backgroundColor={Theme.colors.background}>
+        <Panel flexDirection="column" flex={1} padding={1} border={false}>
             <Container flexDirection="column" flex={1}>
                 <Header name={displayName ?? name} version={version} breadcrumb={breadcrumb} />
 
@@ -134,6 +134,6 @@ function TuiAppContent() {
                 );
             })}
             </Container>
-        </box>
+        </Panel>
     );
 }

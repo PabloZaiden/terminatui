@@ -43,6 +43,7 @@ export function Panel({
     justifyContent,
     gap,
     padding,
+    noShrink,
 }: PanelProps & { children?: ReactNode }) {
     const backgroundColor = surface === "overlay" ? Theme.overlay : Theme.colors.panelBackground;
 
@@ -67,6 +68,7 @@ export function Panel({
             paddingBottom={resolvedPadding.paddingBottom}
             paddingLeft={resolvedPadding.paddingLeft}
             flexGrow={flex}
+            flexShrink={noShrink ? 0 : flex === undefined ? undefined : 1}
             width={width as any}
             height={height as any}
             flexDirection={flexDirection as any}

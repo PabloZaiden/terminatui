@@ -30,13 +30,14 @@ export function Container({
     justifyContent,
     gap,
     padding,
+    noShrink,
 }: ContainerProps & { children?: ReactNode }) {
     const resolvedPadding = normalizePadding(padding);
 
     return (
         <box
             flexGrow={flex}
-            flexShrink={flex === undefined ? undefined : 1}
+            flexShrink={noShrink ? 0 : flex === undefined ? undefined : 1}
             width={width as any}
             height={height as any}
             flexDirection={flexDirection as any}
