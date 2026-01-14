@@ -1,7 +1,7 @@
 # Phase 1: Create Semantic Component Library (OpenTUI Implementation)
 
-**Last Updated:** 2026-01-10  
-**Prerequisites:** Phase 0A and 0B must be complete
+**Last Updated:** 2026-01-14  
+**Prerequisites:** Phase 0A navigation refactor complete (Phase 0B deferred)
 
 ---
 
@@ -233,7 +233,7 @@ Build the abstraction layer using OpenTUI as the initial renderer implementation
   - [ ] Implement `destroy()` method
   - [ ] Handle alternate screen, theme, config
 - [ ] Export semantic components from adapter
-- [ ] Wire up keyboard provider (uses Phase 0B bubbling + modal-first behavior)
+- [ ] Wire up keyboard provider (single-active-handler model + modal-first behavior)
 
 **Validation:**
 - Factory can create OpenTUI renderer

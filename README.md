@@ -24,7 +24,7 @@ bun add @pablozaiden/terminatui
 
 ## Status
 
-- **Current focus:** Phase 0A navigation refactor completed (stack navigation, modal-first back, global shortcuts including copy-from-active-modal; live log copy uses current log history). Phase 0B (keyboard bubbling) not started yet.
+- **Current focus:** Renderer migration. Phase 1 (semantic component layer + OpenTUI adapter) ✅ complete. Phase 2 (refactor app UI to semantic; no OpenTUI imports outside adapter) ✅ complete. Next: Phase 3 Ink adapter.
 
 ## Quick Start
 

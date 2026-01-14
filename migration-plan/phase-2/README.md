@@ -25,7 +25,7 @@ Update all existing TUI components to use the new semantic component library ins
 - ✅ TuiApp.tsx uses semantic layer for Header/StatusBar/CommandSelector, etc.
 - ✅ Modals render without dimming the whole screen
 - ✅ Status bar text no longer corrupts (removed control characters)
-- ✅ Global background is painted explicitly at root
+- ✅ Global background is painted explicitly at root (via semantic root wrapper)
 - ✅ OpenTUI adapter uses direction-specific padding props
 - ✅ StatusBar stabilized (fixed height) to avoid "falling" during editor modal open
 - ✅ Full application working with semantic layer (OpenTUI renderer)
@@ -52,10 +52,9 @@ Complete task breakdown with checklists:
 
 ## Phase 2 Remaining Work
 
-Most of Phase 2 is complete. What’s typically left before moving to Phase 3:
+Phase 2 is complete.
 
-- Reduce remaining raw OpenTUI primitive usage in app/components (currently still used for a small amount of layout glue where semantic equivalents are missing).
-- Migrate any remaining components still using raw `<box>/<text>`.
+Optional sanity checks before moving to Phase 3:
 - Do a final parity sweep across screens:
   - command selection
   - config form (including editor modal)

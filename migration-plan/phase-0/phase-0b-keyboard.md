@@ -401,7 +401,7 @@ After implementing all tasks, perform comprehensive validation:
 4. **Re-test**: Repeat validation until issue resolved
 5. **Document workaround**: If architectural change needed, document why
 
-**DO NOT proceed to Phase 1 until all Phase 0B validation passes.**
+**Note:** Phase 0B is currently **deferred**. Proceeding with Phase 1+ is OK as long as the existing keyboard model remains sufficient.
 
 ---
 
@@ -421,13 +421,9 @@ After implementing all tasks, perform comprehensive validation:
 
 ## Next Steps
 
-1. Implement Task 0B.1 (KeyboardContext for Hierarchy)
-2. Validate Task 0B.1
-3. Implement Task 0B.2 (useKeyboardHandler Hook)
-4. Validate Task 0B.2
-5. Continue through all tasks with validation
-6. Perform comprehensive manual validation
-7. **Only after all validation passes:** Proceed to Phase 1 (semantic components)
+1. Keep Phase 0B as reference (no action required)
+2. Proceed with renderer migration phases (Phase 1 → Phase 2 → Phase 3)
+3. Revisit Phase 0B only if keyboard handling needs outgrow the current model
 
 ---
 

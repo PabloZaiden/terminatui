@@ -21,7 +21,7 @@ When you run without arguments, an interactive form appears!
 Create `src/commands/run.ts`:
 
 ```typescript
-import { Command, type AppContext, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import { Command, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
 
 const options = {
   task: {
@@ -70,11 +70,9 @@ export class RunCommand extends Command<typeof options, RunConfig> {
   override readonly displayName = "Run Task";
   override readonly actionLabel = "Start Task";
 
-  async execute(ctx: AppContext, config: RunConfig): Promise<CommandResult> {
-    ctx.logger.info(`Starting task: ${config.task}`);
-    
+  async execute(config: RunConfig): Promise<CommandResult> {
     if (config.verbose) {
-      ctx.logger.debug(`Environment: ${config.env}`);
+      console.debug(`Environment: ${config.env}`);
     }
 
     // Simulate task execution
