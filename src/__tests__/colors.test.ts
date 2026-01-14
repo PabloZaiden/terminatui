@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { colors, supportsColors } from "../cli/output/colors.ts";
+import { colors } from "../cli/output/colors.ts";
 
 describe("colors", () => {
   describe("basic colors", () => {
@@ -115,13 +115,3 @@ describe("colors", () => {
   });
 });
 
-describe("supportsColors", () => {
-  test("is a function", () => {
-    expect(typeof supportsColors).toBe("function");
-  });
-
-  test("returns a boolean", () => {
-    const result = supportsColors();
-    expect(typeof result).toBe("boolean");
-  });
-});

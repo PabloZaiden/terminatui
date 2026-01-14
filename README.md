@@ -497,7 +497,6 @@ import {
   KeyboardPriority,      // Global < Focused < Modal
   
   // Components
-  Theme,                 // TUI color theme
   JsonHighlight,         // Syntax-highlighted JSON display
 } from "@pablozaiden/terminatui";
 ```
@@ -507,19 +506,12 @@ import {
 Terminatui includes utilities for formatted CLI output:
 
 ```typescript
-import { colors, table, bulletList, keyValueList } from "@pablozaiden/terminatui";
+import { colors } from "@pablozaiden/terminatui";
 
 // Colors
 console.log(colors.red("Error!"));
 console.log(colors.success("Done!"));  // ✓ Done!
 console.log(colors.bold(colors.blue("Title")));
-
-// Tables
-console.log(table(data, ["name", "value", "status"]));
-
-// Lists
-console.log(bulletList(["Item 1", "Item 2", "Item 3"]));
-console.log(keyValueList({ name: "Test", count: 42 }));
 ```
 
 ## License
