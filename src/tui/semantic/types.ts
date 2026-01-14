@@ -90,7 +90,6 @@ export interface ScrollViewProps extends LayoutProps {
 
 export interface OverlayProps {
     zIndex?: number;
-    dim?: boolean;
     top?: number | string;
     left?: number | string;
     right?: number | string;

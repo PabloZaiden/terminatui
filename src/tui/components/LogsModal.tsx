@@ -8,6 +8,7 @@ import { LogColors } from "./logColors.ts";
 import { ModalBase } from "./ModalBase.tsx";
 import { useLogs } from "../context/LogsContext.tsx";
 import type { ModalComponent, ModalDefinition } from "../registry.tsx";
+import { LogLevel } from "../../core/logger.ts";
 
 export interface LogsModalParams {}
 
@@ -77,7 +78,7 @@ function LogsModalView({
             <ScrollView axis="vertical" flex={1} stickyToEnd={true} focused={true}>
                 <Container flexDirection="column" gap={0}>
                     {logs.map((log, idx) => {
-                        const color = LogColors[log.level] ?? "#ffffff";
+                        const color = LogColors[log.level] ?? LogColors[LogLevel.info];
                         const sanitized = Bun.stripANSI(log.message).trim();
 
                         return (
