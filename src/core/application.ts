@@ -73,7 +73,7 @@ export interface ApplicationHooks {
  *   defaultCommand: "interactive",
  * });
  * 
- * await app.run(process.argv.slice(2));
+ * await app.run();
  * ```
  */
 export class Application {
@@ -187,11 +187,20 @@ export class Application {
   }
 
   /**
-   * Run the application with the given arguments.
-   * 
-   * @param argv Command-line arguments (typically process.argv.slice(2))
+   * Run the application using Bun's process args.
+   *
+   * This is the common entrypoint for real apps.
    */
-  async run(argv: string[]): Promise<void> {
+  async run(): Promise<void> {
+    return this.runFromArgs(Bun.argv.slice(2));
+  }
+
+  /**
+   * Run the application with explicit argv.
+   *
+   * Useful for tests or manual programmatic invocation.
+   */
+  async runFromArgs(argv: string[]): Promise<void> {
     // configure logger
     AppContext.current.logger.onLogEvent((event) => {
       process.stderr.write(event.message + "\n");

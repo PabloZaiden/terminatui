@@ -82,7 +82,7 @@ describe("Command (class-based)", () => {
     expect(cmd.executedWith).toEqual({ verbose: true, name: "world" });
   });
 
-  test("supports beforeExecute and afterExecute hooks", async () => {
+  test("beforeExecute/afterExecute hooks are callable", () => {
     const order: string[] = [];
 
     class HookCommand extends Command<OptionSchema> {
@@ -90,24 +90,23 @@ describe("Command (class-based)", () => {
       readonly description = "Hook command";
       readonly options = {} as const;
 
-      override beforeExecute(_opts: unknown): void {
+      override beforeExecute(): void {
         order.push("before");
       }
 
-      override execute(_config: unknown): void {
+      override execute(): void {
         order.push("execute");
       }
 
-      override afterExecute(_opts: unknown, _error?: Error): void {
+      override afterExecute(): void {
         order.push("after");
       }
     }
 
     const cmd = new HookCommand();
-    // Hooks are invoked by Application; call directly here.
-    cmd.beforeExecute?.({} as any);
-    cmd.execute({} as any);
-    cmd.afterExecute?.({} as any, undefined);
+    cmd.beforeExecute();
+    cmd.execute();
+    cmd.afterExecute();
 
     expect(order).toEqual(["before", "execute", "after"]);
   });

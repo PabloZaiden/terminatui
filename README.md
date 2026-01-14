@@ -81,7 +81,11 @@ class MyApp extends Application {
 
 ```typescript
 // index.ts
+// Recommended: let Terminatui read `Bun.argv.slice(2)`
 await new MyApp().run();
+
+// For tests or programmatic invocation:
+// await new MyApp().runFromArgs(["greet", "--name", "World"]);
 ```
 
 ```bash
@@ -174,10 +178,15 @@ The `Application` class manages command registration and execution:
 ```typescript
 class Application {
   constructor(config: ApplicationConfig);
-  
-  run(args?: string[]): Promise<void>;
+
+  // Recommended entrypoint (reads `Bun.argv.slice(2)`)
+  run(): Promise<void>;
+
+  // Useful for tests or programmatic invocation
+  runFromArgs(argv: string[]): Promise<void>;
+
   getContext(): AppContext;
-  
+
   // Lifecycle hooks (override in subclass)
   onBeforeRun?(command: Command, options: Record<string, unknown>): void;
   onAfterRun?(command: Command, result: unknown): void;

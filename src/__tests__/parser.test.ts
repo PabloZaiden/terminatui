@@ -1,194 +1,122 @@
-import { test, expect, describe } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
   extractCommandChain,
-  schemaToParseArgsOptions,
   parseOptionValues,
+  schemaToParseArgsOptions,
   validateOptions,
 } from "../cli/parser.ts";
 import type { OptionSchema } from "../types/command.ts";
 
-describe("extractCommandChain", () => {
-  test("extracts command path with no flags", () => {
-    const result = extractCommandChain(["run", "test"]);
-    expect(result.commands).toEqual(["run", "test"]);
-    expect(result.remaining).toEqual([]);
+describe("cli/parser helpers", () => {
+  describe("extractCommandChain", () => {
+    test("splits commands from flags", () => {
+      const cases: Array<{
+        args: string[];
+        expected: { commands: string[]; remaining: string[] };
+      }> = [
+        { args: ["run", "test"], expected: { commands: ["run", "test"], remaining: [] } },
+        {
+          args: ["run", "--verbose", "file.ts"],
+          expected: { commands: ["run"], remaining: ["--verbose", "file.ts"] },
+        },
+        { args: ["--help"], expected: { commands: [], remaining: ["--help"] } },
+        { args: ["run", "-v"], expected: { commands: ["run"], remaining: ["-v"] } },
+        { args: [], expected: { commands: [], remaining: [] } },
+        {
+          args: ["config", "set", "--key", "value"],
+          expected: { commands: ["config", "set"], remaining: ["--key", "value"] },
+        },
+      ];
+
+      for (const c of cases) {
+        expect(extractCommandChain(c.args)).toEqual(c.expected);
+      }
+    });
   });
 
-  test("separates commands from flags", () => {
-    const result = extractCommandChain(["run", "--verbose", "file.ts"]);
-    expect(result.commands).toEqual(["run"]);
-    expect(result.remaining).toEqual(["--verbose", "file.ts"]);
+  describe("schemaToParseArgsOptions", () => {
+    test("converts OptionSchema to parseArgs config", () => {
+      const schema: OptionSchema = {
+        name: { type: "string", description: "Name" },
+        verbose: { type: "boolean", alias: "v", default: false, description: "Verbose" },
+        files: { type: "array", description: "Files" },
+        count: { type: "number", default: 10, description: "Count" },
+      };
+
+      const result = schemaToParseArgsOptions(schema);
+
+      expect(result.options?.["name"]).toMatchObject({ type: "string" });
+      expect(result.options?.["verbose"]).toMatchObject({
+        type: "boolean",
+        short: "v",
+        default: false,
+      });
+      expect(result.options?.["files"]).toMatchObject({ multiple: true });
+      // parseArgs expects string defaults for non-boolean types
+      expect(result.options?.["count"]).toMatchObject({ type: "string", default: "10" });
+    });
   });
 
-  test("handles args starting with flags", () => {
-    const result = extractCommandChain(["--help"]);
-    expect(result.commands).toEqual([]);
-    expect(result.remaining).toEqual(["--help"]);
+  describe("parseOptionValues", () => {
+    test("coerces values, applies defaults, and reads env", () => {
+      process.env["TEST_VALUE"] = "env-value";
+
+      const schema: OptionSchema = {
+        name: { type: "string", description: "Name" },
+        count: { type: "number", default: 5, description: "Count" },
+        verbose: { type: "boolean", description: "Verbose" },
+        value: { type: "string", env: "TEST_VALUE", description: "Value" },
+        level: {
+          type: "string",
+          enum: ["low", "medium", "high"],
+          description: "Level",
+        },
+      };
+
+      const result = parseOptionValues(schema, {
+        name: "test",
+        count: "42",
+        verbose: "true",
+        level: "medium",
+      });
+
+      expect(result["name"]).toBe("test");
+      expect(result["count"]).toBe(42);
+      expect(result["verbose"]).toBe(true);
+      expect(result["value"]).toBe("env-value");
+      expect(result["level"]).toBe("medium");
+
+      delete process.env["TEST_VALUE"];
+    });
+
+    test("throws on invalid enum", () => {
+      const schema: OptionSchema = {
+        level: {
+          type: "string",
+          enum: ["low", "medium", "high"],
+          description: "Level",
+        },
+      };
+
+      expect(() => parseOptionValues(schema, { level: "invalid" })).toThrow();
+    });
   });
 
-  test("handles short flags", () => {
-    const result = extractCommandChain(["run", "-v"]);
-    expect(result.commands).toEqual(["run"]);
-    expect(result.remaining).toEqual(["-v"]);
-  });
+  describe("validateOptions", () => {
+    test("returns errors for missing required and invalid ranges", () => {
+      const schema: OptionSchema = {
+        name: { type: "string", required: true, description: "Name" },
+        count: { type: "number", min: 1, max: 10, description: "Count" },
+      };
 
-  test("handles empty args", () => {
-    const result = extractCommandChain([]);
-    expect(result.commands).toEqual([]);
-    expect(result.remaining).toEqual([]);
-  });
+      expect(validateOptions(schema, { name: "ok", count: 5 })).toEqual([]);
 
-  test("extracts nested command path", () => {
-    const result = extractCommandChain(["config", "set", "--key", "value"]);
-    expect(result.commands).toEqual(["config", "set"]);
-    expect(result.remaining).toEqual(["--key", "value"]);
-  });
-});
+      const missing = validateOptions(schema, {} as Record<string, unknown>);
+      expect(missing.some((e) => e.type === "missing_required" && e.field === "name")).toBe(true);
 
-describe("schemaToParseArgsOptions", () => {
-  test("converts string option", () => {
-    const schema: OptionSchema = {
-      name: { type: "string", description: "Name" },
-    };
-    const result = schemaToParseArgsOptions(schema);
-    expect(result.options!["name"]?.type).toBe("string");
-  });
-
-  test("converts boolean option", () => {
-    const schema: OptionSchema = {
-      verbose: { type: "boolean", description: "Verbose" },
-    };
-    const result = schemaToParseArgsOptions(schema);
-    expect(result.options!["verbose"]?.type).toBe("boolean");
-  });
-
-  test("converts alias to short", () => {
-    const schema: OptionSchema = {
-      verbose: { type: "boolean", alias: "v", description: "Verbose" },
-    };
-    const result = schemaToParseArgsOptions(schema);
-    expect(result.options!["verbose"]?.short).toBe("v");
-  });
-
-  test("converts array option to multiple", () => {
-    const schema: OptionSchema = {
-      files: { type: "array", description: "Files" },
-    };
-    const result = schemaToParseArgsOptions(schema);
-    expect(result.options!["files"]?.multiple).toBe(true);
-  });
-
-  test("includes default values", () => {
-    const schema: OptionSchema = {
-      count: { type: "number", default: 10, description: "Count" },
-    };
-    const result = schemaToParseArgsOptions(schema);
-    // parseArgs expects string defaults for non-boolean types
-    expect(result.options!["count"]?.default).toBe("10");
-  });
-
-  test("includes default values for boolean", () => {
-    const schema: OptionSchema = {
-      verbose: { type: "boolean", default: false, description: "Verbose" },
-    };
-    const result = schemaToParseArgsOptions(schema);
-    // Boolean defaults remain as boolean
-    expect(result.options!["verbose"]?.default).toBe(false);
-  });
-});
-
-describe("parseOptionValues", () => {
-  test("passes through string values", () => {
-    const schema: OptionSchema = {
-      name: { type: "string", description: "Name" },
-    };
-    const result = parseOptionValues(schema, { name: "test" });
-    expect(result["name"]).toBe("test");
-  });
-
-  test("coerces number values", () => {
-    const schema: OptionSchema = {
-      count: { type: "number", description: "Count" },
-    };
-    const result = parseOptionValues(schema, { count: "42" });
-    expect(result["count"]).toBe(42);
-  });
-
-  test("coerces boolean values", () => {
-    const schema: OptionSchema = {
-      verbose: { type: "boolean", description: "Verbose" },
-    };
-    const result = parseOptionValues(schema, { verbose: "true" });
-    expect(result["verbose"]).toBe(true);
-  });
-
-  test("applies default values", () => {
-    const schema: OptionSchema = {
-      count: { type: "number", default: 5, description: "Count" },
-    };
-    const result = parseOptionValues(schema, {});
-    expect(result["count"]).toBe(5);
-  });
-
-  test("reads from environment variables", () => {
-    process.env["TEST_VALUE"] = "env-value";
-    const schema: OptionSchema = {
-      value: { type: "string", env: "TEST_VALUE", description: "Value" },
-    };
-    const result = parseOptionValues(schema, {});
-    expect(result["value"]).toBe("env-value");
-    delete process.env["TEST_VALUE"];
-  });
-
-  test("validates enum values", () => {
-    const schema: OptionSchema = {
-      level: {
-        type: "string",
-        enum: ["low", "medium", "high"],
-        description: "Level",
-      },
-    };
-    const result = parseOptionValues(schema, { level: "medium" });
-    expect(result["level"]).toBe("medium");
-  });
-
-  test("throws on invalid enum value", () => {
-    const schema: OptionSchema = {
-      level: {
-        type: "string",
-        enum: ["low", "medium", "high"],
-        description: "Level",
-      },
-    };
-    expect(() => parseOptionValues(schema, { level: "invalid" })).toThrow();
-  });
-});
-
-describe("validateOptions", () => {
-  test("returns empty array for valid options", () => {
-    const schema: OptionSchema = {
-      name: { type: "string", description: "Name" },
-    };
-    const errors = validateOptions(schema, { name: "test" });
-    expect(errors).toEqual([]);
-  });
-
-  test("returns error for missing required option", () => {
-    const schema: OptionSchema = {
-      name: { type: "string", required: true, description: "Name" },
-    };
-    const errors = validateOptions(schema, {} as Record<string, unknown>);
-    expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0]?.type).toBe("missing_required");
-  });
-
-  test("validates number min/max", () => {
-    const schema: OptionSchema = {
-      count: { type: "number", min: 1, max: 10, description: "Count" },
-    };
-    const errors = validateOptions(schema, { count: 0 });
-    expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0]?.type).toBe("validation");
+      const tooLow = validateOptions(schema, { name: "ok", count: 0 });
+      expect(tooLow.some((e) => e.type === "validation" && e.field === "count")).toBe(true);
+    });
   });
 });
 

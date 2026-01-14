@@ -35,4 +35,4 @@ class ExampleApp extends TuiApplication {
 }
 
 // Run the app
-await new ExampleApp().run(Bun.argv.slice(2));
+await new ExampleApp().run();

@@ -28,27 +28,18 @@ class SimpleCommand extends Command<OptionSchema> {
 
 describe("Help Generation (core)", () => {
   describe("formatUsage", () => {
-    test("formats basic usage", () => {
-      const cmd = new SimpleCommand({ name: "test", description: "Test command" });
-      const usage = formatUsage(cmd, { appName: "myapp" });
-      expect(usage).toContain("myapp");
-      expect(usage).toContain("test");
-    });
-
-    test("includes [command] for commands with subcommands", () => {
-      const cmd = new SimpleCommand({ name: "parent", description: "Parent" });
-      cmd.subCommands = [new SimpleCommand({ name: "child", description: "Child" })];
-      const usage = formatUsage(cmd, { appName: "myapp" });
-      expect(usage).toContain("[command]");
-    });
-
-    test("includes [options] for commands with options", () => {
+    test("formats basic usage and includes tokens", () => {
       const cmd = new SimpleCommand({
-        name: "test",
-        description: "Test",
+        name: "parent",
+        description: "Parent",
         options: { verbose: { type: "boolean", description: "Verbose" } },
       });
+      cmd.subCommands = [new SimpleCommand({ name: "child", description: "Child" })];
+
       const usage = formatUsage(cmd, { appName: "myapp" });
+      expect(usage).toContain("myapp");
+      expect(usage).toContain("parent");
+      expect(usage).toContain("[command]");
       expect(usage).toContain("[options]");
     });
   });
@@ -142,42 +133,29 @@ describe("Help Generation (core)", () => {
   });
 
   describe("formatExamples", () => {
-    test("formats examples list", () => {
+    test("formats examples list and empty state", () => {
       const cmd = new SimpleCommand({ name: "test", description: "Test" });
       cmd.examples = [{ command: "test --verbose", description: "Run with verbose" }];
 
-      const examples = formatExamples(cmd);
-      expect(examples).toContain("test --verbose");
-      expect(examples).toContain("Run with verbose");
-    });
+      expect(formatExamples(cmd)).toContain("test --verbose");
+      expect(formatExamples(cmd)).toContain("Run with verbose");
 
-    test("returns empty for no examples", () => {
-      const cmd = new SimpleCommand({ name: "test", description: "Test" });
-      const examples = formatExamples(cmd);
-      expect(examples).toBe("");
+      const noExamples = new SimpleCommand({ name: "empty", description: "Empty" });
+      expect(formatExamples(noExamples)).toBe("");
     });
   });
 
   describe("generateCommandHelp", () => {
-    test("includes usage section", () => {
-      const cmd = new SimpleCommand({ name: "test", description: "Test" });
-      const help = generateCommandHelp(cmd, { appName: "myapp" });
-      expect(help).toContain("Usage:");
-    });
-
-    test("includes command description", () => {
-      const cmd = new SimpleCommand({ name: "test", description: "A test command for testing" });
-      const help = generateCommandHelp(cmd, { appName: "myapp" });
-      expect(help).toContain("A test command for testing");
-    });
-
-    test("includes options section", () => {
+    test("includes usage, description, and options section", () => {
       const cmd = new SimpleCommand({
         name: "test",
-        description: "Test",
+        description: "A test command for testing",
         options: { verbose: { type: "boolean", description: "Verbose mode" } },
       });
+
       const help = generateCommandHelp(cmd, { appName: "myapp" });
+      expect(help).toContain("Usage:");
+      expect(help).toContain("A test command for testing");
       expect(help).toContain("Options:");
       expect(help).toContain("--verbose");
     });

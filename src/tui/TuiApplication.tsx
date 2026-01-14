@@ -36,7 +36,7 @@ export interface TuiApplicationConfig extends ApplicationConfig {
  *   }
  * }
  * 
- * await new MyApp().run(process.argv.slice(2));
+ * await new MyApp().run();
  * ```
  */
 export class TuiApplication extends Application {
@@ -53,21 +53,25 @@ export class TuiApplication extends Application {
      * If no arguments are provided and TUI is enabled, launches the TUI.
      * Otherwise, runs in CLI mode.
      */
-    override async run(argv: string[] = process.argv.slice(2)): Promise<void> {
-        // Check for --interactive or -i flag
-        const hasInteractiveFlag = argv.includes("--interactive") || argv.includes("-i");
-        let filteredArgs = argv.filter((arg) => arg !== "--interactive" && arg !== "-i");
+     override async run(): Promise<void> {
+         return this.runFromArgs(Bun.argv.slice(2));
+     }
 
-        // Launch TUI if:
-        // 1. Explicit --interactive flag, or
-        // 2. No args and TUI is enabled
-        if (hasInteractiveFlag || (filteredArgs.length === 0 && this.enableTui)) {
-            await this.runTui();
-            return;
-        }
+     override async runFromArgs(argv: string[]): Promise<void> {
+         // Check for --interactive or -i flag
+         const hasInteractiveFlag = argv.includes("--interactive") || argv.includes("-i");
+         const filteredArgs = argv.filter((arg) => arg !== "--interactive" && arg !== "-i");
 
-        await super.run(filteredArgs);
-    }
+         // Launch TUI if:
+         // 1. Explicit --interactive flag, or
+         // 2. No args and TUI is enabled
+         if (hasInteractiveFlag || (filteredArgs.length === 0 && this.enableTui)) {
+             await this.runTui();
+             return;
+         }
+
+         await super.runFromArgs(filteredArgs);
+     }
 
     /**
      * Launch the interactive TUI.
