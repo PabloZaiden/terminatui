@@ -22,6 +22,7 @@ import { KNOWN_COMMANDS, RESERVED_TOP_LEVEL_COMMAND_NAMES } from "./knownCommand
 export interface GlobalOptions {
   "log-level"?: string;
   "detailed-logs"?: boolean;
+  "interactive"?: boolean;
 }
 
 /**
@@ -420,7 +421,7 @@ export class Application {
    * Parse global options from argv.
    * Returns the parsed global options and remaining args.
    */
-  private parseGlobalOptions(argv: string[]): {
+  protected parseGlobalOptions(argv: string[]): {
     globalOptions: GlobalOptions;
     remainingArgs: string[];
   } {
@@ -443,7 +444,10 @@ export class Application {
       } else if (arg === "--no-detailed-logs") {
         globalOptions["detailed-logs"] = false;
         i += 1;
-      } else {
+      } else if (arg === "--interactive" || arg === "-i") {
+        globalOptions["interactive"] = true;
+        i += 1;
+      } else { 
         remainingArgs.push(arg);
         i += 1;
       }
@@ -455,7 +459,7 @@ export class Application {
   /**
    * Apply global options to the application context.
    */
-  private applyGlobalOptions(options: GlobalOptions): void {
+  protected applyGlobalOptions(options: GlobalOptions): void {
     const logger = AppContext.current.logger;
 
     // Apply detailed-logs

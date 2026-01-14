@@ -58,19 +58,18 @@ export class TuiApplication extends Application {
      }
 
      override async runFromArgs(argv: string[]): Promise<void> {
-         // Check for --interactive or -i flag
-         const hasInteractiveFlag = argv.includes("--interactive") || argv.includes("-i");
-         const filteredArgs = argv.filter((arg) => arg !== "--interactive" && arg !== "-i");
+         const { globalOptions, remainingArgs } = this.parseGlobalOptions(argv);
 
          // Launch TUI if:
          // 1. Explicit --interactive flag, or
          // 2. No args and TUI is enabled
-         if (hasInteractiveFlag || (filteredArgs.length === 0 && this.enableTui)) {
+         if (globalOptions["interactive"] || (remainingArgs.length === 0 && this.enableTui)) {
+             this.applyGlobalOptions(globalOptions);
              await this.runTui();
              return;
          }
 
-         await super.runFromArgs(filteredArgs);
+         await super.runFromArgs(remainingArgs);
      }
 
     /**

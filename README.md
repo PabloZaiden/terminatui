@@ -375,11 +375,13 @@ class MyApp extends TuiApplication {
 }
 ```
 
-When run with no arguments, the app launches an interactive TUI instead of showing help:
+When run with no arguments, the app launches an interactive TUI instead of showing help. You can also force TUI mode with `--interactive` (or `-i`):
 
 ```bash
-myapp              # Launches TUI
-myapp run --verbose # Runs in CLI mode
+myapp                 # Launches TUI
+myapp --interactive    # Forces TUI
+myapp -i               # Forces TUI
+myapp run --verbose    # Runs in CLI mode
 ```
 
 ### TUI Metadata
