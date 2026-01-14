@@ -52,8 +52,6 @@ export function Panel({
     // - typical panels use focused/unfocused border colors
     const borderColor = surface === "overlay" ? Theme.overlayTitle : focused ? Theme.borderFocused : Theme.border;
 
-    const resolvedTitleInset = 0;
-
     const resolvedPadding = normalizePadding(padding, { dense });
 
     return (
@@ -77,7 +75,6 @@ export function Panel({
             gap={gap}
             backgroundColor={backgroundColor}
         >
-            {resolvedTitleInset > 0 ? <box height={resolvedTitleInset} /> : null}
             {children}
         </box>
     );
