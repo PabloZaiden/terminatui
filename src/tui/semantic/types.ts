@@ -15,6 +15,7 @@ export interface ThemeConfig {
     colors: {
         background: string;
         panelBackground: string;
+        overlay: string;
 
         text: string;
         mutedText: string;

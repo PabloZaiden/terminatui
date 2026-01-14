@@ -30,4 +30,3 @@ export const SemanticColors = {
     selectionText: "#0b0c10",
 } as const;
 
-export type ThemeColors = typeof SemanticColors;
