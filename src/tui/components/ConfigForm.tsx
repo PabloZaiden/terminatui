@@ -132,7 +132,7 @@ export function ConfigForm({
             <ScrollView
                 axis="vertical"
                 flex={1}
-scrollRef={(ref) => {
+                scrollRef={(ref) => {
                     scrollViewRef.current = ref;
                 }}
             >
