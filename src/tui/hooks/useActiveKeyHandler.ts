@@ -1,9 +1,6 @@
 import { useEffect, useId, useRef } from "react";
-import {
-    useKeyboardContext,
-    type KeyHandler,
-    type KeyboardEvent,
-} from "../context/KeyboardContext.tsx";
+import { useKeyboardContext } from "../context/KeyboardContext.tsx";
+import type { KeyHandler } from "../adapters/types.ts";
 
 interface UseActiveKeyHandlerOptions {
     /**
@@ -31,7 +28,7 @@ interface UseActiveKeyHandlerOptions {
  * ```tsx
  * // In a screen component
  * useActiveKeyHandler((event) => {
- *     if (event.key.name === "return") {
+ *     if (event.name === "return") {
  *         onSelect();
  *         return true;
  *     }
@@ -41,7 +38,7 @@ interface UseActiveKeyHandlerOptions {
  * // In a modal - becomes active when visible
  * useActiveKeyHandler(
  *     (event) => {
- *         if (event.key.name === "escape") {
+ *         if (event.name === "escape") {
  *             onClose();
  *             return true;
  *         }
@@ -75,4 +72,4 @@ export function useActiveKeyHandler(
 }
 
 // Re-export types for convenience
-export type { KeyHandler, KeyboardEvent };
+export type { KeyHandler };

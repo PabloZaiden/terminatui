@@ -70,8 +70,8 @@ Contains:
 |-------|------|--------|
 | **Phase 0A** | Stack-based navigation (architecture improvement) | ✅ Complete |
 | **Phase 0B** | Component-chain keyboard handling (architecture improvement) | ⏸️ Deferred (not needed) |
-| **Phase 1** | Create semantic component library (OpenTUI impl) | Not Started |
-| **Phase 2** | Refactor existing components to use semantic layer | Not Started |
+| **Phase 1** | Create semantic component library (OpenTUI impl) | ✅ Complete |
+| **Phase 2** | Refactor existing components to use semantic layer | ✅ Complete |
 | **Phase 3** | Implement Ink adapter | Not Started |
 | **Phase 4** | Switch to Ink, remove OpenTUI | Not Started |
 
@@ -119,13 +119,15 @@ Each component abstracts rendering details so adapters can implement them differ
 - [x] Requirements documented
 - [x] Architecture designed
 - [x] Tasks broken down
-- [x] Phase 0A complete: Screen-agnostic TuiApp with registry-based screens/modals and simplified navigation API
+- [x] Phase 0A complete: Stack-based navigation + registry-based screens/modals
+- [x] Phase 1 complete: Semantic component layer + OpenTUI adapter + renderer interface/factory
+- [x] Phase 2 complete: App UI fully uses semantic components (no raw OpenTUI primitives/imports outside adapter)
 
 **Next Steps:**
-1. **Manual testing** to verify all flows work correctly
-2. Begin Phase 1 implementation ([tasks](./phase-1/tasks.md))
+1. Do a quick manual UI parity pass (modals, status bar, command selector, config forms)
+2. Start Phase 3 Ink adapter implementation ([tasks](./phase-3/tasks.md))
 
-**Current Focus:** [Phase 1 - Semantic Component Library](./phase-1/README.md)
+**Current Focus:** [Phase 2 - Refactor to Semantic Layer](./phase-2/README.md)
 
 ## 🔍 Key Documents to Read (In Order)
 
@@ -190,6 +192,6 @@ Refer to:
 
 ---
 
-**Last Updated:** 2026-01-12  
-**Documents Version:** 1.1  
-**Status:** Phase 0A Complete - Ready for Phase 0B
+**Last Updated:** 2026-01-14  
+**Documents Version:** 1.2  
+**Status:** Phase 2 Complete - Ready for Phase 3

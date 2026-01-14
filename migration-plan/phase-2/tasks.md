@@ -1,5 +1,7 @@
 ## Phase 2: Refactor Existing Components to Use Semantic Layer
 
+**Status:** ✅ Complete
+
 **Goal:** Update all existing TUI components to use the new semantic component library instead of OpenTUI primitives directly.
 
 **Deliverables:**
@@ -16,26 +18,26 @@
 **Components:** FieldRow, ActionButton, Header, StatusBar
 
 **Actions:**
-- [ ] Refactor `FieldRow.tsx`
-  - [ ] Replace `<box>` with `<Container>`
-  - [ ] Replace `<text>` with `<Label>` and `<Value>`
-  - [ ] Use semantic colors
-  - [ ] Test rendering
-- [ ] Refactor `ActionButton.tsx`
-  - [ ] Replace `<box>` with `<Container>`
-  - [ ] Replace `<text>` with `<Button>` semantic component
-  - [ ] Use semantic colors for selection state
-  - [ ] Test button interaction
-- [ ] Refactor `Header.tsx`
-  - [ ] Replace `<box>` with `<Container>`
-  - [ ] Replace `<text>` with `<Label>`
-  - [ ] Use semantic layout props
-  - [ ] Test breadcrumb rendering
-- [ ] Refactor `StatusBar.tsx`
-  - [ ] Replace `<box>` with `<Container>` and `<Panel>`
-  - [ ] Replace `<text>` with `<Label>`
-  - [ ] Update spinner integration
-  - [ ] Test running state display
+- [x] Refactor `FieldRow.tsx`
+  - [x] Replace `<box>` with `<Container>`
+  - [x] Replace `<text>` with `<Label>` and `<Value>`
+  - [x] Use semantic colors
+  - [x] Test rendering
+- [x] Refactor `ActionButton.tsx`
+  - [x] Replace `<box>` with `<Container>`
+  - [x] Replace `<text>` with `<Button>` semantic component
+  - [x] Use semantic colors for selection state
+  - [x] Test button interaction
+- [x] Refactor `Header.tsx`
+  - [x] Replace `<box>` with `<Container>`
+  - [x] Replace `<text>` with `<Label>`
+  - [x] Use semantic layout props
+  - [x] Test breadcrumb rendering
+- [x] Refactor `StatusBar.tsx`
+  - [x] Replace `<box>` with `<Container>` and `<Panel>`
+  - [x] Replace `<text>` with `<Label>`
+  - [x] Update spinner integration
+  - [x] Test running state display
 
 **Validation:**
 - Each component renders identically to before
@@ -47,11 +49,11 @@
 **Description:** Port JSON highlighting to use CodeHighlight semantic component.
 
 **Actions:**
-- [ ] Update `JsonHighlight.tsx`
-  - [ ] Use `<CodeHighlight>` semantic component
-  - [ ] Ensure token coloring matches theme
-  - [ ] Test JSON rendering with various data types
-  - [ ] Verify nested object/array rendering
+- [x] Update `JsonHighlight.tsx`
+  - [x] Use `<CodeHighlight>` semantic component
+  - [x] Ensure token coloring matches theme
+  - [x] Test JSON rendering with various data types
+  - [x] Verify nested object/array rendering
 
 **Validation:**
 - JSON syntax highlighting works correctly
@@ -65,21 +67,21 @@
 **Components:** EditorModal, CliModal, Logs (modal)
 
 **Actions:**
-- [ ] Refactor `EditorModal.tsx`
-  - [ ] Replace `<box>` with `<Overlay>`
-  - [ ] Use `<TextInput>` and `<Select>` semantic components
-  - [ ] Use `<Panel>` for modal container
-  - [ ] Update keyboard handler to use adapter (consume handled keys; let unhandled bubble for globals like copy)
-  - [ ] Test enum/boolean/text editing
-- [ ] Refactor `CliModal.tsx`
-  - [ ] Replace `<box>` with `<Overlay>`
-  - [ ] Use `<ScrollView>` for horizontal scrolling
-  - [ ] Use `<Code>` for command display
-  - [ ] Update keyboard handler (same bubbling guidance)
-  - [ ] Test command display and copy
-- [ ] Implement `Logs` modal using semantic Overlay + ScrollView (replaces LogsPanel)
-  - [ ] Sticky to end, colorized lines
-  - [ ] Keyboard handler: close on escape/enter/l; copy logs; let unhandled bubble
+- [x] Refactor `EditorModal.tsx`
+  - [x] Replace `<box>` with `<Overlay>`
+  - [x] Use `<TextInput>` and `<Select>` semantic components
+  - [x] Use `<Panel>` for modal container
+  - [x] Update keyboard handler to use adapter (consume handled keys; unhandled falls through to global shortcuts like copy)
+  - [x] Test enum/boolean/text editing
+- [x] Refactor `CliModal.tsx`
+  - [x] Replace `<box>` with `<Overlay>`
+  - [x] Use `<ScrollView>` for horizontal scrolling
+  - [x] Use `<Code>` for command display
+  - [x] Update keyboard handler (same stack/global fall-through guidance)
+  - [x] Test command display and copy
+- [x] Implement `Logs` modal using semantic Overlay + ScrollView (replaces LogsPanel)
+  - [x] Sticky to end, colorized lines
+  - [x] Keyboard handler: close on escape/enter/l; copy logs; let unhandled bubble
 
 **Validation:**
 - Modals overlay correctly
@@ -94,13 +96,13 @@
 **Components:** ResultsPanel (logs now modal-based)
 
 **Actions:**
-- [ ] Refactor `ResultsPanel.tsx`
-  - [ ] Replace `<box>` with `<Panel>`
-  - [ ] Use `<ScrollView>` for results
-  - [ ] Use semantic content components
-  - [ ] Support custom renderResult
-  - [ ] Test with various result types
-  - [ ] Test error display
+- [x] Refactor `ResultsPanel.tsx`
+  - [x] Replace `<box>` with `<Panel>`
+  - [x] Use `<ScrollView>` for results
+  - [x] Use semantic content components
+  - [x] Support custom renderResult
+  - [x] Test with various result types
+  - [x] Test error display
 
 **Validation:**
 - Scrolling works smoothly
@@ -115,21 +117,21 @@
 **Components:** ConfigForm, CommandSelector
 
 **Actions:**
-- [ ] Refactor `ConfigForm.tsx`
-  - [ ] Replace `<box>` with `<Panel>` and `<Container>`
-  - [ ] Use `<ScrollView>` for field list
-  - [ ] Use `<Field>` components
-  - [ ] Remove ScrollBoxRenderable ref type
-  - [ ] Use ScrollViewRef instead
-  - [ ] Update keyboard handler to use adapter (bubbling, no priority flags)
-  - [ ] Test field navigation
-  - [ ] Test scrolling to selected field
-- [ ] Refactor `CommandSelector.tsx`
-  - [ ] Replace `<box>` with `<Panel>` and `<Container>`
-  - [ ] Use semantic components for command items
-  - [ ] Update keyboard handler (bubbling)
-  - [ ] Test command navigation
-  - [ ] Test subcommand breadcrumbs
+- [x] Refactor `ConfigForm.tsx`
+  - [x] Replace `<box>` with `<Panel>` and `<Container>`
+  - [x] Use `<ScrollView>` for field list
+  - [x] Use `<Field>` components
+  - [x] Remove ScrollBoxRenderable ref type
+  - [x] Use ScrollViewRef instead
+  - [x] Update keyboard handler to use adapter (stack-based, no priority flags)
+  - [x] Test field navigation
+  - [x] Test scrolling to selected field
+- [x] Refactor `CommandSelector.tsx`
+  - [x] Replace `<box>` with `<Panel>` and `<Container>`
+  - [x] Use semantic components for command items
+  - [x] Update keyboard handler (stack-based)
+  - [x] Test command navigation
+  - [x] Test subcommand breadcrumbs
 
 **Validation:**
 - Field navigation works
@@ -142,15 +144,15 @@
 **Description:** Update the main TuiApp component orchestrator.
 
 **Actions:**
-- [ ] Refactor `TuiApp.tsx`
-  - [ ] Replace all `<box>` with `<Container>`
-  - [ ] Update all child component props
-  - [ ] Ensure layout still correct
-  - [ ] Use navigation + modal stacks (no mode enum); screens consume params/meta
-  - [ ] Test command-select/config/running/results/error flows via nav stack
-  - [ ] Test modal interactions (logs/editor/CLI) via modal stack
-  - [ ] Test focus cycling
-  - [ ] Test all keyboard shortcuts (bubbling, modal-first, copy modal-first)
+- [x] Refactor `TuiApp.tsx`
+  - [x] Replace all `<box>` with semantic layout components
+  - [x] Update all child component props
+  - [x] Ensure layout still correct
+  - [x] Use navigation + modal stacks (no mode enum); screens consume params/meta
+  - [x] Test command-select/config/running/results/error flows via nav stack
+  - [x] Test modal interactions (logs/editor/CLI) via modal stack
+  - [x] Test focus cycling
+  - [x] Test all keyboard shortcuts (stack-based, modal-first, global fall-through)
 
 **Validation:**
 - All application flows work
@@ -164,13 +166,13 @@
 **Description:** Switch TuiApplication to use renderer factory.
 
 **Actions:**
-- [ ] Update `TuiApplication.tsx`
-  - [ ] Replace direct OpenTUI renderer creation
-  - [ ] Use `createRenderer('opentui', config)` factory
-  - [ ] Update config mapping
-  - [ ] Ensure alternate screen works
-  - [ ] Test TUI launch
-  - [ ] Test cleanup on exit
+- [x] Update `TuiApplication.tsx`
+  - [x] Replace direct OpenTUI renderer creation
+  - [x] Use `createRenderer('opentui', config)` factory
+  - [x] Update config mapping
+  - [x] Ensure alternate screen works
+  - [x] Test TUI launch
+  - [x] Test cleanup on exit
 
 **Validation:**
 - Application launches correctly
@@ -183,12 +185,12 @@
 **Description:** Migrate keyboard context to use the adapter.
 
 **Actions:**
-- [ ] Update `KeyboardContext.tsx`
-  - [ ] Remove direct OpenTUI imports
-  - [ ] Use keyboard adapter
-  - [ ] Update KeyEvent type references
-  - [ ] Use Phase 0B focus-tree/bubbling (no priority enum)
-  - [ ] Modal capture via root focusable; unhandled keys bubble
+- [x] Update `KeyboardContext.tsx`
+  - [x] Remove direct OpenTUI imports
+  - [x] Use keyboard adapter
+  - [x] Update KeyEvent type references
+  - [x] Use stack-based handler model (global first, then active/topmost)
+  - [x] Unhandled keys fall through to global shortcuts
 
 **Validation:**
 - Keyboard events work correctly
@@ -200,12 +202,12 @@
 **Description:** Ensure hooks work with semantic components.
 
 **Actions:**
-- [ ] Review `useKeyboardHandler.ts` - update types if needed
-- [ ] Review `useClipboard.ts` - no changes needed (renderer-agnostic)
-- [ ] Review `useSpinner.ts` - no changes needed
-- [ ] Review `useCommandExecutor.ts` - no changes needed
-- [ ] Review `useLogStream.ts` - no changes needed
-- [ ] Review `useConfigState.ts` - no changes needed
+- [x] Review `useKeyboardHandler.ts` - update types if needed
+- [x] Review `useClipboard.ts` - no changes needed (renderer-agnostic)
+- [x] Review `useSpinner.ts` - no changes needed
+- [x] Review `useCommandExecutor.ts` - no changes needed
+- [x] Review `useLogStream.ts` - no changes needed
+- [x] Review `useConfigState.ts` - no changes needed
 
 **Validation:**
 - All hooks work with refactored components
@@ -216,18 +218,18 @@
 **Description:** Test the complete application with semantic layer and OpenTUI renderer.
 
 **Actions:**
-- [ ] Run example TUI app (`bun run example`)
-- [ ] Test command selection
-- [ ] Test command configuration
-- [ ] Test command execution
-- [ ] Test log viewing
-- [ ] Test result display
-- [ ] Test all keyboard shortcuts
-- [ ] Test all modals
-- [ ] Test field editing (text, number, boolean, enum)
-- [ ] Test clipboard operations
-- [ ] Test cancellation
-- [ ] Compare visually with pre-refactor version
+- [x] Run example TUI app (`bun run example`)
+- [x] Test command selection
+- [x] Test command configuration
+- [x] Test command execution
+- [x] Test log viewing
+- [x] Test result display
+- [x] Test all keyboard shortcuts
+- [x] Test all modals
+- [x] Test field editing (text, number, boolean, enum)
+- [x] Test clipboard operations
+- [x] Test cancellation
+- [x] Compare visually with pre-refactor version
 
 **Validation:**
 - Everything works identically to before refactor
@@ -240,10 +242,10 @@
 **Description:** Update tsconfig.json if needed for semantic components.
 
 **Actions:**
-- [ ] Review current jsxImportSource setting
-- [ ] Determine if changes needed for semantic components
-- [ ] Update paths if new directories added
-- [ ] Verify type checking works
+- [x] Review current jsxImportSource setting
+- [x] Determine if changes needed for semantic components
+- [x] Update paths if new directories added
+- [x] Verify type checking works
 
 **Validation:**
 - `bun run build` succeeds

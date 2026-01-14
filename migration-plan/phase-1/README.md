@@ -1,7 +1,7 @@
 # Phase 1: Create Semantic Component Library
 
-**Last Updated:** 2026-01-10  
-**Prerequisites:** Phase 0A and 0B must be complete
+**Last Updated:** 2026-01-14  
+**Prerequisites:** Phase 0A navigation refactor complete (Phase 0B deferred)
 
 ---
 
@@ -22,7 +22,7 @@ Build the abstraction layer using OpenTUI as the initial renderer implementation
 
 - ✅ New semantic component definitions and types
 - ✅ OpenTUI adapter implementation for all 12 components
-- ✅ Keyboard input adapter (works with Phase 0B focus/bubbling + modal stack)
+- ✅ Keyboard input adapter (single-active-handler model + modal stack)
 - ✅ Renderer interface and factory
 - ✅ Updated theme system
 - ✅ Tests for semantic components

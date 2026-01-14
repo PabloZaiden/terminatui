@@ -1,9 +1,11 @@
 import { useRef, useEffect, type ReactNode } from "react";
-import type { ScrollBoxRenderable } from "@opentui/core";
-import { Theme } from "../theme.ts";
-import { FieldRow } from "./FieldRow.tsx";
-import { ActionButton } from "./ActionButton.tsx";
-import { useActiveKeyHandler, type KeyboardEvent } from "../hooks/useActiveKeyHandler.ts";
+import { Field } from "../semantic/Field.tsx";
+import { MenuButton } from "../semantic/MenuButton.tsx";
+import { Panel } from "../semantic/Panel.tsx";
+import { ScrollView, type ScrollViewRef } from "../semantic/ScrollView.tsx";
+import { Container } from "../semantic/Container.tsx";
+import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
+import type { KeyboardEvent } from "../adapters/types.ts";
 import type { FieldConfig } from "./types.ts";
 
 interface ConfigFormProps {
@@ -64,26 +66,23 @@ export function ConfigForm({
     additionalButtons = [],
     onKeyDown,
 }: ConfigFormProps) {
-    const borderColor = focused ? Theme.borderFocused : Theme.border;
-    const scrollboxRef = useRef<ScrollBoxRenderable>(null);
+    const scrollViewRef = useRef<ScrollViewRef | null>(null);
     const totalItems = fieldConfigs.length + additionalButtons.length + 1; // fields + additional buttons + action button
 
     // Auto-scroll to keep selected item visible
     useEffect(() => {
-        if (scrollboxRef.current) {
-            scrollboxRef.current.scrollTo(selectedIndex);
-        }
+        scrollViewRef.current?.scrollToIndex(selectedIndex);
     }, [selectedIndex]);
 
     // Handle keyboard events (only when focused)
     useActiveKeyHandler(
-        (event) => {
+        (event: KeyboardEvent) => {
             // Let parent handle first if provided
             if (onKeyDown?.(event)) {
                 return true;
             }
 
-            const { key } = event;
+            const key = event;
 
             // Arrow key navigation
             if (key.name === "down") {
@@ -123,21 +122,21 @@ export function ConfigForm({
     );
 
     return (
-        <box
-            flexDirection="column"
-            border={true}
-            borderStyle="rounded"
-            borderColor={borderColor}
+        <Panel
             title={title}
-            flexGrow={1}
+            focused={focused}
+            flex={1}
             padding={1}
+            flexDirection="column"
         >
-            <scrollbox
-                ref={scrollboxRef}
-                scrollY={true}
-                flexGrow={1}
+            <ScrollView
+                axis="vertical"
+                flex={1}
+                scrollRef={(ref) => {
+                    scrollViewRef.current = ref;
+                }}
             >
-                <box flexDirection="column" gap={0}>
+                <Container flexDirection="column" gap={0}>
                     {fieldConfigs.map((field, idx) => {
                         const isSelected = idx === selectedIndex;
                         const displayValue = getDisplayValue(
@@ -147,11 +146,11 @@ export function ConfigForm({
                         );
 
                         return (
-                            <FieldRow
+                            <Field
                                 key={field.key}
                                 label={field.label}
                                 value={displayValue}
-                                isSelected={isSelected}
+                                selected={isSelected}
                             />
                         );
                     })}
@@ -159,17 +158,17 @@ export function ConfigForm({
                     {additionalButtons.map((btn, idx) => {
                         const buttonSelectedIndex = fieldConfigs.length + idx;
                         return (
-                            <ActionButton
+                            <MenuButton
                                 key={btn.label}
                                 label={btn.label}
-                                isSelected={selectedIndex === buttonSelectedIndex}
+                                selected={selectedIndex === buttonSelectedIndex}
                             />
                         );
                     })}
 
                     {actionButton}
-                </box>
-            </scrollbox>
-        </box>
+                </Container>
+            </ScrollView>
+        </Panel>
     );
 }

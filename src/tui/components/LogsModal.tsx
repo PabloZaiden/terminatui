@@ -1,14 +1,37 @@
 import { useCallback } from "react";
-import { Theme } from "../theme.ts";
+import { Container } from "../semantic/Container.tsx";
+import { ScrollView } from "../semantic/ScrollView.tsx";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
+import { Label } from "../semantic/Label.tsx";
 import { LogColors } from "./logColors.ts";
-import type { LogEvent } from "../../core/logger.ts";
 import { ModalBase } from "./ModalBase.tsx";
+import { useLogs } from "../context/LogsContext.tsx";
+import type { ModalComponent, ModalDefinition } from "../registry.tsx";
+import { LogLevel } from "../../core/logger.ts";
 
-interface LogsModalProps {
-    /** Log entries to display */
-    logs: LogEvent[];
+export interface LogsModalParams {}
+
+export class LogsModal implements ModalDefinition<LogsModalParams> {
+    static readonly Id = "logs";
+
+    getId(): string {
+        return LogsModal.Id;
+    }
+
+    component(): ModalComponent<LogsModalParams> {
+        return function LogsModalComponentWrapper({ params: _params, onClose }: { params: LogsModalParams; onClose: () => void; }) {
+            return (
+                <LogsModalView
+                    visible={true}
+                    onClose={onClose}
+                />
+            );
+        };
+    }
+}
+
+interface LogsModalViewProps {
     /** Whether the panel is visible */
     visible: boolean;
     /** Callback when the modal is closed */
@@ -18,15 +41,15 @@ interface LogsModalProps {
 /**
  * Panel displaying log entries with color-coded levels.
  */
-export function LogsModal({
-    logs,
+function LogsModalView({
     visible,
     onClose,
-}: LogsModalProps) {
+}: LogsModalViewProps) {
+    const { logs } = useLogs();
     // Handle Enter to close (Esc and Ctrl+L are handled globally)
     useActiveKeyHandler(
         (event) => {
-            if (event.key.name === "return" || event.key.name === "enter") {
+            if (event.name === "return" || event.name === "enter") {
                 onClose();
                 return true;
             }
@@ -52,30 +75,24 @@ export function LogsModal({
 
     return (
         <ModalBase title={title} top={4} bottom={4} left={4} right={4}>
-            <scrollbox
-                scrollY={true}
-                flexGrow={1}
-                stickyScroll={true}
-                stickyStart="bottom"
-                focused={true}
-            >
-                <box flexDirection="column" gap={0}>
+            <ScrollView axis="vertical" flex={1} stickyToEnd={true} focused={true}>
+                <Container flexDirection="column" gap={0}>
                     {logs.map((log, idx) => {
-                        const color = LogColors[log.level] ?? Theme.statusText;
+                        const color = LogColors[log.level] ?? LogColors[LogLevel.info];
                         const sanitized = Bun.stripANSI(log.message).trim();
 
                         return (
-                            <text key={`${log.timestamp.getTime()}-${idx}`} fg={color}>
-                                {sanitized}
-                            </text>
+                            <Label key={`${log.timestamp.getTime()}-${idx}`}>
+                                <span fg={color}>{sanitized}</span>
+                            </Label>
                         );
                     })}
 
                     {logs.length === 0 && (
-                        <text fg={Theme.label}>No logs yet...</text>
+                        <Label color="mutedText">No logs yet...</Label>
                     )}
-                </box>
-            </scrollbox>
+                </Container>
+            </ScrollView>
         </ModalBase>
     );
 }

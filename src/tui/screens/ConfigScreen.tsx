@@ -2,7 +2,8 @@ import { useCallback, useMemo, useState } from "react";
 import type { AnyCommand } from "../../core/command.ts";
 import type { FieldConfig } from "../components/types.ts";
 import { ConfigForm } from "../components/ConfigForm.tsx";
-import { ActionButton } from "../components/ActionButton.tsx";
+import { Container } from "../semantic/Container.tsx";
+import { MenuButton } from "../semantic/MenuButton.tsx";
 import { schemaToFieldConfigs } from "../utils/schemaToFields.ts";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 import { buildCliCommand } from "../utils/buildCliCommand.ts";
@@ -13,8 +14,8 @@ import type { ScreenComponent } from "../registry.tsx";
 import { savePersistedParameters } from "../utils/parameterPersistence.ts";
 import type { OptionSchema, OptionValues } from "../../types/command.ts";
 import { ScreenBase } from "./ScreenBase.ts";
-import type { EditorModalParams } from "../modals/EditorModal.tsx";
-import { type CliModalParams } from "../modals/CliModal.tsx";
+import type { EditorModalParams } from "../components/EditorModal.tsx";
+import type { CliModalParams } from "../components/CliModal.tsx";
 import { RunningScreen, type RunningParams } from "./RunningScreen.tsx";
 import { type ErrorParams, ErrorScreen } from "./ErrorScreen.tsx";
 import { type ResultsParams, ResultsScreen } from "./ResultsScreen.tsx";
@@ -130,7 +131,7 @@ export class ConfigScreen extends ScreenBase {
             }, [appName, commandPath, command.options, values, navigation]);
 
             return (
-                <box flexDirection="column" flexGrow={1}>
+                <Container flexDirection="column" flex={1}>
                     <ConfigForm
                         title={`Configure: ${command.displayName ?? command.name}`}
                         fieldConfigs={derivedFieldConfigs}
@@ -144,13 +145,13 @@ export class ConfigScreen extends ScreenBase {
                             { label: "CLI Command", onPress: handleShowCliArgs },
                         ]}
                         actionButton={
-                            <ActionButton
+                            <MenuButton
                                 label={command.actionLabel ?? "Run"}
-                                isSelected={selectedFieldIndex === derivedFieldConfigs.length + 1}
+                                selected={selectedFieldIndex === derivedFieldConfigs.length + 1}
                             />
                         }
                     />
-                </box>
+                </Container>
             );
         };
     }

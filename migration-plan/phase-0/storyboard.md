@@ -164,4 +164,4 @@ Phase 0A refactoring is complete. TuiApp is now fully screen-agnostic:
 
 All screens and modals are registered centrally via `registerAllScreens()` and `registerAllModals()` in `TuiApp.tsx`.
 
-**Next Step**: Manual testing to verify all flows work correctly, then Phase 0B if needed.
+**Next Step**: Proceed to Phase 3 (Ink adapter) once Phase 2 is complete and UI parity is acceptable.

@@ -1,23 +1,51 @@
 import { useState, useEffect } from "react";
-import type { SelectOption } from "@opentui/core";
-import { Theme } from "../theme.ts";
 import type { FieldConfig } from "./types.ts";
 import { ModalBase } from "./ModalBase.tsx";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
+import { Select } from "../semantic/Select.tsx";
+import { TextInput } from "../semantic/TextInput.tsx";
+import { Label } from "../semantic/Label.tsx";
+import type { ModalComponent, ModalDefinition } from "../registry.tsx";
 
-interface EditorModalProps {
-    /** The key of the field being edited */
-    fieldKey: string | null;
-    /** The current value of the field */
+export interface EditorModalParams {
+    fieldKey: string;
     currentValue: unknown;
+    fieldConfigs: FieldConfig[];
+    onSubmit: (value: unknown) => void;
+    onCancel: () => void;
+}
+
+export class EditorModal implements ModalDefinition<EditorModalParams> {
+    static readonly Id = "property-editor";
+
+    getId(): string {
+        return EditorModal.Id;
+    }
+
+    component(): ModalComponent<EditorModalParams> {
+        return function EditorModalComponentWrapper({ params, onClose }: { params: EditorModalParams; onClose: () => void; }) {
+            return (
+                <EditorModalView
+                    fieldKey={params.fieldKey}
+                    currentValue={params.currentValue}
+                    visible={true}
+                    onSubmit={(value) => {
+                        params.onSubmit?.(value);
+                    }}
+                    onCancel={() => {
+                        params.onCancel?.();
+                        onClose();
+                    }}
+                    fieldConfigs={params.fieldConfigs}
+                />
+            );
+        };
+    }
+}
+
+interface EditorModalViewProps {
     /** Whether the modal is visible */
     visible: boolean;
-    /** Called when the user submits a new value */
-    onSubmit: (value: unknown) => void;
-    /** Called when the user cancels editing */
-    onCancel: () => void;
-    /** Field configurations */
-    fieldConfigs: FieldConfig[];
 }
 
 /**
@@ -29,13 +57,19 @@ interface EditorModalProps {
  * block the underlying screen from receiving events, even though most key
  * handling is done by the native components.
  */
-export function EditorModal({
+interface EditorModalViewProps extends EditorModalParams {
+    /** Whether the modal is visible */
+    visible: boolean;
+}
+
+function EditorModalView({
     fieldKey,
     currentValue,
     visible,
     onSubmit,
+    onCancel,
     fieldConfigs,
-}: EditorModalProps) {
+}: EditorModalViewProps) {
     const [inputValue, setInputValue] = useState("");
     const [selectIndex, setSelectIndex] = useState(0);
 
@@ -44,9 +78,11 @@ export function EditorModal({
         if (fieldKey && visible) {
             setInputValue(String(currentValue ?? ""));
 
-            // For enums, find current index
+            // For enums/booleans, find current index
             const fieldConfig = fieldConfigs.find((f) => f.key === fieldKey);
-            if (fieldConfig?.options) {
+            if (fieldConfig?.type === "boolean") {
+                setSelectIndex(currentValue ? 1 : 0);
+            } else if (fieldConfig?.options) {
                 const idx = fieldConfig.options.findIndex((o) => o.value === currentValue);
                 setSelectIndex(idx >= 0 ? idx : 0);
             }
@@ -73,92 +109,76 @@ export function EditorModal({
         return null;
     }
 
-    const isEnum = fieldConfig.type === "enum" && fieldConfig.options;
-    const isBoolean = fieldConfig.type === "boolean";
     const isNumber = fieldConfig.type === "number";
 
     const handleInputSubmit = (value: string) => {
         if (isNumber) {
             onSubmit(parseInt(value.replace(/[^0-9-]/g, ""), 10) || 0);
-        } else {
-            onSubmit(value);
+            onCancel();
+            return;
         }
+
+        onSubmit(value);
+        onCancel();
     };
 
-    const handleSelectIndexChange = (index: number, _option: SelectOption | null) => {
-        setSelectIndex(index);
-    };
+    const selectOptions =
+        fieldConfig.type === "boolean"
+            ? [
+                  { label: "False", value: "false" },
+                  { label: "True", value: "true" },
+              ]
+            : fieldConfig.type === "enum"
+              ? (fieldConfig.options ?? []).map((o) => ({
+                    label: o.name,
+                    value: String(o.value),
+                }))
+              : null;
 
-    const handleSelectSubmit = (_index: number, option: SelectOption | null) => {
-        if (option) {
-            onSubmit(option.value);
+    const usesSelect = selectOptions !== null;
+
+    const handleSelectSubmit = () => {
+        const selected = selectOptions?.[selectIndex];
+        if (!selected) {
+            return;
         }
-    };
 
-    const handleBooleanSubmit = (_index: number, option: SelectOption | null) => {
-        if (option) {
-            onSubmit(option.value === true);
+        if (fieldConfig.type === "boolean") {
+            onSubmit(selected.value === "true");
+            onCancel();
+            return;
         }
-    };
 
-    // Boolean uses select with True/False options
-    const booleanOptions: SelectOption[] = [
-        { name: "False", description: "", value: false },
-        { name: "True", description: "", value: true },
-    ];
+        onSubmit(selected.value);
+        onCancel();
+    };
 
     return (
         <ModalBase title={`Edit: ${fieldConfig.label}`} width="60%" height={12} top={4} left={6}>
-            {isEnum && fieldConfig.options && (
-                <select
-                    options={fieldConfig.options.map((o) => ({
-                        name: o.name,
-                        value: o.value,
-                        description: "",
-                    }))}
-                    selectedIndex={selectIndex}
+            {usesSelect && selectOptions && (
+                <Select
+                    options={selectOptions}
+                    value={selectOptions[selectIndex]?.value ?? selectOptions[0]?.value ?? ""}
                     focused={true}
-                    onChange={handleSelectIndexChange}
-                    onSelect={handleSelectSubmit}
-                    showScrollIndicator={true}
-                    showDescription={false}
-                    height={6}
-                    width="100%"
-                    wrapSelection={true}
-                    selectedBackgroundColor="#61afef"
-                    selectedTextColor="#1e2127"
+                    onChange={(next) => {
+                        const idx = selectOptions.findIndex((o) => o.value === next);
+                        setSelectIndex(idx >= 0 ? idx : 0);
+                    }}
+                    onSubmit={handleSelectSubmit}
                 />
             )}
 
-            {isBoolean && (
-                <select
-                    options={booleanOptions}
-                    selectedIndex={currentValue ? 1 : 0}
-                    focused={true}
-                    onSelect={handleBooleanSubmit}
-                    showScrollIndicator={false}
-                    showDescription={false}
-                    height={2}
-                    width="100%"
-                    wrapSelection={true}
-                    selectedBackgroundColor="#61afef"
-                    selectedTextColor="#1e2127"
-                />
-            )}
-
-            {!isEnum && !isBoolean && (
-                <input
+            {!usesSelect && (
+                <TextInput
                     value={inputValue}
                     placeholder={fieldConfig.placeholder ?? `Enter ${fieldConfig.label.toLowerCase()}...`}
                     focused={true}
-                    onInput={(value) => setInputValue(value)}
-                    onSubmit={handleInputSubmit}
+                    onChange={(value) => setInputValue(value)}
+                    onSubmit={() => handleInputSubmit(inputValue)}
                 />
             )}
 
-            <text fg={Theme.statusText}>
-                Enter to save, Esc to cancel
-            </text>
+            <Label color="mutedText">Enter to save, Esc to cancel</Label>
         </ModalBase>
     );
 }

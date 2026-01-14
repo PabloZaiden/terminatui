@@ -19,7 +19,7 @@ myapp greet --name Alice --loud
 Update `src/greet.ts`:
 
 ```typescript
-import { Command, type AppContext, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import { Command, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
 
 const options = {
   name: {
@@ -40,7 +40,7 @@ export class GreetCommand extends Command<typeof options> {
   readonly description = "Greet someone";
   readonly options = options;
 
-  execute(_ctx: AppContext, config: { name: string; loud: boolean }): CommandResult {
+  execute(config: { name: string; loud: boolean }): CommandResult {
     const message = `Hello, ${config.name}!`;
     console.log(config.loud ? message.toUpperCase() : message);
     return { success: true };

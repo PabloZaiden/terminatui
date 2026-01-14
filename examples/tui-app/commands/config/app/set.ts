@@ -72,6 +72,9 @@ export class AppSetCommand extends Command<typeof options> {
                 count++;
                 AppContext.current.logger.info(`Applying configuration... (${count}/5)`);
                 if (count >= 5 || execCtx.signal.aborted) {
+                    if (count < 5) {
+                        AppContext.current.logger.warn("Configuration update aborted");
+                    }
                     clearInterval(interval);
                     resolve(undefined);
                 }

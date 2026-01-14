@@ -16,11 +16,9 @@ Create `src/commands/deploy.ts`:
 
 ```typescript
 import path from "node:path";
-import { existsSync } from "node:fs";
 import { 
   Command, 
   ConfigValidationError,
-  type AppContext, 
   type OptionSchema, 
   type OptionValues,
   type CommandResult 
@@ -84,10 +82,7 @@ export class DeployCommand extends Command<typeof options, DeployConfig> {
    * Transform and validate raw options into DeployConfig.
    * Runs before execute() - errors here show helpful messages.
    */
-  override buildConfig(
-    _ctx: AppContext, 
-    opts: OptionValues<typeof options>
-  ): DeployConfig {
+  override async buildConfig(opts: OptionValues<typeof options>): Promise<DeployConfig> {
     // 1. Validate app path exists
     const appRaw = opts["app"] as string | undefined;
     if (!appRaw) {
@@ -98,7 +93,7 @@ export class DeployCommand extends Command<typeof options, DeployConfig> {
     }
     
     const appPath = path.resolve(appRaw);
-    if (!existsSync(appPath)) {
+    if (!(await Bun.file(appPath).exists())) {
       throw new ConfigValidationError(
         `Application path does not exist: ${appPath}`,
         "app"
@@ -157,11 +152,8 @@ export class DeployCommand extends Command<typeof options, DeployConfig> {
    * Execute with fully validated DeployConfig.
    * No need to validate here - buildConfig already did it!
    */
-  async execute(ctx: AppContext, config: DeployConfig): Promise<CommandResult> {
-    ctx.logger.info(`Deploying ${config.appName} to ${config.environment}`);
-    ctx.logger.debug(`Path: ${config.appPath}`);
-    ctx.logger.debug(`Replicas: ${config.replicas}`);
-    ctx.logger.debug(`URL: ${config.envConfig.url}`);
+  async execute(config: DeployConfig): Promise<CommandResult> {
+    console.log(`Deploying ${config.appName} to ${config.environment}`);
 
     if (config.dryRun) {
       console.log("DRY RUN - Would deploy:");

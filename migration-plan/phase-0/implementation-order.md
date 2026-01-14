@@ -1,6 +1,6 @@
 # Implementation Order & Success Criteria
 
-**Last Updated:** 2026-01-10
+**Last Updated:** 2026-01-14
 
 ---
 
@@ -26,16 +26,14 @@ The two phases must be completed **sequentially**, with a storyboard checkpoint 
 - Refactor TuiApp to be screen-driven: screens/modals declare transitions and data providers (e.g., clipboard content); TuiApp handles only global concerns (back, logs toggle, global copy) and orchestrates navigation without per-screen branching.
 - Outcome: removes hardcoded per-route logic from TuiApp; enables Phase 0B focus-tree work.
 
-### Phase 0B Second: Component-Chain Keyboard (next up)
+### Phase 0B Second: Component-Chain Keyboard (deferred)
 **Document:** [phase-0b-keyboard.md](./phase-0b-keyboard.md)
 
 **Rationale:**
-- Depends on screen components from Phase 0A, validated storyboard, and navigation refactor
-- Screen hierarchy makes focus tree clearer
-- Can reference screen types instead of mode enum
-- Benefits from simplified state management
+- Evaluated during Phase 0A work and deferred
+- Current keyboard model (global + single active handler, modal-first) is sufficient
 
-**⚠️ Next:** Validate storyboard, refactor navigation per storyboard, then implement focus-tree bubbling per Phase 0B plan.
+**Next:** Proceed with renderer migration (Phase 1 → Phase 2 → Phase 3).
 
 ---
 
@@ -197,15 +195,15 @@ If critical issues are found during validation:
 
 ## Next Steps After Phase 0
 
-Once Phase 0A and 0B are complete and validated:
+Once Phase 0A is complete (Phase 0B deferred):
 
-1. **Update migration docs** - Reflect completed Phase 0 work
-2. **Begin Phase 1** - Semantic component library creation
-3. **Reference Phase 0** - Use screen types and keyboard patterns in Phase 1
+1. **Begin Phase 1** - Semantic component library creation
+2. **Proceed to Phase 2** - Refactor app UI to semantic layer
+3. **Proceed to Phase 3** - Implement Ink adapter
 
 See:
 - [Main Migration Plan](../README.md)
-- [Phase 1 Tasks](../tasks/phase-1-tasks.md)
+- [Phase 1](../phase-1/README.md)
 
 ---
 

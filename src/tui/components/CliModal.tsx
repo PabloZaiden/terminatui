@@ -1,11 +1,37 @@
-import { Theme } from "../theme.ts";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
+import { Container } from "../semantic/Container.tsx";
+import { ScrollView } from "../semantic/ScrollView.tsx";
 import { ModalBase } from "./ModalBase.tsx";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
+import { Label } from "../semantic/Label.tsx";
+import { Value } from "../semantic/Value.tsx";
+import type { ModalComponent, ModalDefinition } from "../registry.tsx";
 
-interface CliModalProps {
-    /** CLI command to display */
+export interface CliModalParams {
     command: string;
+}
+
+export class CliModal implements ModalDefinition<CliModalParams> {
+    static readonly Id = "cli";
+
+    getId(): string {
+        return CliModal.Id;
+    }
+
+    component(): ModalComponent<CliModalParams> {
+        return function CliModalComponentWrapper({ params, onClose }: { params: CliModalParams; onClose: () => void; }) {
+            return (
+                <CliModalView
+                    command={params.command}
+                    visible={true}
+                    onClose={onClose}
+                />
+            );
+        };
+    }
+}
+
+interface CliModalViewProps extends CliModalParams {
     /** Whether the modal is visible */
     visible: boolean;
     /** Called when the modal should close */
@@ -15,11 +41,11 @@ interface CliModalProps {
 /**
  * Modal displaying the CLI command equivalent of the current config.
  */
-export function CliModal({
+function CliModalView({
     command,
     visible,
     onClose,
-}: CliModalProps) {
+}: CliModalViewProps) {
     // Register clipboard provider for CLI command
     useClipboardProvider(
         () => ({ content: command, label: "CLI" }),
@@ -29,7 +55,7 @@ export function CliModal({
     // Handle Enter to close (Esc is handled globally)
     useActiveKeyHandler(
         (event) => {
-            if (event.key.name === "return" || event.key.name === "enter") {
+            if (event.name === "return" || event.name === "enter") {
                 onClose();
                 return true;
             }
@@ -44,15 +70,13 @@ export function CliModal({
 
     return (
         <ModalBase title="CLI Command" width="80%" height={10} top={4} left={4}>
-            <scrollbox scrollX={true} height={3}>
-                <text fg={Theme.value}>
-                    {command}
-                </text>
-            </scrollbox>
+            <ScrollView axis="horizontal" height={3}>
+                <Container>
+                    <Value>{command}</Value>
+                </Container>
+            </ScrollView>
 
-            <text fg={Theme.statusText}>
-                Enter or Esc to close
-            </text>
+            <Label color="mutedText">Enter or Esc to close</Label>
         </ModalBase>
     );
 }

@@ -4,8 +4,10 @@ import { useNavigation } from "../context/NavigationContext.tsx";
 import { useExecutor } from "../context/ExecutorContext.tsx";
 import { useBackHandler } from "../hooks/useBackHandler.ts";
 import type { ScreenComponent } from "../registry.tsx";
-import { Theme } from "../theme.ts";
 import { ScreenBase } from "./ScreenBase.ts";
+import { Container } from "../semantic/Container.tsx";
+import { Label } from "../semantic/Label.tsx";
+import { Panel } from "../semantic/Panel.tsx";
 
 /**
  * Screen state stored in navigation params.
@@ -50,12 +52,20 @@ export class RunningScreen extends ScreenBase {
             }, [executor, navigation]));
 
             return (
-                <box flexDirection="column" flexGrow={1} gap={1}>
-                    <text fg={Theme.statusText}>
-                        Running {command.displayName ?? command.name}... Check logs for progress.
-                    </text>
-                    <text fg={Theme.statusText}>Press Esc to cancel.</text>
-                </box>
+                <Panel
+                    flexDirection="column"
+                    flex={1}
+                    title={`Running ${command.displayName ?? command.name}`}
+                    padding={1}
+                    focused
+                >
+                    <Container flexDirection="column" flex={1} gap={1}>
+                        <Label color="mutedText">
+                            Check logs for progress.
+                        </Label>
+                        <Label color="mutedText">Press Esc to cancel.</Label>
+                    </Container>
+                </Panel>
             );
         };
     }

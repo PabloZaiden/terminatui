@@ -1,9 +1,5 @@
 import { useEffect, useRef } from "react";
-import {
-    useKeyboardContext,
-    type GlobalKeyHandler,
-    type KeyboardEvent,
-} from "../context/KeyboardContext.tsx";
+import { useKeyboardContext, type GlobalKeyHandler } from "../context/KeyboardContext.tsx";
 
 /**
  * Set the global keyboard handler.
@@ -21,7 +17,7 @@ import {
  * ```tsx
  * // In TuiApp
  * useGlobalKeyHandler((event) => {
- *     const { key } = event;
+ *     const key = event;
  *     
  *     if (key.ctrl && key.name === "l") {
  *         toggleLogs();
@@ -46,9 +42,13 @@ export function useGlobalKeyHandler(handler: GlobalKeyHandler): void {
 
     useEffect(() => {
         // Set a stable wrapper that calls the current handler
-        setGlobalHandler((event) => handlerRef.current(event));
+        const unregister = setGlobalHandler((event) => handlerRef.current(event));
+
+        return () => {
+            unregister();
+        };
     }, [setGlobalHandler]);
 }
 
 // Re-export types for convenience
-export type { GlobalKeyHandler, KeyboardEvent };
+export type { GlobalKeyHandler };

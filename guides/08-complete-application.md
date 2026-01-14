@@ -152,7 +152,6 @@ Create `src/commands/add.ts`:
 import {
   Command,
   ConfigValidationError,
-  type AppContext,
   type OptionSchema,
   type OptionValues,
   type CommandResult,
@@ -190,15 +189,10 @@ export class AddCommand extends Command<typeof options, AddConfig> {
   readonly options = options;
   readonly displayName = "Add Task";
   readonly actionLabel = "Create Task";
-  readonly group = "Tasks";
-  readonly order = 1;
 
   private db = new Database();
 
-  override buildConfig(
-    _ctx: AppContext,
-    opts: OptionValues<typeof options>
-  ): AddConfig {
+  override buildConfig(opts: OptionValues<typeof options>): AddConfig {
     const title = (opts["title"] as string)?.trim();
     if (!title) {
       throw new ConfigValidationError("Task title cannot be empty", "title");
@@ -215,13 +209,11 @@ export class AddCommand extends Command<typeof options, AddConfig> {
     return { title, priority };
   }
 
-  async execute(ctx: AppContext, config: AddConfig): Promise<CommandResult> {
-    ctx.logger.debug(`Creating task: ${config.title}`);
-
+  async execute(config: AddConfig): Promise<CommandResult> {
     const task = await this.db.addTask(config.title, config.priority);
-    
-    const notifications = new NotificationService(ctx.logger);
-    notifications.taskAdded(task);
+
+    // (Example) optional: log to console or your own logger
+    console.log(`Created task: ${task.title}`);
 
     return {
       success: true,
@@ -237,7 +229,6 @@ Create `src/commands/list.ts`:
 ```typescript
 import {
   Command,
-  type AppContext,
   type OptionSchema,
   type OptionValues,
   type CommandResult,
@@ -272,27 +263,20 @@ export class ListCommand extends Command<typeof options, ListConfig> {
   readonly options = options;
   readonly displayName = "List Tasks";
   readonly actionLabel = "Show Tasks";
-  readonly group = "Tasks";
-  readonly order = 2;
 
   // Execute immediately when selected in TUI
   readonly immediateExecution = true;
 
   private db = new Database();
 
-  override buildConfig(
-    _ctx: AppContext,
-    opts: OptionValues<typeof options>
-  ): ListConfig {
+  override buildConfig(opts: OptionValues<typeof options>): ListConfig {
     return {
       filter: (opts["filter"] as ListConfig["filter"]) ?? "all",
       priority: opts["priority"] as Task["priority"] | undefined,
     };
   }
 
-  async execute(ctx: AppContext, config: ListConfig): Promise<CommandResult> {
-    ctx.logger.debug(`Listing tasks: filter=${config.filter}`);
-
+  async execute(config: ListConfig): Promise<CommandResult> {
     let tasks = await this.db.listTasks(config.filter);
 
     if (config.priority) {
@@ -314,7 +298,6 @@ Create `src/commands/complete.ts`:
 import {
   Command,
   ConfigValidationError,
-  type AppContext,
   type OptionSchema,
   type OptionValues,
   type CommandResult,
@@ -342,15 +325,10 @@ export class CompleteCommand extends Command<typeof options, CompleteConfig> {
   readonly options = options;
   readonly displayName = "Complete Task";
   readonly actionLabel = "Mark Complete";
-  readonly group = "Tasks";
-  readonly order = 3;
 
   private db = new Database();
 
-  override buildConfig(
-    _ctx: AppContext,
-    opts: OptionValues<typeof options>
-  ): CompleteConfig {
+  override buildConfig(opts: OptionValues<typeof options>): CompleteConfig {
     const id = opts["id"] as string;
     if (!id?.trim()) {
       throw new ConfigValidationError("Task ID is required", "id");
@@ -358,11 +336,9 @@ export class CompleteCommand extends Command<typeof options, CompleteConfig> {
     return { id: id.trim() };
   }
 
-  async execute(ctx: AppContext, config: CompleteConfig): Promise<CommandResult> {
-    ctx.logger.debug(`Completing task: ${config.id}`);
-
+  async execute(config: CompleteConfig): Promise<CommandResult> {
     const task = await this.db.completeTask(config.id);
-    
+
     if (!task) {
       return {
         success: false,
@@ -370,8 +346,7 @@ export class CompleteCommand extends Command<typeof options, CompleteConfig> {
       };
     }
 
-    const notifications = new NotificationService(ctx.logger);
-    notifications.taskCompleted(task);
+    console.log(`Completed task: ${task.title}`);
 
     return {
       success: true,
@@ -387,7 +362,6 @@ Create `src/commands/stats.ts`:
 ```typescript
 import {
   Command,
-  type AppContext,
   type OptionSchema,
   type CommandResult,
 } from "@pablozaiden/terminatui";
@@ -402,15 +376,11 @@ export class StatsCommand extends Command<typeof options> {
   readonly options = options;
   readonly displayName = "Statistics";
   readonly actionLabel = "Show Stats";
-  readonly group = "Analytics";
-  readonly order = 1;
   readonly immediateExecution = true;
 
   private db = new Database();
 
-  async execute(ctx: AppContext): Promise<CommandResult> {
-    ctx.logger.debug("Fetching statistics");
-
+  async execute(): Promise<CommandResult> {
     const stats = await this.db.getStats();
 
     return {
