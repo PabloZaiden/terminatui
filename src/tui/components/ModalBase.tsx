@@ -29,12 +29,7 @@ export function ModalBase({
 }: ModalBaseProps) {
     return (
         <Overlay zIndex={20} top={top} left={left} right={right} bottom={bottom} width={width} height={height}>
-            <Panel border={true} flexDirection="column" flex={1} padding={1} surface="overlay">
-                {title && (
-                    <Label color="warning" bold>
-                        {title}
-                    </Label>
-                )}
+            <Panel title={title} border={true} flexDirection="column" flex={1} padding={1} surface="overlay">
                 <Container flexDirection="column" gap={1} flex={1}>
                     {children}
                 </Container>
