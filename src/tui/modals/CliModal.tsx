@@ -1,11 +1,11 @@
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { Container } from "../semantic/Container.tsx";
 import { ScrollView } from "../semantic/ScrollView.tsx";
-import { ModalBase } from "./ModalBase.tsx";
+import { ModalBase } from "../components/ModalBase.tsx";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 import { Label } from "../semantic/Label.tsx";
 import { Value } from "../semantic/Value.tsx";
-import type { ModalComponent, ModalDefinition } from "../registry.tsx";
+import type { ModalComponent, ModalDefinition } from "../registry.ts";
 
 export interface CliModalParams {
     command: string;

@@ -19,7 +19,7 @@ enum Mode {
     Error,
 }
 
-// State variables in TuiApp.tsx
+// State variables in TuiRoot.tsx
 const [mode, setMode] = useState<Mode>(Mode.CommandSelect);
 const [selectedCommand, setSelectedCommand] = useState<AnyCommand | null>(null);
 const [commandPath, setCommandPath] = useState<string[]>([]);

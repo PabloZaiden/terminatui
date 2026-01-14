@@ -6,7 +6,7 @@
 
 ## Detailed Coupling Analysis
 
-### 1. Renderer Initialization (`TuiApplication.tsx`)
+### 1. Renderer Initialization (`TuiRootlication.tsx`)
 
 **Current Code:**
 ```typescript
@@ -21,7 +21,7 @@ const renderer = await createCliRenderer({
 });
 
 const root = createRoot(renderer);
-root.render(<TuiApp ... />);
+root.render(<TuiRoot ... />);
 renderer.start();
 ```
 
@@ -33,7 +33,7 @@ const renderer = await createRenderer('ink', {
     theme: Theme,
 });
 
-renderer.render(<TuiApp ... />);
+renderer.render(<TuiRoot ... />);
 ```
 
 

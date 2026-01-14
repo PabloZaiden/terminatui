@@ -19,7 +19,7 @@ Replace flat priority-based keyboard handling with component hierarchy-aware bub
 A simpler **stack-based active handler** model:
 
 ```
-Global Handler (TuiApp)
+Global Handler (TuiRoot)
     ↓ (if not handled)
 Active Handler (topmost screen/modal in stack)
 ```
@@ -55,7 +55,7 @@ Consider implementing Phase 0B if:
 ### Current Keyboard Architecture Summary
 
 ```typescript
-// Global handler (TuiApp only)
+// Global handler (TuiRoot only)
 useGlobalKeyHandler((event) => {
     if (key.name === "escape") { goBack(); return true; }
     if (key.ctrl && key.name === "y") { copy(); return true; }
@@ -100,7 +100,7 @@ Each component can be **focusable** and register keyboard handlers. The focus tr
 Each component can be **focusable** and register keyboard handlers. The focus tree reflects the component hierarchy:
 
 ```
-TuiApp (root)
+TuiRoot (root)
 └── ConfigScreen
     ├── ConfigForm (focused)
     │   ├── FieldRow (selected)
@@ -113,7 +113,7 @@ When a key is pressed:
 1. Event sent to deepest focused component (FieldRow)
 2. If not handled, bubble to parent (ConfigForm)
 3. If not handled, bubble to parent (ConfigScreen)
-4. If not handled, bubble to parent (TuiApp)
+4. If not handled, bubble to parent (TuiRoot)
 5. Stop when handled or reach root
 
 ### 2. Keyboard Context Redesign
@@ -261,11 +261,11 @@ const handled = handler.handle(event);
 
 ---
 
-### Task 0B.3: Update TuiApp Global Handlers
+### Task 0B.3: Update TuiRoot Global Handlers
 
 **Actions:**
 - [ ] Remove mode-aware global keyboard handler
-- [ ] Create TuiApp-level handler (registered as root)
+- [ ] Create TuiRoot-level handler (registered as root)
 - [ ] Handle app-wide shortcuts (escape to exit at root level; copy uses currentModal→current screen data)
 - [ ] Remove `enabled` flags and mode checks
 - [ ] Simplify to only handle truly global shortcuts
@@ -274,7 +274,7 @@ const handled = handler.handle(event);
 ```
 ✓ App-level shortcuts work (escape to exit at top level)
 ✓ Global copy works regardless of modal visibility (modal content first, else screen)
-✓ No mode-specific logic in TuiApp handler
+✓ No mode-specific logic in TuiRoot handler
 ✓ Handlers in screens receive events first
 ```
 
@@ -305,7 +305,7 @@ const handled = handler.handle(event);
 **Validation Checkpoint:**
 ```
 ✓ Each screen handles its own shortcuts
-✓ Unhandled keys bubble to parent (TuiApp)
+✓ Unhandled keys bubble to parent (TuiRoot)
 ✓ Screen-specific shortcuts work correctly
 ✓ No handler conflicts or duplicates
 ```

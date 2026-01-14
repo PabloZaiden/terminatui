@@ -4,10 +4,10 @@ import { ScrollView } from "../semantic/ScrollView.tsx";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 import { Label } from "../semantic/Label.tsx";
-import { LogColors } from "./logColors.ts";
-import { ModalBase } from "./ModalBase.tsx";
+import { LogColors } from "../components/logColors.ts";
+import { ModalBase } from "../components/ModalBase.tsx";
 import { useLogs } from "../context/LogsContext.tsx";
-import type { ModalComponent, ModalDefinition } from "../registry.tsx";
+import type { ModalComponent, ModalDefinition } from "../registry.ts";
 import { LogLevel } from "../../core/logger.ts";
 
 export interface LogsModalParams {}

@@ -2,7 +2,7 @@ import { createRenderer } from "./adapters/factory.ts";
 import { RendererProvider } from "./context/RendererContext.tsx";
 import { Application, type ApplicationConfig } from "../core/application.ts";
 import type { AnyCommand } from "../core/command.ts";
-import { TuiApp } from "./TuiApp.tsx";
+import { TuiRoot } from "./TuiRoot.tsx";
 import { LogLevel } from "../core/logger.ts";
 import { createSettingsCommand } from "../builtins/settings.ts";
 import { loadPersistedParameters } from "./utils/parameterPersistence.ts";
@@ -90,7 +90,7 @@ export class TuiApplication extends Application {
 
             renderer.render(
                 <RendererProvider renderer={renderer}>
-                    <TuiApp
+                    <TuiRoot
                         name={this.name}
                         displayName={this.displayName}
                         version={this.version}

@@ -15,7 +15,7 @@ import { useKeyboardContext, type GlobalKeyHandler } from "../context/KeyboardCo
  * 
  * @example
  * ```tsx
- * // In TuiApp
+ * // In TuiRoot
  * useGlobalKeyHandler((event) => {
  *     const key = event;
  *     
