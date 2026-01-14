@@ -82,7 +82,7 @@ export class Application {
   readonly version: string;
   readonly commitHash?: string;
   readonly registry: CommandRegistry;
-  
+
   private readonly defaultCommandName?: string;
   private hooks: ApplicationHooks = {};
 
@@ -171,11 +171,11 @@ export class Application {
     command.subCommands.push(helpCmd);
 
     // Recursively inject into subcommands
-      for (const subCommand of command.subCommands) {
-        if (subCommand.name !== KNOWN_COMMANDS.help) {
-          this.injectHelpCommand(subCommand);
-        }
+    for (const subCommand of command.subCommands) {
+      if (subCommand.name !== KNOWN_COMMANDS.help) {
+        this.injectHelpCommand(subCommand);
       }
+    }
 
   }
 
@@ -275,7 +275,7 @@ export class Application {
 
     let parsedValues: Record<string, unknown> = {};
     let parseError: string | undefined;
-    
+
     try {
       const parseArgsOptions = {
         args: flagArgs,
@@ -353,7 +353,7 @@ export class Application {
 
       // Execute the command with the config
       const result = await command.execute(config);
-      
+
       // In CLI mode, handle result output
       if (mode === ExecutionMode.Cli && result) {
         const commandResult = result as CommandResult;

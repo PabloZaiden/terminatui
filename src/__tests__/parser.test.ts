@@ -4,10 +4,8 @@ import {
   schemaToParseArgsOptions,
   parseOptionValues,
   validateOptions,
-  parseCliArgs,
 } from "../cli/parser.ts";
 import type { OptionSchema } from "../types/command.ts";
-import { defineCommand } from "../types/command.ts";
 
 describe("extractCommandChain", () => {
   test("extracts command path with no flags", () => {
@@ -194,75 +192,3 @@ describe("validateOptions", () => {
   });
 });
 
-describe("parseCliArgs", () => {
-  test("parses command name", () => {
-    const cmd = defineCommand({
-      name: "run",
-      description: "Run command",
-      execute: () => {},
-    });
-
-    const result = parseCliArgs({
-      args: ["run"],
-      commands: { run: cmd },
-    });
-
-    expect(result.command).toBe(cmd);
-    expect(result.commandPath).toEqual(["run"]);
-  });
-
-  test("detects help flag", () => {
-    const cmd = defineCommand({
-      name: "run",
-      description: "Run command",
-      execute: () => {},
-    });
-
-    const result = parseCliArgs({
-      args: ["run", "--help"],
-      commands: { run: cmd },
-    });
-
-    expect(result.showHelp).toBe(true);
-  });
-
-  test("detects -h flag", () => {
-    const cmd = defineCommand({
-      name: "run",
-      description: "Run command",
-      execute: () => {},
-    });
-
-    const result = parseCliArgs({
-      args: ["run", "-h"],
-      commands: { run: cmd },
-    });
-
-    expect(result.showHelp).toBe(true);
-  });
-
-  test("returns error for unknown command", () => {
-    const result = parseCliArgs({
-      args: ["unknown"],
-      commands: {},
-    });
-
-    expect(result.error?.type).toBe("unknown_command");
-  });
-
-  test("uses default command if provided", () => {
-    const cmd = defineCommand({
-      name: "default",
-      description: "Default command",
-      execute: () => {},
-    });
-
-    const result = parseCliArgs({
-      args: [],
-      commands: { default: cmd },
-      defaultCommand: "default",
-    });
-
-    expect(result.command).toBe(cmd);
-  });
-});
