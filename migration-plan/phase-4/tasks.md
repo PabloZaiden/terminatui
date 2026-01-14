@@ -1,78 +1,66 @@
-## Phase 4: Migration Cutover and OpenTUI Removal
+## Phase 4: Dual-Renderer Cutover (Keep OpenTUI + Ink)
 
-**Goal:** Switch default renderer to Ink, remove OpenTUI dependencies, and complete the migration.
+**Goal:** Ship Ink as an additional renderer while keeping OpenTUI supported.
 
 **Deliverables:**
-- TuiApplication defaulting to Ink
-- OpenTUI dependencies removed
+- TuiApplication supports both renderers
+- Documented renderer selection (default + override)
 - Documentation updated
-- Both example apps validated
-- Performance benchmarks
+- Example apps validated on both renderers
+- Basic performance notes (optional)
 
-### Task 4.1: Switch Default Renderer to Ink
+### Task 4.1: Finalize Renderer Selection API
 
-**Description:** Make Ink the default renderer in TuiApplication.
-
-**Actions:**
-- [ ] Update `TuiApplication.tsx`
-- [ ] Change default renderer from 'opentui' to 'ink'
-- [ ] Update renderer initialization
-- [ ] Remove OpenTUI-specific configuration
-- [ ] Test application launch
-
-**Validation:**
-- App launches with Ink by default
-- No initialization errors
-- Smooth startup
-
-### Task 4.2: Update Package Dependencies
-
-**Description:** Remove OpenTUI and update package.json.
+**Description:** Provide a stable way to select renderer per app invocation.
 
 **Actions:**
-- [ ] Remove `@opentui/react` from dependencies
-- [ ] Remove `@opentui/core` if separate
-- [ ] Verify all Ink dependencies present
-- [ ] Run `bun install` to update lockfile
-- [ ] Check for unused dependencies
-- [ ] Update peer dependencies if needed
+- [ ] Decide default renderer (likely `opentui` for now)
+- [ ] Ensure `TuiApplication` accepts a renderer option (`"opentui" | "ink"`)
+- [ ] Ensure CLI entry points can pass renderer selection through
+- [ ] Document how to choose renderer (env var / flag / config)
 
 **Validation:**
-- Package.json has only Ink dependencies
-- No OpenTUI references remain
-- Dependencies install cleanly
+- App launches with either renderer
+- Selection mechanism is stable and documented
 
-### Task 4.3: Update TypeScript Configuration
+### Task 4.2: Validate Dual-Renderer Parity
 
-**Description:** Update tsconfig for Ink/React JSX.
+**Description:** Confirm the semantic layer provides acceptable parity on both renderers.
 
 **Actions:**
-- [ ] Update `tsconfig.json`
-- [ ] Change `jsxImportSource` from `@opentui/react` to `react`
-- [ ] Verify jsx configuration
-- [ ] Run `bun run build` to validate
-- [ ] Fix any type errors
+- [ ] Ensure all 12 semantic components are implemented in Ink adapter
+- [ ] Verify keyboard behavior parity (global shortcuts + active handler)
+- [ ] Verify overlays/modals parity (stacking, closing, focus)
+- [ ] Verify scrolling parity (results, logs)
 
 **Validation:**
-- TypeScript builds without errors
-- JSX transforms correctly
-- Type checking works
+- No major UX regressions between renderers
+- Both renderers can run the same app flows
 
-### Task 4.4: Remove OpenTUI Adapter Code
+### Task 4.3: Documentation + Examples
 
-**Description:** Clean up OpenTUI adapter implementation.
+**Description:** Update docs/examples to reflect dual-renderer support.
 
 **Actions:**
-- [ ] Remove `src/tui/adapters/opentui/` directory
-- [ ] Remove OpenTUI renderer from factory
-- [ ] Remove OpenTUI type references
-- [ ] Update imports if needed
-- [ ] Clean up any OpenTUI-specific utilities
+- [ ] Update README/docs to explain renderer selection
+- [ ] Ensure examples can run with `opentui` and `ink`
+- [ ] Add a short “when to choose which renderer” note
 
 **Validation:**
-- No OpenTUI code remains in codebase
-- No import errors
-- Builds successfully
+- Docs are accurate
+- Example apps run on both renderers
+
+### Task 4.4: CI / Matrix Testing
+
+**Description:** Make it hard to regress one renderer while working on the other.
+
+**Actions:**
+- [ ] Run automated checks against both renderers where possible
+- [ ] Add smoke test script(s) that launch both renderers in example app
+
+**Validation:**
+- Regressions are caught early
+- Both renderers stay buildable
 
 ### Task 4.5: Update Documentation - README
 

@@ -107,18 +107,16 @@ src/tui/
 | Mouse | Built-in | `useStdin()` | Optional - not critical |
 | Refs | `ScrollBoxRenderable` | `ref` forwarding | Normalize ref interface |
 
-### Phase 4: Migration Cutover
+### Phase 4: Dual-Renderer Cutover
 
-**Goal:** Switch default renderer to Ink, remove OpenTUI
+**Goal:** Ship Ink as a supported renderer while keeping OpenTUI.
 
 **Tasks:**
-1. Update `TuiApplication` to default to Ink renderer
-2. Update `package.json` - remove `@opentui/react`, add Ink deps
-3. Update `tsconfig.json` - change `jsxImportSource` to `react`
-4. Remove OpenTUI adapter code
-5. Update documentation
-6. Test both example apps thoroughly
-7. Performance testing and optimization
+1. Finalize renderer selection API (default + override)
+2. Document how to choose renderer per app
+3. Validate parity for core flows on both renderers
+4. Update examples/CI to exercise both renderers
+5. Optional: performance notes and known-differences doc
 
 **Testing Plan:**
 - Run example TUI app end-to-end

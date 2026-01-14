@@ -1,4 +1,4 @@
-# Phase 4: Migration Cutover and OpenTUI Removal
+# Phase 4: Dual-Renderer Cutover (Keep OpenTUI + Ink)
 
 **Last Updated:** 2026-01-10  
 **Prerequisites:** Phase 3 must be complete
@@ -7,22 +7,22 @@
 
 ## Overview
 
-Switch default renderer to Ink, remove OpenTUI dependencies, and complete the migration.
+Finalize Ink as an additional renderer, validate parity, and keep both OpenTUI and Ink supported.
 
-**Goal:** Make Ink the default renderer and remove all OpenTUI code and dependencies.
+**Goal:** Support both renderers long-term, with a safe per-app selection mechanism.
 
 **Why This Phase:**
-- Completes the migration
-- Removes unstable OpenTUI dependency
-- Simplifies distribution (no binaries)
-- Validates stability improvements
+- Completes Ink implementation work
+- Preserves OpenTUI as a stable fallback
+- Enables per-app renderer choice
+- Avoids hard cutovers
 
 ---
 
 ## Deliverables
 
-- ✅ TuiApplication defaulting to Ink
-- ✅ OpenTUI dependencies removed
+- ✅ TuiApplication supports both renderers
+- ✅ Renderer selection documented (default + overrides)
 - ✅ Documentation updated
 - ✅ Both example apps validated (shortcuts/copy/modal behavior verified)
 - ✅ Performance benchmarks completed
@@ -34,10 +34,10 @@ Switch default renderer to Ink, remove OpenTUI dependencies, and complete the mi
 
 ### [tasks.md](./tasks.md) - 12 Implementation Tasks
 Complete task breakdown with checklists:
-- Task 4.1: Switch Default Renderer to Ink
-- Task 4.2: Update Package Dependencies
-- Task 4.3: Update TypeScript Configuration
-- Task 4.4: Remove OpenTUI Adapter Code
+- Task 4.1: Finalize Renderer Selection API
+- Task 4.2: Validate Dual-Renderer Parity
+- Task 4.3: Documentation + Examples
+- Task 4.4: CI / Matrix Testing
 - Task 4.5: Update Documentation - README
 - Task 4.6: Update Documentation - API Docs
 - Task 4.7: Test Example App Thoroughly
@@ -54,8 +54,8 @@ Complete task breakdown with checklists:
 Before declaring migration complete, verify:
 
 ✅ All 12 tasks completed  
-✅ Ink is default renderer  
-✅ OpenTUI fully removed  
+✅ Both OpenTUI and Ink supported  
+✅ Renderer selection works (default + override)  
 ✅ Documentation updated  
 ✅ Example app works perfectly  
 ✅ Production app works perfectly  
@@ -78,12 +78,10 @@ The migration is complete and successful when:
 - ✅ Performance meets or exceeds targets
 - ✅ Stability improved (no crashes)
 - ✅ Terminal compatibility improved
-- ✅ Copy/paste reliable
-- ✅ Package size reduced
-- ✅ Distribution simplified
-- ✅ Documentation updated
+- ✅ Copy/paste reliable on both renderers
+- ✅ Example app parity on both renderers
+- ✅ Renderer selection documented
 - ✅ Tests pass
-- ✅ OpenTUI fully removed
 
 ---
 

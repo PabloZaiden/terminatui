@@ -1,6 +1,6 @@
-# OpenTUI to Ink Migration
+# OpenTUI + Ink Dual-Renderer Plan
 
-This directory contains the complete migration plan and task breakdown for migrating TerminaTUI from OpenTUI to Ink as the terminal rendering engine.
+This directory contains the complete plan and task breakdown for adding an Ink renderer alongside the existing OpenTUI renderer, so TerminaTUI can run on either engine depending on app needs.
 
 ## ⚠️ Important: Ink v6 Required
 
@@ -45,7 +45,7 @@ Contains:
 
 **Problem:** OpenTUI is unstable, has poor terminal compatibility, binary dependencies, and blocks development.
 
-**Solution:** Migrate to Ink (mature, battle-tested) with semantic component abstraction layer.
+**Solution:** Keep OpenTUI and add Ink (mature, battle-tested) behind the semantic component abstraction layer, so renderers are swappable per app.
 
 **Approach:** 
 0. **Phase 0 (Architecture):** Fix navigation and keyboard handling
@@ -55,14 +55,14 @@ Contains:
 2. Implement OpenTUI adapter for semantic components
 3. Refactor existing code to use semantic layer
 4. Implement Ink adapter
-5. Switch to Ink, remove OpenTUI
+5. Add runtime selection + validate both renderers
 
 **Key Benefits:**
 - ✅ Stability and reliability
 - ✅ Better terminal compatibility
-- ✅ No binary dependencies
+- ✅ Renderer choice per app
 - ✅ Future renderer independence
-- ✅ Smaller package size
+- ✅ Escape hatch for roadblocks
 
 ## 📋 Migration Phases
 
@@ -73,7 +73,7 @@ Contains:
 | **Phase 1** | Create semantic component library (OpenTUI impl) | ✅ Complete |
 | **Phase 2** | Refactor existing components to use semantic layer | ✅ Complete |
 | **Phase 3** | Implement Ink adapter | Not Started |
-| **Phase 4** | Switch to Ink, remove OpenTUI | Not Started |
+| **Phase 4** | Dual-renderer cutover (keep OpenTUI + Ink) | Not Started |
 
 ## 🏗️ Proposed Architecture
 

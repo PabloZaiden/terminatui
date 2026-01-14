@@ -70,11 +70,11 @@ This section documents the key decisions and rationale discussed during the eval
    - Faster overall completion
    - Can make breaking changes if justified
 
-5. **Remove OpenTUI After Validation**
-   - Rationale: Simplify codebase
-   - No need to maintain two renderers
-   - One stable release cycle sufficient for validation
-   - Rollback via git if critical issues
+5. **Keep Both Renderers Long-Term**
+   - Rationale: Preserve OpenTUI as a mature option while adding Ink as an escape hatch
+   - Some apps may hit renderer-specific roadblocks; allow choosing per app
+   - Avoid high-risk cutover events
+   - Maintain parity via CI/smoke testing and shared semantic layer
 
 ### Rejected Alternatives
 

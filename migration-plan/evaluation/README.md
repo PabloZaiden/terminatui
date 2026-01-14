@@ -2,13 +2,13 @@
 
 **Date:** 2026-01-10  
 **Status:** Proposal  
-**Target:** Complete migration from OpenTUI to Ink for terminal rendering
+**Target:** Add Ink as a second renderer alongside OpenTUI
 
 ---
 
 ## Quick Start
 
-This directory contains the evaluation and analysis for migrating from OpenTUI to Ink.
+This directory contains the evaluation and analysis for adding Ink alongside OpenTUI.
 
 ### Read in Order:
 
@@ -53,14 +53,14 @@ OpenTUI is unstable with:
 
 ### The Solution
 
-Migrate to Ink (mature, battle-tested) with semantic component abstraction layer.
+Add Ink (mature, battle-tested) behind a semantic component abstraction layer, while keeping OpenTUI supported.
 
 **Benefits:**
 - ✅ Stability and reliability
 - ✅ Better terminal compatibility
-- ✅ No binary dependencies
+- ✅ Renderer choice per app
 - ✅ Future renderer independence
-- ✅ Smaller package size
+- ✅ Escape hatch for roadblocks
 
 ### The Approach
 
@@ -69,7 +69,7 @@ Migrate to Ink (mature, battle-tested) with semantic component abstraction layer
 2. Implement OpenTUI adapter for semantic components
 3. Refactor existing code to use semantic layer
 4. Implement Ink adapter
-5. Switch to Ink, remove OpenTUI
+5. Validate dual-renderer support (keep OpenTUI)
 
 ---
 
