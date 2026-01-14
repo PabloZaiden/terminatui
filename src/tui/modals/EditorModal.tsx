@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import type { FieldConfig } from "./types.ts";
-import { ModalBase } from "./ModalBase.tsx";
+import type { FieldConfig } from "../components/types.ts";
+import { ModalBase } from "../components/ModalBase.tsx";
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { Select } from "../semantic/Select.tsx";
 import { TextInput } from "../semantic/TextInput.tsx";
 import { Label } from "../semantic/Label.tsx";
-import type { ModalComponent, ModalDefinition } from "../registry.tsx";
+import type { ModalComponent, ModalDefinition } from "../registry.ts";
 
 export interface EditorModalParams {
     fieldKey: string;

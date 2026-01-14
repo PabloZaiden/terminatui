@@ -22,7 +22,7 @@ Update all existing TUI components to use the new semantic component library ins
 ## Deliverables
 
 - ✅ Semantic component layer in use throughout core UI
-- ✅ TuiApp.tsx uses semantic layer for Header/StatusBar/CommandSelector, etc.
+- ✅ TuiRoot.tsx uses semantic layer for Header/StatusBar/CommandSelector, etc.
 - ✅ Modals render without dimming the whole screen
 - ✅ Status bar text no longer corrupts (removed control characters)
 - ✅ Global background is painted explicitly at root (via semantic root wrapper)

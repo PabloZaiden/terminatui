@@ -6,7 +6,7 @@
 
 **Deliverables:**
 - All 13 component files refactored
-- TuiApp.tsx using semantic components
+- TuiRoot.tsx using semantic components
 - TuiApplication.tsx using renderer factory
 - Keyboard handlers using keyboard adapter
 - Full application working with semantic layer
@@ -144,7 +144,7 @@
 **Description:** Update the main TuiApp component orchestrator.
 
 **Actions:**
-- [x] Refactor `TuiApp.tsx`
+- [x] Refactor `TuiRoot.tsx`
   - [x] Replace all `<box>` with semantic layout components
   - [x] Update all child component props
   - [x] Ensure layout still correct

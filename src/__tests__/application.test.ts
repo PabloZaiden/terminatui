@@ -2,8 +2,9 @@ import { describe, test, expect } from "bun:test";
 import { Application } from "../core/application.ts";
 import { Command } from "../core/command.ts";
 import type { OptionSchema, OptionValues, OptionDef } from "../types/command.ts";
-import { LogLevel } from "../core/logger.ts";
 import { AppContext } from "../core/context.ts";
+import { LogLevel } from "../core/logger.ts";
+import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 
 // Define a proper option schema
 const testOptions = {
@@ -42,6 +43,50 @@ class TuiCommand extends Command<OptionSchema> {
 
 describe("Application", () => {
   describe("constructor", () => {
+    test("rejects reserved help command definitions", () => {
+      class ReservedCommand extends Command<OptionSchema> {
+        readonly name = KNOWN_COMMANDS.help;
+        readonly description = "tries to override built-in";
+        readonly options = {};
+
+        override async execute(): Promise<void> {}
+      }
+
+      expect(() => {
+        new Application({
+          name: "test-app",
+          version: "1.0.0",
+          commands: [new ReservedCommand()],
+        });
+      }).toThrow(/reserved/i);
+
+      class SubCommand extends Command<OptionSchema> {
+        readonly name = KNOWN_COMMANDS.help;
+        readonly description = "user help";
+        readonly options = {};
+
+        override async execute(): Promise<void> {}
+      }
+
+      class ParentCommand extends Command<OptionSchema> {
+        readonly name = "parent";
+        readonly description = "parent";
+        readonly options = {};
+
+        override subCommands = [new SubCommand()];
+
+        override async execute(): Promise<void> {}
+      }
+
+      expect(() => {
+        new Application({
+          name: "test-app",
+          version: "1.0.0",
+          commands: [new ParentCommand()],
+        });
+      }).toThrow(/automatically injected/i);
+    });
+
     test("creates application with name and version", () => {
       const app = new Application({
         name: "test-app",
@@ -89,7 +134,7 @@ describe("Application", () => {
         version: "1.0.0",
         commands: [],
       });
-      expect(app.registry.has("help")).toBe(true);
+      expect(app.registry.has(KNOWN_COMMANDS.help)).toBe(true);
     });
 
     test("injects help subcommand into commands", () => {
@@ -101,21 +146,11 @@ describe("Application", () => {
         commands: [cmd],
       });
       expect(cmd.subCommands).toBeDefined();
-      expect(cmd.subCommands?.some((c) => c.name === "help")).toBe(true);
+      expect(cmd.subCommands?.some((c) => c.name === KNOWN_COMMANDS.help)).toBe(true);
     });
   });
 
   describe("run", () => {
-    test("shows help when no args and no default command", async () => {
-      const app = new Application({
-        name: "test-app",
-        version: "1.0.0",
-        commands: [new TestCommand()],
-      });
-      // Should not throw
-      await app.run([]);
-    });
-
     test("runs default command when no args", async () => {
       const cmd = new TuiCommand();
       const app = new Application({
@@ -124,31 +159,30 @@ describe("Application", () => {
         commands: [cmd],
         defaultCommand: "tui-cmd",
       });
-      await app.run([]);
+      await app.runFromArgs([]);
       expect(cmd.executed).toBe(true);
     });
 
-    test("runs specified command", async () => {
+    test("runs specified command and passes options", async () => {
       const cmd = new TestCommand();
       const app = new Application({
         name: "test-app",
         version: "1.0.0",
         commands: [cmd],
       });
-      await app.run(["test"]);
-      expect(cmd.executedWith).not.toBeNull();
+
+      await app.runFromArgs(["test", "--value", "hello"]);
+      expect(cmd.executedWith?.["value"]).toBe("hello");
     });
 
-    test("passes options to command", async () => {
-      const cmd = new TestCommand();
+    test("with no args and no default, prints help (no throw)", async () => {
       const app = new Application({
         name: "test-app",
         version: "1.0.0",
-        commands: [cmd],
+        commands: [new TestCommand()],
       });
-      await app.run(["test", "--value", "hello"]);
-      expect(cmd.executedWith).not.toBeNull();
-      expect(cmd.executedWith?.["value"]).toBe("hello");
+
+      await app.runFromArgs([]);
     });
   });
 
@@ -166,7 +200,7 @@ describe("Application", () => {
           called = true;
         },
       });
-      await app.run(["test"]);
+      await app.runFromArgs(["test"]);
       expect(called).toBe(true);
     });
 
@@ -183,7 +217,7 @@ describe("Application", () => {
           called = true;
         },
       });
-      await app.run(["test"]);
+      await app.runFromArgs(["test"]);
       expect(called).toBe(true);
     });
 
@@ -210,7 +244,7 @@ describe("Application", () => {
           errorCaught = error;
         },
       });
-      await app.run(["error-cmd"]);
+      await app.runFromArgs(["error-cmd"]);
       expect(errorCaught?.message).toBe("Test error");
     });
   });
@@ -257,7 +291,7 @@ describe("Application", () => {
         commands: [new ConfigCommand()],
       });
 
-      await app.run(["config-cmd", "--value", "test", "--count", "42"]);
+      await app.runFromArgs(["config-cmd", "--value", "test", "--count", "42"]);
       
       expect(buildConfigCalled).toBe(true);
       expect(receivedConfig).toEqual({ value: "test", count: 42 });
@@ -284,7 +318,7 @@ describe("Application", () => {
         commands: [new NoConfigCommand()],
       });
 
-      await app.run(["no-config-cmd", "--value", "hello"]);
+      await app.runFromArgs(["no-config-cmd", "--value", "hello"]);
       
       expect(receivedOpts).toEqual({ value: "hello" });
     });
@@ -318,7 +352,7 @@ describe("Application", () => {
         },
       });
 
-      await app.run(["fail-config", "--value", "test"]);
+      await app.runFromArgs(["fail-config", "--value", "test"]);
       
       expect(errorCaught?.message).toBe("Config validation failed");
     });
@@ -334,7 +368,7 @@ describe("Application", () => {
       });
       
       // Should not throw - global option should be parsed and removed
-      await app.run(["--log-level", "debug", "test", "--value", "hello"]);
+      await app.runFromArgs(["--log-level", "debug", "test", "--value", "hello"]);
       expect(cmd.executedWith?.["value"]).toBe("hello");
     });
 
@@ -346,7 +380,7 @@ describe("Application", () => {
         commands: [cmd],
       });
       
-      await app.run(["test", "--log-level", "debug", "--value", "hello"]);
+      await app.runFromArgs(["test", "--log-level", "debug", "--value", "hello"]);
       expect(cmd.executedWith?.["value"]).toBe("hello");
     });
 
@@ -359,13 +393,13 @@ describe("Application", () => {
       });
       
       // All of these should work (case-insensitive)
-      await app.run(["--log-level", "debug", "test"]);
+      await app.runFromArgs(["--log-level", "debug", "test"]);
       expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.debug);
       
-      await app.run(["--log-level", "Debug", "test"]);
+      await app.runFromArgs(["--log-level", "Debug", "test"]);
       expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.debug);
       
-      await app.run(["--log-level", "DEBUG", "test"]);
+      await app.runFromArgs(["--log-level", "DEBUG", "test"]);
       expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.debug);
     });
 
@@ -377,7 +411,7 @@ describe("Application", () => {
         commands: [cmd],
       });
       
-      await app.run(["--detailed-logs", "test"]);
+      await app.runFromArgs(["--detailed-logs", "test"]);
       // Should not throw - flag is recognized
       expect(cmd.executedWith).not.toBeNull();
     });
@@ -390,7 +424,7 @@ describe("Application", () => {
         commands: [cmd],
       });
       
-      await app.run(["--no-detailed-logs", "test"]);
+      await app.runFromArgs(["--no-detailed-logs", "test"]);
       // Should not throw - flag is recognized
       expect(cmd.executedWith).not.toBeNull();
     });
@@ -403,7 +437,7 @@ describe("Application", () => {
         commands: [cmd],
       });
       
-      await app.run(["--log-level=warn", "test"]);
+      await app.runFromArgs(["--log-level=warn", "test"]);
       expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.warn);
     });
   });

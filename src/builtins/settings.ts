@@ -4,6 +4,7 @@ import { LogLevel } from "../core/logger.ts";
 import type { OptionSchema, OptionValues } from "../types/command.ts";
 import type { CommandResult } from "../core/command.ts";
 import { getEnumKeys } from "../tui/utils/getEnumKeys.ts";
+import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 
 /**
  * Options schema for the settings command.
@@ -48,8 +49,9 @@ interface SettingsConfig {
  * In TUI mode, this command provides a UI for configuring these settings.
  */
 export class SettingsCommand extends Command<typeof settingsOptions, SettingsConfig> {
-  readonly name = "settings";
+  readonly name = KNOWN_COMMANDS.settings;
   override readonly displayName = "Settings";
+  override readonly tuiHidden = true;
   readonly description = "Configure logging level and output format";
   readonly options = settingsOptions;
 

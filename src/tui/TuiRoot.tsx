@@ -11,14 +11,14 @@ import { Header } from "./components/Header.tsx";
 import { StatusBar } from "./components/StatusBar.tsx";
 import { Container } from "./semantic/Container.tsx";
 import { Panel } from "./semantic/Panel.tsx";
-import { getScreen, getModal, registerAllModals, registerAllScreens } from "./registry.tsx";
+import { getScreen, getModal, registerAllModals, registerAllScreens } from "./registry.ts";
 import { CommandSelectScreen, type CommandSelectParams } from "./screens/CommandSelectScreen.tsx";
 
 // Register all screens and modals at module load
 await registerAllScreens();
 await registerAllModals();
 
-interface TuiAppProps {
+interface TuiRootProps {
     name: string;
     displayName?: string;
     version: string;
@@ -26,7 +26,7 @@ interface TuiAppProps {
     onExit: () => void;
 }
 
-export function TuiApp({ name, displayName, version, commands, onExit }: TuiAppProps) {
+export function TuiRoot({ name, displayName, version, commands, onExit }: TuiRootProps) {
     return (
         <KeyboardProvider>
             <ClipboardProviderComponent>
@@ -43,7 +43,7 @@ export function TuiApp({ name, displayName, version, commands, onExit }: TuiAppP
                                 initialScreen={{ route: CommandSelectScreen.Id, params: { commandPath: [] } }}
                                 onExit={onExit}
                             >
-                                <TuiAppContent />
+                                <TuiRootContent />
                             </NavigationProvider>
                         </ExecutorProvider>
                     </LogsProvider>
@@ -57,7 +57,7 @@ export function TuiApp({ name, displayName, version, commands, onExit }: TuiAppP
  * Main TUI content - renders current screen, modals, and handles global shortcuts.
  * This component knows NOTHING about specific screens or their logic.
  */
-function TuiAppContent() {
+function TuiRootContent() {
     const { displayName, name, version } = useTuiApp();
     const navigation = useNavigation();
     const executor = useExecutor();

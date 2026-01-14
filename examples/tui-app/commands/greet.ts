@@ -48,7 +48,7 @@ export class GreetCommand extends Command<typeof greetOptions> {
 
     override async execute(opts: OptionValues<typeof greetOptions>): Promise<CommandResult> {
         const greeting = this.createGreeting(opts);
-        AppContext.current.logger.info(greeting);
+        AppContext.current.logger.trace(greeting);
         return {
             success: true,
             data: { greeting, timestamp: new Date().toISOString(), meta: { loud: opts.loud, times: opts.times } },

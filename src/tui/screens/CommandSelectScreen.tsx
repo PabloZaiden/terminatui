@@ -4,7 +4,7 @@ import { CommandSelector } from "../components/CommandSelector.tsx";
 import { useTuiApp } from "../context/TuiAppContext.tsx";
 import { useNavigation } from "../context/NavigationContext.tsx";
 import { useBackHandler } from "../hooks/useBackHandler.ts";
-import type { ScreenComponent } from "../registry.tsx";
+import type { ScreenComponent } from "../registry.ts";
 import { loadPersistedParameters } from "../utils/parameterPersistence.ts";
 import { schemaToFieldConfigs } from "../utils/schemaToFields.ts";
 import type { OptionDef, OptionSchema } from "../../types/command.ts";

@@ -3,7 +3,7 @@ import type { AnyCommand, CommandResult } from "../../core/command.ts";
 import { useNavigation } from "../context/NavigationContext.tsx";
 import { ResultsPanel } from "../components/ResultsPanel.tsx";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
-import { type ScreenComponent } from "../registry.tsx";
+import { type ScreenComponent } from "../registry.ts";
 import { ScreenBase } from "./ScreenBase.ts";
 
 /**

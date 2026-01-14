@@ -13,6 +13,7 @@ import {
 import { parseArgs, type ParseArgsConfig } from "util";
 import { createVersionCommand } from "../builtins/version.ts";
 import { createHelpCommandForParent, createRootHelpCommand } from "../builtins/help.ts";
+import { KNOWN_COMMANDS, RESERVED_TOP_LEVEL_COMMAND_NAMES } from "./knownCommands.ts";
 
 /**
  * Global options available on all commands.
@@ -21,6 +22,7 @@ import { createHelpCommandForParent, createRootHelpCommand } from "../builtins/h
 export interface GlobalOptions {
   "log-level"?: string;
   "detailed-logs"?: boolean;
+  "interactive"?: boolean;
 }
 
 /**
@@ -72,7 +74,7 @@ export interface ApplicationHooks {
  *   defaultCommand: "interactive",
  * });
  * 
- * await app.run(process.argv.slice(2));
+ * await app.run();
  * ```
  */
 export class Application {
@@ -81,7 +83,7 @@ export class Application {
   readonly version: string;
   readonly commitHash?: string;
   readonly registry: CommandRegistry;
-  
+
   private readonly defaultCommandName?: string;
   private hooks: ApplicationHooks = {};
 
@@ -112,6 +114,8 @@ export class Application {
    * Register commands and inject help subcommands.
    */
   private registerCommands(commands: AnyCommand[]): void {
+    this.assertNoReservedCommands(commands);
+
     // Register version command at top level
     this.registry.register(createVersionCommand(this.name, this.version, this.commitHash));
 
@@ -123,6 +127,33 @@ export class Application {
 
     // Register root help command
     this.registry.register(createRootHelpCommand(commands, this.name, this.version));
+  }
+
+  private assertNoReservedCommands(commands: AnyCommand[]): void {
+    for (const command of commands) {
+      this.assertNoReservedCommand(command, []);
+    }
+  }
+
+  private assertNoReservedCommand(command: AnyCommand, path: string[]): void {
+    if (RESERVED_TOP_LEVEL_COMMAND_NAMES.has(command.name as never)) {
+      throw new Error(
+        `Command name '${command.name}' is reserved by Terminatui and cannot be registered`
+      );
+    }
+
+    if (command.subCommands) {
+      for (const subCommand of command.subCommands) {
+        if (subCommand.name === KNOWN_COMMANDS.help) {
+          const commandPath = [...path, command.name].join(" ");
+          throw new Error(
+            `Subcommand name '${KNOWN_COMMANDS.help}' is reserved and is automatically injected (found under '${commandPath}')`
+          );
+        }
+
+        this.assertNoReservedCommand(subCommand, [...path, command.name]);
+      }
+    }
   }
 
   /**
@@ -142,10 +173,11 @@ export class Application {
 
     // Recursively inject into subcommands
     for (const subCommand of command.subCommands) {
-      if (subCommand.name !== "help") {
+      if (subCommand.name !== KNOWN_COMMANDS.help) {
         this.injectHelpCommand(subCommand);
       }
     }
+
   }
 
   /**
@@ -156,11 +188,20 @@ export class Application {
   }
 
   /**
-   * Run the application with the given arguments.
-   * 
-   * @param argv Command-line arguments (typically process.argv.slice(2))
+   * Run the application using Bun's process args.
+   *
+   * This is the common entrypoint for real apps.
    */
-  async run(argv: string[]): Promise<void> {
+  async run(): Promise<void> {
+    return this.runFromArgs(Bun.argv.slice(2));
+  }
+
+  /**
+   * Run the application with explicit argv.
+   *
+   * Useful for tests or manual programmatic invocation.
+   */
+  async runFromArgs(argv: string[]): Promise<void> {
     // configure logger
     AppContext.current.logger.onLogEvent((event) => {
       process.stderr.write(event.message + "\n");
@@ -196,7 +237,7 @@ export class Application {
       }
 
       // Check for unknown command in path
-      if (remainingPath.length > 0 && remainingPath[0] !== "help") {
+      if (remainingPath.length > 0 && remainingPath[0] !== KNOWN_COMMANDS.help) {
         AppContext.current.logger.error(`Unknown command: ${remainingPath.join(" ")}`);
         process.exitCode = 1;
         return;
@@ -244,7 +285,7 @@ export class Application {
 
     let parsedValues: Record<string, unknown> = {};
     let parseError: string | undefined;
-    
+
     try {
       const parseArgsOptions = {
         args: flagArgs,
@@ -322,7 +363,7 @@ export class Application {
 
       // Execute the command with the config
       const result = await command.execute(config);
-      
+
       // In CLI mode, handle result output
       if (mode === ExecutionMode.Cli && result) {
         const commandResult = result as CommandResult;
@@ -380,7 +421,7 @@ export class Application {
    * Parse global options from argv.
    * Returns the parsed global options and remaining args.
    */
-  private parseGlobalOptions(argv: string[]): {
+  protected parseGlobalOptions(argv: string[]): {
     globalOptions: GlobalOptions;
     remainingArgs: string[];
   } {
@@ -403,7 +444,10 @@ export class Application {
       } else if (arg === "--no-detailed-logs") {
         globalOptions["detailed-logs"] = false;
         i += 1;
-      } else {
+      } else if (arg === "--interactive" || arg === "-i") {
+        globalOptions["interactive"] = true;
+        i += 1;
+      } else { 
         remainingArgs.push(arg);
         i += 1;
       }
@@ -415,7 +459,7 @@ export class Application {
   /**
    * Apply global options to the application context.
    */
-  private applyGlobalOptions(options: GlobalOptions): void {
+  protected applyGlobalOptions(options: GlobalOptions): void {
     const logger = AppContext.current.logger;
 
     // Apply detailed-logs

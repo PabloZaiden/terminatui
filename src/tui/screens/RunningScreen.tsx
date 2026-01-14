@@ -3,7 +3,7 @@ import type { AnyCommand } from "../../core/command.ts";
 import { useNavigation } from "../context/NavigationContext.tsx";
 import { useExecutor } from "../context/ExecutorContext.tsx";
 import { useBackHandler } from "../hooks/useBackHandler.ts";
-import type { ScreenComponent } from "../registry.tsx";
+import type { ScreenComponent } from "../registry.ts";
 import { ScreenBase } from "./ScreenBase.ts";
 import { Container } from "../semantic/Container.tsx";
 import { Label } from "../semantic/Label.tsx";

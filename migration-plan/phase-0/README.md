@@ -28,13 +28,13 @@ Phase 0 contains critical architectural improvements that were implemented **bef
 Replaced mode-based state management with navigation stack and registry-based screens/modals.
 
 **What Was Done:**
-- Removed 13+ state variables from TuiApp
+- Removed 13+ state variables from TuiRoot
 - Implemented navigation stack with goBack/setBackHandler
 - Created self-contained screen components (no props, context-only)
 - Implemented screen/modal registry with centralized registration
 - Simplified navigation API by removing generic type maps
 - Added static IDs and exported parameter interfaces for type safety
-- TuiApp is now ~150 lines and screen-agnostic
+- TuiRoot is now ~150 lines and screen-agnostic
 
 ### Phase 0B: Component-Chain Keyboard Handling ⏸️ DEFERRED
 **Document:** [phase-0b-keyboard.md](./phase-0b-keyboard.md)
@@ -54,7 +54,7 @@ See [phase-0b-keyboard.md](./phase-0b-keyboard.md) for full justification.
 ## Current Keyboard Architecture
 
 ```typescript
-// Global handler (TuiApp only)
+// Global handler (TuiRoot only)
 useGlobalKeyHandler((event) => {
     if (key.name === "escape") { goBack(); return true; }
     if (key.ctrl && key.name === "y") { copy(); return true; }

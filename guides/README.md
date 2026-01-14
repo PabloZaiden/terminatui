@@ -60,7 +60,11 @@ class MyCLI extends Application {
   }
 }
 
+// Recommended: let Terminatui read `Bun.argv.slice(2)`
 await new MyCLI().run();
+
+// For tests or programmatic invocation:
+// await new MyCLI().runFromArgs(["hello", "--name", "Developer"]);
 EOF
 
 # Run it

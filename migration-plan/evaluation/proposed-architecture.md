@@ -73,7 +73,7 @@ src/tui/
 9. Refactor `FieldRow.tsx`
 10. Refactor `ActionButton.tsx`
 11. Refactor `JsonHighlight.tsx`
-12. Update `TuiApp.tsx` to use semantic components
+12. Update `TuiRoot.tsx` to use semantic components
 13. Update keyboard handlers to use adapter
 
 **Validation:**

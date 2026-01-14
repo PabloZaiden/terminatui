@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
-import { CliModal } from "./components/CliModal.tsx";
-import { EditorModal } from "./components/EditorModal.tsx";
-import { LogsModal } from "./components/LogsModal.tsx";
+import { CliModal } from "./modals/CliModal.tsx";
+import { EditorModal } from "./modals/EditorModal.tsx";
+import { LogsModal } from "./modals/LogsModal.tsx";
 import type { ScreenBase } from "./screens/ScreenBase";
 import { CommandSelectScreen } from "./screens/CommandSelectScreen";
 import { ConfigScreen } from "./screens/ConfigScreen";

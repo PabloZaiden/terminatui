@@ -1,157 +1,126 @@
 import { test, expect, describe } from "bun:test";
-import { defineCommand } from "../types/command.ts";
+import { Command } from "../core/command.ts";
+import type { OptionSchema, OptionValues } from "../types/command.ts";
 
-describe("defineCommand", () => {
-  test("creates a command with name and description", () => {
-    const cmd = defineCommand({
-      name: "test",
-      description: "A test command",
-      execute: () => {},
-    });
+const testOptions = {
+  verbose: {
+    type: "boolean",
+    description: "Enable verbose output",
+    alias: "v",
+  },
+  name: {
+    type: "string",
+    description: "Name option",
+  },
+} as const satisfies OptionSchema;
 
+describe("Command (class-based)", () => {
+  test("has name and description", () => {
+    class TestCommand extends Command<typeof testOptions> {
+      readonly name = "test";
+      readonly description = "A test command";
+      readonly options = testOptions;
+
+      override async execute(): Promise<void> {}
+    }
+
+    const cmd = new TestCommand();
     expect(cmd.name).toBe("test");
     expect(cmd.description).toBe("A test command");
   });
 
-  test("creates a command with options", () => {
-    const cmd = defineCommand({
-      name: "test",
-      description: "A test command",
-      options: {
-        verbose: {
-          type: "boolean",
-          description: "Enable verbose output",
-          alias: "v",
-        },
-      },
-      execute: () => {},
-    });
+  test("has options", () => {
+    class TestCommand extends Command<typeof testOptions> {
+      readonly name = "test";
+      readonly description = "A test command";
+      readonly options = testOptions;
 
-    expect(cmd.options?.["verbose"]).toBeDefined();
-    expect(cmd.options?.["verbose"]?.type).toBe("boolean");
+      override async execute(): Promise<void> {}
+    }
+
+    const cmd = new TestCommand();
+    expect(cmd.options["verbose"]?.type).toBe("boolean");
   });
 
-  test("creates a command with aliases", () => {
-    const cmd = defineCommand({
-      name: "test",
-      description: "A test command",
-      aliases: ["t", "tst"],
-      execute: () => {},
-    });
+  test("supports subcommands", () => {
+    class SubCommand extends Command<OptionSchema> {
+      readonly name = "sub";
+      readonly description = "A subcommand";
+      readonly options = {} as const;
 
-    expect(cmd.aliases).toEqual(["t", "tst"]);
+      override async execute(): Promise<void> {}
+    }
+
+    class ParentCommand extends Command<OptionSchema> {
+      readonly name = "parent";
+      readonly description = "A parent command";
+      readonly options = {} as const;
+      override subCommands = [new SubCommand()];
+
+      override async execute(): Promise<void> {}
+    }
+
+    const cmd = new ParentCommand();
+    expect(cmd.getSubCommand("sub")?.name).toBe("sub");
   });
 
-  test("creates a command with subcommands", () => {
-    const sub = defineCommand({
-      name: "sub",
-      description: "A subcommand",
-      execute: () => {},
-    });
+  test("executes command", async () => {
+    class ExecCommand extends Command<typeof testOptions> {
+      readonly name = "exec";
+      readonly description = "Exec command";
+      readonly options = testOptions;
 
-    const cmd = defineCommand({
-      name: "parent",
-      description: "A parent command",
-      subcommands: { sub },
-      execute: () => {},
-    });
+      executedWith: OptionValues<typeof testOptions> | null = null;
 
-    expect(cmd.subcommands?.["sub"]).toBe(sub);
+      override async execute(opts: OptionValues<typeof testOptions>): Promise<void> {
+        this.executedWith = opts;
+      }
+    }
+
+    const cmd = new ExecCommand();
+    await cmd.execute({ verbose: true, name: "world" });
+    expect(cmd.executedWith).toEqual({ verbose: true, name: "world" });
   });
 
-  test("executes sync command", () => {
-    let executed = false;
-    const cmd = defineCommand({
-      name: "test",
-      description: "A test command",
-      execute: () => {
-        executed = true;
-      },
-    });
-
-    cmd.execute({ options: {}, args: [], commandPath: ["test"] });
-    expect(executed).toBe(true);
-  });
-
-  test("executes async command", async () => {
-    let executed = false;
-    const cmd = defineCommand({
-      name: "test",
-      description: "A test command",
-      execute: async () => {
-        await new Promise((r) => setTimeout(r, 10));
-        executed = true;
-      },
-    });
-
-    await cmd.execute({ options: {}, args: [], commandPath: ["test"] });
-    expect(executed).toBe(true);
-  });
-
-  test("passes options to execute", () => {
-    let receivedOptions: unknown;
-    const cmd = defineCommand({
-      name: "test",
-      description: "A test command",
-      options: {
-        name: {
-          type: "string",
-          description: "Name option",
-        },
-      },
-      execute: (ctx) => {
-        receivedOptions = ctx.options;
-      },
-    });
-
-    cmd.execute({ options: { name: "world" }, args: [], commandPath: ["test"] });
-    expect(receivedOptions).toEqual({ name: "world" });
-  });
-
-  test("supports beforeExecute hook", async () => {
+  test("beforeExecute/afterExecute hooks are callable", () => {
     const order: string[] = [];
-    const cmd = defineCommand({
-      name: "test",
-      description: "A test command",
-      beforeExecute: () => {
+
+    class HookCommand extends Command<OptionSchema> {
+      readonly name = "hook";
+      readonly description = "Hook command";
+      readonly options = {} as const;
+
+      override beforeExecute(): void {
         order.push("before");
-      },
-      execute: () => {
-        order.push("execute");
-      },
-    });
+      }
 
-    await cmd.beforeExecute?.({ options: {}, args: [], commandPath: ["test"] });
-    await cmd.execute({ options: {}, args: [], commandPath: ["test"] });
-    expect(order).toEqual(["before", "execute"]);
-  });
-
-  test("supports afterExecute hook", async () => {
-    const order: string[] = [];
-    const cmd = defineCommand({
-      name: "test",
-      description: "A test command",
-      execute: () => {
+      override execute(): void {
         order.push("execute");
-      },
-      afterExecute: () => {
+      }
+
+      override afterExecute(): void {
         order.push("after");
-      },
-    });
+      }
+    }
 
-    await cmd.execute({ options: {}, args: [], commandPath: ["test"] });
-    await cmd.afterExecute?.({ options: {}, args: [], commandPath: ["test"] });
-    expect(order).toEqual(["execute", "after"]);
+    const cmd = new HookCommand();
+    cmd.beforeExecute();
+    cmd.execute();
+    cmd.afterExecute();
+
+    expect(order).toEqual(["before", "execute", "after"]);
   });
 
-  test("supports hidden commands", () => {
-    const cmd = defineCommand({
-      name: "hidden",
-      description: "A hidden command",
-      hidden: true,
-      execute: () => {},
-    });
+  test("supports tuiHidden", () => {
+    class HiddenCommand extends Command<OptionSchema> {
+      readonly name = "hidden";
+      readonly description = "Hidden";
+      readonly options = {} as const;
+      override readonly tuiHidden = true;
 
-    expect(cmd.hidden).toBe(true);
+      override async execute(): Promise<void> {}
+    }
+
+    expect(new HiddenCommand().tuiHidden).toBe(true);
   });
 });

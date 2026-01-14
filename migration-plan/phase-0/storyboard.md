@@ -1,6 +1,6 @@
 # TerminaTUI Navigation & Modal Storyboard
 
-**Purpose**: Capture current screen/modal flows, global behaviors, and data sourcing so TuiApp can become screen-agnostic and each screen/modal can declare its own transitions and data (e.g., clipboard content).
+**Purpose**: Capture current screen/modal flows, global behaviors, and data sourcing so TuiRoot can become screen-agnostic and each screen/modal can declare its own transitions and data (e.g., clipboard content).
 
 **Status**: ✅ COMPLETE - All items implemented and validated
 
@@ -10,7 +10,7 @@
 
 The keyboard system uses a **single-active-handler model** to prevent key conflicts:
 
-1. **Global handler** (in TuiApp) processes app-wide shortcuts FIRST:
+1. **Global handler** (in TuiRoot) processes app-wide shortcuts FIRST:
    - `Esc`: back/close modal
    - `Ctrl+Y`: copy from active view
    - `Ctrl+L`: toggle logs modal
@@ -22,7 +22,7 @@ The keyboard system uses a **single-active-handler model** to prevent key confli
    - Screens handle navigation keys (arrows, Enter)
 
 3. **Key hooks**:
-   - `useGlobalKeyHandler`: Set the global handler (TuiApp only)
+   - `useGlobalKeyHandler`: Set the global handler (TuiRoot only)
    - `useActiveKeyHandler`: Register as the active handler (screens/modals)
 
 This design ensures:
@@ -41,7 +41,7 @@ This design ensures:
 - **Active view data** (used by global copy/status):
   - Modals: logs (logHistory), CLI (command string provided by modal), property editor (no copy content).
   - Screens: results (command-provided clipboard content), error (message), config (values JSON), others: none.
-- **Status/last action**: provided by clipboard hook (e.g., copy success message) and execution state (running flag); TuiApp need not track an explicit "state", just render based on current screen/modal and executor status.
+- **Status/last action**: provided by clipboard hook (e.g., copy success message) and execution state (running flag); TuiRoot need not track an explicit "state", just render based on current screen/modal and executor status.
 
 ## Screen Transitions
 
@@ -109,9 +109,9 @@ This design ensures:
 - Fallback: exit.
 
 ## Intended Refactor Goals (guidance for upcoming work)
-- TuiApp becomes screen-agnostic: screens/modals declare their transitions and data providers (e.g., clipboard content) instead of hardcoded `switch`/`if` chains.
+- TuiRoot becomes screen-agnostic: screens/modals declare their transitions and data providers (e.g., clipboard content) instead of hardcoded `switch`/`if` chains.
 - Global handler remains only for truly global concerns (back, logs toggle, global copy, CLI modal); screen-specific navigation lives in screens.
-- Navigation actions (push/replace/pop, open/close modal) are invoked by screens/modals based on their own logic, not centralized branching in TuiApp.
+- Navigation actions (push/replace/pop, open/close modal) are invoked by screens/modals based on their own logic, not centralized branching in TuiRoot.
 
 ## Refactor Implementation Checklist (based on storyboard)
 1) ✅ Define contracts: screen/modal interfaces for transitions and data (clipboard/status), plus a registry to map routes/modal IDs to components/providers.
@@ -123,7 +123,7 @@ This design ensures:
    - ✅ ErrorScreen provides error.message
    - ✅ LogsModal provides logs content (enabled only when visible)
    - ✅ CliModal provides CLI command string
-   - ✅ TuiApp uses ClipboardContext instead of getClipboardContent if-chains
+   - ✅ TuiRoot uses ClipboardContext instead of getClipboardContent if-chains
 3) ✅ Keyboard architecture refactored to single-active-handler model:
    - ✅ Rewrote KeyboardContext for global + active handler model
    - ✅ Created useGlobalKeyHandler for app-wide shortcuts
@@ -132,15 +132,15 @@ This design ensures:
    - ✅ Only ONE handler active at a time - no priority conflicts
    - ✅ Removed old priority-based useKeyboardHandler
    - ✅ EditorModal registers as active handler to block underlying screen
-4) ✅ Keep TuiApp global-only: back/escape (modal-first), logs toggle, global copy dispatch, status bar wiring, executor plumbing; rendering via registry lookups instead of hardcoded switches.
+4) ✅ Keep TuiRoot global-only: back/escape (modal-first), logs toggle, global copy dispatch, status bar wiring, executor plumbing; rendering via registry lookups instead of hardcoded switches.
    - ✅ Global handler handles: Esc (back), Ctrl+Y (copy), Ctrl+L (logs toggle)
    - ✅ Screen-specific: CLI Args button on ConfigScreen opens CLI modal
    - ✅ getClipboardContent if-chains replaced with ClipboardContext provider pattern
    - ✅ Created registry.tsx with ScreenRegistry and ModalRegistry types
    - ✅ Created renderScreenFromRegistry and renderModalsFromRegistry functions
-   - ✅ TuiApp now uses screenRegistry (useMemo) instead of switch statement
-   - ✅ TuiApp now uses modalRegistry (useMemo) instead of if-chains
-5) ✅ Navigation wiring: screens/modals invoke navigation actions directly (push/replace/pop/openModal/closeModal) without TuiApp branching on route.
+   - ✅ TuiRoot now uses screenRegistry (useMemo) instead of switch statement
+   - ✅ TuiRoot now uses modalRegistry (useMemo) instead of if-chains
+5) ✅ Navigation wiring: screens/modals invoke navigation actions directly (push/replace/pop/openModal/closeModal) without TuiRoot branching on route.
    - ✅ Navigation is passed to screens or accessed via useNavigation hook
    - ✅ Screen renderers in registry close over navigation for callbacks
 6) ✅ Validation: exercise all flows (select→config→run→results/error; back paths; logs toggle anywhere; CLI modal from config; property editor submit/cancel; copy in screens/modals) then `bun run build` and `bun run test`.
@@ -149,12 +149,12 @@ This design ensures:
 
 ## Summary
 
-Phase 0A refactoring is complete. TuiApp is now fully screen-agnostic:
+Phase 0A refactoring is complete. TuiRoot is now fully screen-agnostic:
 
 | Component | Registered | Uses Context |
 |-----------|------------|--------------|
-| `CommandSelectScreen` | ✅ Registry | `useTuiApp`, `useNavigation`, `useBackHandler` |
-| `ConfigScreen` | ✅ Registry | `useTuiApp`, `useNavigation`, `useExecutor` |
+| `CommandSelectScreen` | ✅ Registry | `useTuiRoot`, `useNavigation`, `useBackHandler` |
+| `ConfigScreen` | ✅ Registry | `useTuiRoot`, `useNavigation`, `useExecutor` |
 | `RunningScreen` | ✅ Registry | `useNavigation`, `useExecutor`, `useBackHandler` |
 | `ResultsScreen` | ✅ Registry | `useNavigation` |
 | `ErrorScreen` | ✅ Registry | `useNavigation` |
@@ -162,6 +162,6 @@ Phase 0A refactoring is complete. TuiApp is now fully screen-agnostic:
 | `CliModal` | ✅ Registry | - |
 | `LogsModal` | ✅ Registry | - |
 
-All screens and modals are registered centrally via `registerAllScreens()` and `registerAllModals()` in `TuiApp.tsx`.
+All screens and modals are registered centrally via `registerAllScreens()` and `registerAllModals()` in `TuiRoot.tsx`.
 
 **Next Step**: Proceed to Phase 3 (Ink adapter) once Phase 2 is complete and UI parity is acceptable.

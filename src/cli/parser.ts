@@ -1,21 +1,6 @@
-import type { Command, OptionSchema, OptionValues } from "../types/command.ts";
-import { parseArgs, type ParseArgsConfig } from "util";
+import type { OptionSchema, OptionValues } from "../types/command.ts";
+import { type ParseArgsConfig } from "util";
 
-/**
- * Result of parsing CLI arguments
- */
-export interface ParseResult<T extends OptionSchema = OptionSchema> {
-  command: Command<T> | null;
-  commandPath: string[];
-  options: OptionValues<T>;
-  args: string[];
-  showHelp: boolean;
-  error?: ParseError;
-}
-
-/**
- * Error during parsing
- */
 export interface ParseError {
   type: "unknown_command" | "invalid_option" | "missing_required" | "validation";
   message: string;
@@ -168,74 +153,3 @@ export function validateOptions<T extends OptionSchema>(
   return errors;
 }
 
-interface ParseCliArgsOptions<T extends OptionSchema> {
-  args: string[];
-  commands: Record<string, Command<T>>;
-  defaultCommand?: string;
-}
-
-/**
- * Parse CLI arguments into a result
- */
-export function parseCliArgs<T extends OptionSchema>(
-  options: ParseCliArgsOptions<T>
-): ParseResult<T> {
-  const { args, commands, defaultCommand } = options;
-  const { commands: commandChain, remaining } = extractCommandChain(args);
-
-  // Check for help flag
-  const showHelp = remaining.includes("--help") || remaining.includes("-h");
-
-  // Find command
-  const commandName = commandChain[0] ?? defaultCommand;
-  if (!commandName) {
-    return {
-      command: null,
-      commandPath: [],
-      options: {} as OptionValues<T>,
-      args: remaining,
-      showHelp,
-    };
-  }
-
-  const command = commands[commandName];
-  if (!command) {
-    return {
-      command: null,
-      commandPath: commandChain,
-      options: {} as OptionValues<T>,
-      args: remaining,
-      showHelp,
-      error: {
-        type: "unknown_command",
-        message: `Unknown command: ${commandName}`,
-      },
-    };
-  }
-
-  // Parse options
-  const schema = command.options ?? ({} as T);
-  const parseArgsConfig = schemaToParseArgsOptions(schema);
-
-  let parsedValues: Record<string, unknown> = {};
-  try {
-    const { values } = parseArgs({
-      args: remaining,
-      ...parseArgsConfig,
-      allowPositionals: false,
-    });
-    parsedValues = values;
-  } catch {
-    // Ignore parse errors for now
-  }
-
-  const optionValues = parseOptionValues(schema, parsedValues);
-
-  return {
-    command,
-    commandPath: commandChain,
-    options: optionValues,
-    args: remaining,
-    showHelp,
-  };
-}

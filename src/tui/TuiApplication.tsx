@@ -2,9 +2,10 @@ import { createRenderer } from "./adapters/factory.ts";
 import { RendererProvider } from "./context/RendererContext.tsx";
 import { Application, type ApplicationConfig } from "../core/application.ts";
 import type { AnyCommand } from "../core/command.ts";
-import { TuiApp } from "./TuiApp.tsx";
+import { TuiRoot } from "./TuiRoot.tsx";
 import { LogLevel } from "../core/logger.ts";
 import { createSettingsCommand } from "../builtins/settings.ts";
+import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 import { loadPersistedParameters } from "./utils/parameterPersistence.ts";
 import { AppContext } from "../core/context.ts";
 
@@ -35,7 +36,7 @@ export interface TuiApplicationConfig extends ApplicationConfig {
  *   }
  * }
  * 
- * await new MyApp().run(process.argv.slice(2));
+ * await new MyApp().run();
  * ```
  */
 export class TuiApplication extends Application {
@@ -52,21 +53,24 @@ export class TuiApplication extends Application {
      * If no arguments are provided and TUI is enabled, launches the TUI.
      * Otherwise, runs in CLI mode.
      */
-    override async run(argv: string[] = process.argv.slice(2)): Promise<void> {
-        // Check for --interactive or -i flag
-        const hasInteractiveFlag = argv.includes("--interactive") || argv.includes("-i");
-        let filteredArgs = argv.filter((arg) => arg !== "--interactive" && arg !== "-i");
+     override async run(): Promise<void> {
+         return this.runFromArgs(Bun.argv.slice(2));
+     }
 
-        // Launch TUI if:
-        // 1. Explicit --interactive flag, or
-        // 2. No args and TUI is enabled
-        if (hasInteractiveFlag || (filteredArgs.length === 0 && this.enableTui)) {
-            await this.runTui();
-            return;
-        }
+     override async runFromArgs(argv: string[]): Promise<void> {
+         const { globalOptions, remainingArgs } = this.parseGlobalOptions(argv);
 
-        await super.run(filteredArgs);
-    }
+         // Launch TUI if:
+         // 1. Explicit --interactive flag, or
+         // 2. No args and TUI is enabled
+         if (globalOptions["interactive"] || (remainingArgs.length === 0 && this.enableTui)) {
+             this.applyGlobalOptions(globalOptions);
+             await this.runTui();
+             return;
+         }
+
+         await super.runFromArgs(remainingArgs);
+     }
 
     /**
      * Launch the interactive TUI.
@@ -90,7 +94,7 @@ export class TuiApplication extends Application {
 
             renderer.render(
                 <RendererProvider renderer={renderer}>
-                    <TuiApp
+                    <TuiRoot
                         name={this.name}
                         displayName={this.displayName}
                         version={this.version}
@@ -108,7 +112,7 @@ export class TuiApplication extends Application {
      */
     private loadPersistedSettings(): void {
         try {
-            const settings = loadPersistedParameters(this.name, "settings");
+            const settings = loadPersistedParameters(this.name, KNOWN_COMMANDS.settings);
             
             // Apply log-level if set
             if (settings["log-level"]) {
@@ -136,15 +140,16 @@ export class TuiApplication extends Application {
         const userCommands = this.registry
             .list()
             .filter((cmd) => {
-                // Exclude version and help from main menu
-                if (cmd.name === "version" || cmd.name === "help") {
+                // Exclude internal/built-in commands from the TUI main menu
+                if (cmd.tuiHidden) {
                     return false;
                 }
-                // Exclude settings if already defined by user (they shouldn't)
-                if (cmd.name === "settings") {
+
+                // Extra safety: keep known internal command names out
+                if (cmd.name === KNOWN_COMMANDS.help || cmd.name === KNOWN_COMMANDS.version || cmd.name === KNOWN_COMMANDS.settings) {
                     return false;
                 }
-                // Include commands that have options or execute methods
+
                 return true;
             });
 

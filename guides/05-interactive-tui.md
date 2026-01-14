@@ -12,9 +12,14 @@ taskr run --task build --env production
 
 # TUI mode (interactive)
 taskr
+
+# Force TUI mode
+taskr --interactive
+# or
+taskr -i
 ```
 
-When you run without arguments, an interactive form appears!
+When you run without arguments (or pass `--interactive`), an interactive form appears!
 
 ## Step 1: Create the Command with TUI Metadata
 
