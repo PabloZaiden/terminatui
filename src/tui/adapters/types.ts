@@ -14,7 +14,7 @@ export type KeyHandler = (event: KeyboardEvent) => boolean;
 
 export interface KeyboardAdapter {
     setActiveHandler: (id: string, handler: KeyHandler) => () => void;
-    setGlobalHandler: (handler: KeyHandler) => void;
+    setGlobalHandler: (handler: KeyHandler) => () => void;
 }
 
 export interface RendererConfig {

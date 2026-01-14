@@ -27,8 +27,9 @@ interface KeyboardContextValue {
     /**
      * Set the global handler (processed before active handler).
      * Only one global handler is supported.
+     * Returns unregister function.
      */
-    setGlobalHandler: (handler: GlobalKeyHandler) => void;
+    setGlobalHandler: (handler: GlobalKeyHandler) => () => void;
 }
 
 const KeyboardContext = createContext<KeyboardContextValue | null>(null);
@@ -61,11 +62,16 @@ export function KeyboardProvider({ children }: KeyboardProviderProps) {
     }, []);
 
     const setGlobalHandler = useCallback((handler: GlobalKeyHandler) => {
+        const previous = globalHandlerRef.current;
         globalHandlerRef.current = handler;
+
+        return () => {
+            globalHandlerRef.current = previous;
+        };
     }, []);
 
     useEffect(() => {
-        keyboard.setGlobalHandler((event: KeyboardEvent) => {
+        const unregister = keyboard.setGlobalHandler((event: KeyboardEvent) => {
             if (globalHandlerRef.current?.(event)) {
                 return true;
             }
@@ -77,6 +83,10 @@ export function KeyboardProvider({ children }: KeyboardProviderProps) {
 
             return false;
         });
+
+        return () => {
+            unregister();
+        };
     }, [keyboard]);
 
     const value = useMemo<KeyboardContextValue>(

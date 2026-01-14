@@ -42,7 +42,11 @@ export function useGlobalKeyHandler(handler: GlobalKeyHandler): void {
 
     useEffect(() => {
         // Set a stable wrapper that calls the current handler
-        setGlobalHandler((event) => handlerRef.current(event));
+        const unregister = setGlobalHandler((event) => handlerRef.current(event));
+
+        return () => {
+            unregister();
+        };
     }, [setGlobalHandler]);
 }
 

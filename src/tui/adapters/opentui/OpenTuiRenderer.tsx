@@ -26,7 +26,7 @@ export class OpenTuiRenderer implements Renderer {
 
     public keyboard: Renderer["keyboard"] = {
         setActiveHandler: () => () => {},
-        setGlobalHandler: () => {},
+        setGlobalHandler: () => () => {},
     };
 
     public components: Renderer["components"] = {

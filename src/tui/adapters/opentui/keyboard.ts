@@ -27,7 +27,12 @@ export function useOpenTuiKeyboardAdapter(): KeyboardAdapter {
     }, []);
 
     const setGlobalHandler = useCallback((handler: KeyHandler) => {
+        const previous = globalHandlerRef.current;
         globalHandlerRef.current = handler;
+
+        return () => {
+            globalHandlerRef.current = previous;
+        };
     }, []);
 
     useKeyboard((key: KeyEvent) => {
