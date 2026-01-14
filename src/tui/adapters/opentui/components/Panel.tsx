@@ -2,20 +2,29 @@ import type { ReactNode } from "react";
 import type { PanelProps, Spacing } from "../../../semantic/types.ts";
 import { Theme } from "../../../theme.ts";
 
-function normalizePadding(padding: number | Spacing | undefined): any {
+function normalizePadding(
+    padding: number | Spacing | undefined,
+    opts: { dense: boolean }
+): { padding?: number; paddingTop?: number; paddingRight?: number; paddingBottom?: number; paddingLeft?: number } {
     if (padding === undefined) {
-        return undefined;
+        return opts.dense
+            ? {
+                  padding: 0,
+                  paddingLeft: 1,
+                  paddingRight: 1,
+              }
+            : { padding: 1 };
     }
 
     if (typeof padding === "number") {
-        return padding;
+        return { padding };
     }
 
     return {
-        top: padding.top ?? 0,
-        right: padding.right ?? 0,
-        bottom: padding.bottom ?? 0,
-        left: padding.left ?? 0,
+        paddingTop: padding.top ?? 0,
+        paddingRight: padding.right ?? 0,
+        paddingBottom: padding.bottom ?? 0,
+        paddingLeft: padding.left ?? 0,
     };
 }
 
@@ -24,6 +33,7 @@ export function Panel({
     focused,
     border = true,
     surface = "panel",
+    dense = false,
     children,
     flex,
     width,
@@ -41,13 +51,21 @@ export function Panel({
     // - typical panels use focused/unfocused border colors
     const borderColor = surface === "overlay" ? Theme.overlayTitle : focused ? Theme.borderFocused : Theme.border;
 
+    const resolvedTitleInset = 0;
+
+    const resolvedPadding = normalizePadding(padding, { dense });
+
     return (
         <box
             border={border}
             borderStyle={border ? "rounded" : undefined}
             borderColor={borderColor}
             title={title}
-            padding={normalizePadding(padding)}
+            padding={resolvedPadding.padding}
+            paddingTop={resolvedPadding.paddingTop}
+            paddingRight={resolvedPadding.paddingRight}
+            paddingBottom={resolvedPadding.paddingBottom}
+            paddingLeft={resolvedPadding.paddingLeft}
             flexGrow={flex}
             width={width as any}
             height={height as any}
@@ -57,6 +75,7 @@ export function Panel({
             gap={gap}
             backgroundColor={backgroundColor}
         >
+            {resolvedTitleInset > 0 ? <box height={resolvedTitleInset} /> : null}
             {children}
         </box>
     );

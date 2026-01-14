@@ -27,7 +27,7 @@ export function StatusBar({
     const spinner = isRunning ? `${frame} ` : "";
 
     return (
-        <Panel border={true} flexDirection="column" gap={0}>
+        <Panel dense border={true} flexDirection="column" gap={0} height={showShortcuts ? 4 : 2}>
             <Container flexDirection="row" justifyContent="space-between" padding={{ left: 1, right: 1 }}>
                 <Label color="success" bold>
                     {spinner}{status}

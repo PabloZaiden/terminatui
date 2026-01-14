@@ -17,12 +17,15 @@ export function Header({ name, version, breadcrumb }: HeaderProps) {
     const breadcrumbStr = breadcrumb?.length ? ` › ${breadcrumb.join(" › ")}` : "";
 
     return (
-        <Container flexDirection="row" justifyContent="space-between" padding={{ bottom: 1 }}>
-            <Label color="mutedText" bold>
-                {name}
-                {breadcrumbStr}
-            </Label>
-            <Label color="mutedText">v{version}</Label>
-        </Container>
+        <box flexDirection="column" flexShrink={0}>
+            <Container flexDirection="row" justifyContent="space-between">
+                <Label color="mutedText" bold>
+                    {name}
+                    {breadcrumbStr}
+                </Label>
+                <Label color="mutedText">v{version}</Label>
+            </Container>
+            <box height={1} flexShrink={0} />
+        </box>
     );
 }

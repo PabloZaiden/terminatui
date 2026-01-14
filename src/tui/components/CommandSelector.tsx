@@ -1,7 +1,9 @@
 import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import type { Command } from "../../core/command.ts";
-import { Theme } from "../theme.ts";
 import { MenuItem } from "../semantic/MenuItem.tsx";
+import { Container } from "../semantic/Container.tsx";
+import { Panel } from "../semantic/Panel.tsx";
+import { Label } from "../semantic/Label.tsx";
 
 interface CommandItem {
     /** The command object */
@@ -67,26 +69,15 @@ export function CommandSelector({
         : "Select Command";
 
     return (
-        <box
-            flexDirection="column"
-            flexGrow={1}
-            justifyContent="center"
-            alignItems="center"
-            gap={1}
-        >
-            <box
+        <Container flexDirection="column" flex={1} justifyContent="center" alignItems="center" gap={1}>
+            <Panel
                 flexDirection="column"
-                border={true}
-                borderStyle="rounded"
-                borderColor={Theme.borderFocused}
                 title={title}
-                paddingLeft={3}
-                paddingRight={3}
-                paddingTop={1}
-                paddingBottom={1}
-                minWidth={60}
+                padding={undefined}
+                width={60}
+                focused
             >
-                <box flexDirection="column" gap={1}>
+                <Container flexDirection="column" gap={1}>
                     {commands.map((item, idx) => {
                         const isSelected = idx === selectedIndex;
                         const label = item.label ?? item.command.displayName ?? item.command.name;
@@ -105,13 +96,11 @@ export function CommandSelector({
                             />
                         );
                     })}
-                </box>
-            </box>
+                </Container>
+            </Panel>
 
-            <text fg={Theme.label}>
-                ↑/↓ Navigate • Enter Select • Esc {breadcrumb?.length ? "Back" : "Exit"}
-            </text>
-        </box>
+            <Label color="mutedText">↑/↓ Navigate • Enter Select • Esc {breadcrumb?.length ? "Back" : "Exit"}</Label>
+        </Container>
     );
 }
 

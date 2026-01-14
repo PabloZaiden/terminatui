@@ -60,6 +60,10 @@ export interface PanelProps extends LayoutProps {
     focused?: boolean;
     border?: boolean;
     surface?: PanelSurface;
+
+    /** Renderer-level compact styling (e.g. no default padding). */
+    dense?: boolean;
+
     children?: ReactNode;
 }
 
@@ -86,6 +90,7 @@ export interface OverlayProps {
     dim?: boolean;
     children?: ReactNode;
 }
+
 
 export interface LabelProps {
     color?: SemanticColor;
