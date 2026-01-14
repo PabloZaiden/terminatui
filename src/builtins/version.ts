@@ -5,7 +5,7 @@ import type { OptionSchema } from "../types/command.ts";
 /**
  * Configuration for version command.
  */
-export interface VersionConfig {
+interface VersionConfig {
   /** Application name */
   appName: string;
   /** Application version (e.g., "1.0.0") */
@@ -18,7 +18,7 @@ export interface VersionConfig {
  * Format version string with optional commit hash.
  * If commitHash is empty or undefined, shows "(dev)".
  */
-export function formatVersion(version: string, commitHash?: string): string {
+function formatVersion(version: string, commitHash?: string): string {
   const hashPart = commitHash && commitHash.length > 0 
     ? commitHash.substring(0, 7) 
     : "(dev)";

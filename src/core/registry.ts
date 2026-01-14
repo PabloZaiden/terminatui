@@ -72,7 +72,11 @@ export class CommandRegistry {
    * @param path Array of command names forming the path
    * @returns Object with resolved command, remaining path, and full path
    */
-  resolve(path: string[]): ResolveResult {
+  resolve(path: string[]): {
+    command: AnyCommand | undefined;
+    remainingPath: string[];
+    resolvedPath: string[];
+  } {
     if (path.length === 0) {
       return { command: undefined, remainingPath: [], resolvedPath: [] };
     }
@@ -127,14 +131,3 @@ export class CommandRegistry {
   }
 }
 
-/**
- * Result of resolving a command path.
- */
-export interface ResolveResult {
-  /** The resolved command, or undefined if not found */
-  command: AnyCommand | undefined;
-  /** Path elements that couldn't be resolved (remaining after last matched command) */
-  remainingPath: string[];
-  /** Path elements that were successfully resolved */
-  resolvedPath: string[];
-}
