@@ -1,10 +1,11 @@
 import { useState, useCallback } from "react";
-import type { Command, OptionSchema, OptionValues } from "../types/command.ts";
+import type { OptionSchema, OptionValues } from "../types/command.ts";
+import type { AnyCommand } from "../core/command.ts";
 
 /**
  * Hook for command execution
  */
-export function useCommand<T extends OptionSchema>(command: Command<T>) {
+export function useCommand<T extends OptionSchema>(command: AnyCommand) {
   const [isExecuting, setIsExecuting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -14,11 +15,7 @@ export function useCommand<T extends OptionSchema>(command: Command<T>) {
       setError(null);
 
       try {
-        await command.execute({
-          options,
-          args: [],
-          commandPath: [command.name],
-        });
+        await command.execute(options);
       } catch (err) {
         setError(err instanceof Error ? err : new Error(String(err)));
       } finally {
