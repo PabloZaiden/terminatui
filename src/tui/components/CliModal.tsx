@@ -5,14 +5,33 @@ import { ModalBase } from "./ModalBase.tsx";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 import { Label } from "../semantic/Label.tsx";
 import { Value } from "../semantic/Value.tsx";
+import type { ModalComponent, ModalDefinition } from "../registry.tsx";
 
 export interface CliModalParams {
     command: string;
 }
 
-interface CliModalProps {
-    /** CLI command to display */
-    command: string;
+export class CliModal implements ModalDefinition<CliModalParams> {
+    static readonly Id = "cli";
+
+    getId(): string {
+        return CliModal.Id;
+    }
+
+    component(): ModalComponent<CliModalParams> {
+        return function CliModalComponentWrapper({ params, onClose }: { params: CliModalParams; onClose: () => void; }) {
+            return (
+                <CliModalView
+                    command={params.command}
+                    visible={true}
+                    onClose={onClose}
+                />
+            );
+        };
+    }
+}
+
+interface CliModalViewProps extends CliModalParams {
     /** Whether the modal is visible */
     visible: boolean;
     /** Called when the modal should close */
@@ -22,11 +41,11 @@ interface CliModalProps {
 /**
  * Modal displaying the CLI command equivalent of the current config.
  */
-export function CliModal({
+function CliModalView({
     command,
     visible,
     onClose,
-}: CliModalProps) {
+}: CliModalViewProps) {
     // Register clipboard provider for CLI command
     useClipboardProvider(
         () => ({ content: command, label: "CLI" }),

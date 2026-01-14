@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-import { ModalBase } from "./modals/ModalBase";
-import { CliModal } from "./modals/CliModal";
-import { EditorModal } from "./modals/EditorModal";
-import { LogsModal } from "./modals/LogsModal";
+import { CliModal } from "./components/CliModal.tsx";
+import { EditorModal } from "./components/EditorModal.tsx";
+import { LogsModal } from "./components/LogsModal.tsx";
 import type { ScreenBase } from "./screens/ScreenBase";
 import { CommandSelectScreen } from "./screens/CommandSelectScreen";
 import { ConfigScreen } from "./screens/ConfigScreen";
@@ -49,7 +48,12 @@ export function registerScreen(screen: ScreenBase): void {
  * Register a modal component for a modal ID.
  * Typically called at module load time.
  */
-export function registerModal<TParams>(modal: ModalBase<TParams>): void {
+export interface ModalDefinition<TParams> {
+    getId(): string;
+    component(): ModalComponent<TParams>;
+}
+
+export function registerModal<TParams>(modal: ModalDefinition<TParams>): void {
     modalRegistry.set(modal.getId(), modal.component());
 }
 

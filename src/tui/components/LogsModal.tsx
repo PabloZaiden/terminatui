@@ -7,8 +7,30 @@ import { Label } from "../semantic/Label.tsx";
 import { LogColors } from "./logColors.ts";
 import { ModalBase } from "./ModalBase.tsx";
 import { useLogs } from "../context/LogsContext.tsx";
+import type { ModalComponent, ModalDefinition } from "../registry.tsx";
 
-interface LogsModalProps {
+export interface LogsModalParams {}
+
+export class LogsModal implements ModalDefinition<LogsModalParams> {
+    static readonly Id = "logs";
+
+    getId(): string {
+        return LogsModal.Id;
+    }
+
+    component(): ModalComponent<LogsModalParams> {
+        return function LogsModalComponentWrapper({ params: _params, onClose }: { params: LogsModalParams; onClose: () => void; }) {
+            return (
+                <LogsModalView
+                    visible={true}
+                    onClose={onClose}
+                />
+            );
+        };
+    }
+}
+
+interface LogsModalViewProps {
     /** Whether the panel is visible */
     visible: boolean;
     /** Callback when the modal is closed */
@@ -18,10 +40,10 @@ interface LogsModalProps {
 /**
  * Panel displaying log entries with color-coded levels.
  */
-export function LogsModal({
+function LogsModalView({
     visible,
     onClose,
-}: LogsModalProps) {
+}: LogsModalViewProps) {
     const { logs } = useLogs();
     // Handle Enter to close (Esc and Ctrl+L are handled globally)
     useActiveKeyHandler(

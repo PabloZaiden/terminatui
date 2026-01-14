@@ -5,6 +5,7 @@ import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import { Select } from "../semantic/Select.tsx";
 import { TextInput } from "../semantic/TextInput.tsx";
 import { Label } from "../semantic/Label.tsx";
+import type { ModalComponent, ModalDefinition } from "../registry.tsx";
 
 export interface EditorModalParams {
     fieldKey: string;
@@ -14,7 +15,35 @@ export interface EditorModalParams {
     onCancel: () => void;
 }
 
-interface EditorModalProps {
+export class EditorModal implements ModalDefinition<EditorModalParams> {
+    static readonly Id = "property-editor";
+
+    getId(): string {
+        return EditorModal.Id;
+    }
+
+    component(): ModalComponent<EditorModalParams> {
+        return function EditorModalComponentWrapper({ params, onClose }: { params: EditorModalParams; onClose: () => void; }) {
+            return (
+                <EditorModalView
+                    fieldKey={params.fieldKey}
+                    currentValue={params.currentValue}
+                    visible={true}
+                    onSubmit={(value) => {
+                        params.onSubmit?.(value);
+                    }}
+                    onCancel={() => {
+                        params.onCancel?.();
+                        onClose();
+                    }}
+                    fieldConfigs={params.fieldConfigs}
+                />
+            );
+        };
+    }
+}
+
+interface EditorModalViewProps {
     /** Whether the modal is visible */
     visible: boolean;
 }
@@ -28,13 +57,19 @@ interface EditorModalProps {
  * block the underlying screen from receiving events, even though most key
  * handling is done by the native components.
  */
-export function EditorModal({
+interface EditorModalViewProps extends EditorModalParams {
+    /** Whether the modal is visible */
+    visible: boolean;
+}
+
+function EditorModalView({
     fieldKey,
     currentValue,
     visible,
     onSubmit,
+    onCancel,
     fieldConfigs,
-}: EditorModalParams & EditorModalProps) {
+}: EditorModalViewProps) {
     const [inputValue, setInputValue] = useState("");
     const [selectIndex, setSelectIndex] = useState(0);
 
@@ -79,9 +114,12 @@ export function EditorModal({
     const handleInputSubmit = (value: string) => {
         if (isNumber) {
             onSubmit(parseInt(value.replace(/[^0-9-]/g, ""), 10) || 0);
-        } else {
-            onSubmit(value);
+            onCancel();
+            return;
         }
+
+        onSubmit(value);
+        onCancel();
     };
 
     const selectOptions =
@@ -107,10 +145,12 @@ export function EditorModal({
 
         if (fieldConfig.type === "boolean") {
             onSubmit(selected.value === "true");
+            onCancel();
             return;
         }
 
         onSubmit(selected.value);
+        onCancel();
     };
 
     return (
