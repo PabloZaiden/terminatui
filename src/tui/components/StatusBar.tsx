@@ -1,7 +1,7 @@
 import { Label } from "../semantic/Label.tsx";
+import { Spinner } from "../semantic/Spinner.tsx";
 import { Panel } from "../semantic/Panel.tsx";
 import { Container } from "../semantic/Container.tsx";
-import { useSpinner } from "../hooks/useSpinner.ts";
 
 interface StatusBarProps {
     /** Status message to display */
@@ -23,15 +23,15 @@ export function StatusBar({
     showShortcuts = true,
     shortcuts = "L Logs • C CLI • Tab Switch • Ctrl+Y Copy • Esc Back",
 }: StatusBarProps) {
-    const { frame } = useSpinner(isRunning);
-    const spinner = isRunning ? `${frame} ` : "";
-
     return (
         <Panel dense border={true} flexDirection="column" gap={0} height={showShortcuts ? 4 : 2}>
             <Container flexDirection="row" justifyContent="space-between" padding={{ left: 1, right: 1 }}>
-                <Label color="success" bold>
-                    {spinner}{status}
-                </Label>
+                <Container flexDirection="row">
+                    <Spinner active={isRunning} />
+                    <Label color="success" bold>
+                        {status}
+                    </Label>
+                </Container>
             </Container>
 
             {showShortcuts ? (

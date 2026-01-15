@@ -14,6 +14,7 @@ import { MenuButton } from "./components/MenuButton.tsx";
 import { MenuItem } from "./components/MenuItem.tsx";
 import { Overlay } from "./components/Overlay.tsx";
 import { Spacer } from "./components/Spacer.tsx";
+import { Spinner } from "./components/Spinner.tsx";
 import { Panel } from "./components/Panel.tsx";
 import { ScrollView as OpenTuiScrollView } from "./components/ScrollView.tsx";
 import { Select } from "./components/Select.tsx";
@@ -46,6 +47,7 @@ export class OpenTuiRenderer implements Renderer {
 
         Overlay,
         Spacer,
+        Spinner,
         Label,
         Value,
         Code,

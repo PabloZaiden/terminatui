@@ -503,7 +503,7 @@ import {
   useKeyboardHandler,    // Register keyboard handlers with priority
   useClipboard,          // Clipboard operations with OSC 52
   useLogStream,          // Stream logs from logger
-  useSpinner,            // Animated spinner
+  // (renderer-specific) Spinner UI lives in adapters
   useCommandExecutor,    // Execute commands with cancellation
   
   // Context

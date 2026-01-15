@@ -33,6 +33,7 @@ export interface RendererComponents {
 
     Overlay: (props: import("../semantic/types.ts").OverlayProps) => ReactNode;
     Spacer: (props: import("../semantic/types.ts").SpacerProps) => ReactNode;
+    Spinner: (props: import("../semantic/types.ts").SpinnerProps) => ReactNode;
 
     Label: (props: import("../semantic/types.ts").LabelProps) => ReactNode;
     Value: (props: import("../semantic/types.ts").ValueProps) => ReactNode;

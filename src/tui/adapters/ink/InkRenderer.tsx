@@ -16,6 +16,7 @@ import { Panel } from "./components/Panel.tsx";
 import { ScrollView } from "./components/ScrollView.tsx";
 import { Select } from "./components/Select.tsx";
 import { Spacer } from "./components/Spacer.tsx";
+import { Spinner } from "./components/Spinner.tsx";
 import { TextInput } from "./components/TextInput.tsx";
 import { Value } from "./components/Value.tsx";
 import { Code } from "./components/Code.tsx";
@@ -46,6 +47,7 @@ export class InkRenderer implements Renderer {
 
         Overlay,
         Spacer,
+        Spinner,
 
         Label,
         Value,

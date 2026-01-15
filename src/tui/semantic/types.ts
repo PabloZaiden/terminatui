@@ -105,6 +105,9 @@ export interface SpacerProps {
     axis?: "horizontal" | "vertical";
 }
 
+export interface SpinnerProps {
+    active: boolean;
+}
 
 export interface LabelProps {
     color?: SemanticColor;
