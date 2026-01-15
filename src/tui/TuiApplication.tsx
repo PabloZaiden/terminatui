@@ -8,6 +8,7 @@ import { createSettingsCommand } from "../builtins/settings.ts";
 import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 import { loadPersistedParameters } from "./utils/parameterPersistence.ts";
 import { AppContext } from "../core/context.ts";
+import { registerAllModals, registerAllScreens } from "./registry.ts";
 
 /**
  * Extended configuration for TUI-enabled applications.
@@ -53,12 +54,12 @@ export class TuiApplication extends Application {
      * If no arguments are provided and TUI is enabled, launches the TUI.
      * Otherwise, runs in CLI mode.
      */
-     override async run(): Promise<void> {
-         return this.runFromArgs(Bun.argv.slice(2));
-     }
+    override async run(): Promise<void> {
+        return this.runFromArgs(Bun.argv.slice(2));
+    }
 
-     override async runFromArgs(argv: string[]): Promise<void> {
-         const { globalOptions } = this.parseGlobalOptions(argv);
+    override async runFromArgs(argv: string[]): Promise<void> {
+        const { globalOptions } = this.parseGlobalOptions(argv);
 
         const mode = globalOptions["mode"] as ModeOptions ?? "default";
         const resolvedMode = mode === "default" ? this.defaultMode : mode;
@@ -80,13 +81,16 @@ export class TuiApplication extends Application {
         }
 
         throw new Error(`Unknown mode '${resolvedMode}'`);
-     }
+    }
 
-     /**
-      * Launch the TUI.
-      */
-     async runTui(rendererType: TuiModeOptions): Promise<void> {
-         // Get all commands that support TUI or have options
+    /**
+     * Launch the TUI.
+     */
+    async runTui(rendererType: TuiModeOptions): Promise<void> {
+        await registerAllScreens();
+        await registerAllModals();
+        
+        // Get all commands that support TUI or have options
         const commands = this.getExecutableCommands();
 
         // Load and apply persisted settings (log-level, detailed-logs)
@@ -123,7 +127,7 @@ export class TuiApplication extends Application {
     private loadPersistedSettings(): void {
         try {
             const settings = loadPersistedParameters(this.name, KNOWN_COMMANDS.settings);
-            
+
             // Apply log-level if set
             if (settings["log-level"]) {
                 const levelStr = String(settings["log-level"]).toLowerCase();

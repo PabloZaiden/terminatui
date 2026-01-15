@@ -11,12 +11,8 @@ import { Header } from "./components/Header.tsx";
 import { StatusBar } from "./components/StatusBar.tsx";
 import { Container } from "./semantic/Container.tsx";
 import { Panel } from "./semantic/Panel.tsx";
-import { getScreen, getModal, registerAllModals, registerAllScreens } from "./registry.ts";
+import { getScreen, getModal } from "./registry.ts";
 import { CommandSelectScreen, type CommandSelectParams } from "./screens/CommandSelectScreen.tsx";
-
-// Register all screens and modals at module load
-await registerAllScreens();
-await registerAllModals();
 
 interface TuiRootProps {
     name: string;
