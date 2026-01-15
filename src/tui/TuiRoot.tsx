@@ -85,7 +85,7 @@ function TuiRootContent() {
             if (isLogsOpen) {
                 navigation.closeModal();
             } else {
-                 navigation.openModal("logs", {});
+                 navigation.openModal("logs");
 
             }
             return true;
