@@ -158,6 +158,7 @@ describe("Help Generation (core)", () => {
       expect(help).toContain("A test command for testing");
       expect(help).toContain("Options:");
       expect(help).toContain("--verbose");
+      expect(help).toContain("--verbose, --no-verbose");
     });
   });
 
@@ -185,6 +186,7 @@ describe("Help Generation (core)", () => {
       expect(global).toContain("Global Options");
       expect(global).toContain("--log-level");
       expect(global).toContain("--interactive");
+      expect(global).toContain("--interactive, --no-interactive");
       expect(global).toContain("-i");
       expect(global).toContain("--renderer");
       expect(global).toContain("opentui");
@@ -202,6 +204,7 @@ describe("Help Generation (core)", () => {
 
       expect(help).toContain("Global Options");
       expect(help).toContain("--interactive");
+      expect(help).toContain("--interactive, --no-interactive");
     });
 
     test("generateAppHelp includes global options when provided", () => {

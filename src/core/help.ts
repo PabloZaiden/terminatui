@@ -68,11 +68,13 @@ export function formatOptionSchema(title: string, schema: Record<string, OptionD
 
   const entries = Object.entries(schema).map(([name, def]) => {
     const alias = def.alias ? `-${def.alias}, ` : "    ";
-    const flag = `${alias}--${name}`;
     const required = def.required ? colors.red(" (required)") : "";
     const defaultVal =
       def.default !== undefined ? colors.dim(` [default: ${def.default}]`) : "";
     const enumVals = def.enum ? colors.dim(` [${def.enum.join(" | ")}]`) : "";
+
+    const noVariant = def.type === "boolean" ? `, --no-${name}` : "";
+    const flag = `${alias}--${name}${noVariant}`;
     const typeHint = def.type === "boolean" ? "" : colors.dim(` <${def.type}>`);
 
     return `  ${colors.yellow(flag)}${typeHint}${required}\n      ${def.description}${enumVals}${defaultVal}`;
