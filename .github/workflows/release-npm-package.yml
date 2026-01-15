@@ -78,4 +78,9 @@ jobs:
         run: bun run build
 
       - name: Publish Package
-        run: npm publish --no-build
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            npm publish --no-build --tag "${{ steps.get_tag.outputs.tag }}"
+          else
+            npm publish --no-build
+          fi
