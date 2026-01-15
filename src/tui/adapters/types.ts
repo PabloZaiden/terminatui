@@ -18,8 +18,6 @@ import type {
     ValueProps,
 } from "../semantic/types.ts";
 
-export type RendererType = "opentui" | "ink";
-
 export interface KeyboardEvent {
     name: string;
     sequence?: string;

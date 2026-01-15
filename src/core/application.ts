@@ -103,10 +103,10 @@ export class Application {
   readonly name: string;
 
   /**
-   * Default renderer/mode used when `--renderer=default` is specified.
+   * Default mode used when `--mode=default` is specified.
    * Base Application defaults to `cli`.
    */
-  protected defaultRenderer: ModeOptions = "cli";
+  protected defaultMode: ModeOptions = "cli";
   readonly displayName: string;
   readonly version: string;
   readonly commitHash?: string;
@@ -242,7 +242,7 @@ export class Application {
       this.applyGlobalOptions(globalOptions);
 
       const mode = globalOptions["mode"] as ModeOptions ?? "default";
-      const resolvedMode = mode === "default" ? this.defaultRenderer : mode;
+      const resolvedMode = mode === "default" ? this.defaultMode : mode;
 
       if (resolvedMode !== "cli") {
         throw new Error(

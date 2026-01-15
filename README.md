@@ -381,6 +381,9 @@ Extend `TuiApplication` instead of `Application` to get automatic TUI support:
 import { TuiApplication, Command } from "@pablozaiden/terminatui";
 
 class MyApp extends TuiApplication {
+  // Each app decides what "default" means.
+  protected override defaultRenderer = "opentui" as const;
+
   constructor() {
     super({
       name: "myapp",
@@ -393,13 +396,13 @@ class MyApp extends TuiApplication {
 }
 ```
 
-When run with no arguments, the app launches an interactive TUI instead of showing help. You can also force TUI mode with `--interactive` (or `-i`):
+Execution mode is controlled only by the selected mode (`--mode`) or the app’s configured default mode.
 
 ```bash
-myapp                 # Launches TUI
-myapp --interactive    # Forces TUI
-myapp -i               # Forces TUI
-myapp run --verbose    # Runs in CLI mode
+myapp                           # Uses app default mode
+myapp --mode opentui            # Forces TUI (OpenTUI)
+myapp --mode ink                # Forces TUI (Ink)
+myapp --mode cli run --verbose  # Forces CLI
 ```
 
 ### TUI Metadata

@@ -61,7 +61,7 @@ export class TuiApplication extends Application {
          const { globalOptions } = this.parseGlobalOptions(argv);
 
         const mode = globalOptions["mode"] as ModeOptions ?? "default";
-        const resolvedMode = mode === "default" ? this.defaultRenderer : mode;
+        const resolvedMode = mode === "default" ? this.defaultMode : mode;
 
         if (resolvedMode === "cli") {
             await super.runFromArgs(argv);

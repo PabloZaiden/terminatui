@@ -10,8 +10,10 @@
 **Status:** ✅ Complete (Phase 3)
 
 Phase 3 delivered a working Ink renderer so the app can run using either renderer:
-- `--renderer opentui`
-- `--renderer ink`
+- `--mode opentui`
+- `--mode ink`
+
+Note: execution is controlled by `--mode` (or the app’s default mode).
 
 Unlike OpenTUI (which can do boxes, borders, overlays, and native scrolling), the Ink renderer in this project intentionally follows a **line-based terminal UI** approach (inspired by `google-gemini/gemini-cli`):
 - Minimal decoration
@@ -31,7 +33,7 @@ The semantic component layer remains renderer-agnostic; the Ink adapter focuses 
 
 ## What Was Implemented
 
-- ✅ Ink renderer selectable via CLI (`--renderer ink|opentui`)
+- ✅ Ink renderer selectable via CLI (`--mode ink|opentui|cli|default`)
 - ✅ Ink renderer implementation (`src/tui/adapters/ink/**`)
 - ✅ Ink keyboard integration via Ink hooks (`useInput`), wired into the project’s keyboard/focus system
 - ✅ Semantic component implementations for Ink
@@ -66,7 +68,7 @@ Rewritten tasks list that matches the line-based Ink approach and what was actua
 ## Phase 3 Completion Checklist
 
 ✅ Ink renderer can boot and render the app  
-✅ Renderer selection works (`--renderer ink|opentui`)  
+✅ Renderer selection works (`--mode ink|opentui|cli|default`)  
 ✅ Keyboard navigation and input works under Ink  
 ✅ Core flows work: select command, edit config, execute, view results/logs  
 ✅ `bun run build` succeeds  
