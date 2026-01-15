@@ -80,7 +80,7 @@ jobs:
       - name: Publish Package
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            npm publish --no-build --tag "${{ steps.get_tag.outputs.version }}"
+            npm publish --no-build --tag unstable
           else
             npm publish --no-build
           fi
