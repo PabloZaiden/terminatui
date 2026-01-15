@@ -116,7 +116,12 @@ export class ConfigScreen extends ScreenBase {
                     currentValue: values[fieldKey],
                     fieldConfigs: derivedFieldConfigs,
                     onSubmit: (value: unknown) => {
-                        const nextValues = { ...values, [fieldKey]: value };
+                        let nextValues = { ...values, [fieldKey]: value };
+                        const updates = command.onConfigChange?.(fieldKey, value, nextValues);
+                        if (updates) {
+                            nextValues = { ...nextValues, ...updates };
+                        }
+
                         navigation.replace<ConfigParams>(ConfigScreen.Id, { ...params, values: nextValues });
                         navigation.closeModal();
                     },
