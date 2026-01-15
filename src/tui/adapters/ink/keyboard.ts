@@ -1,8 +1,8 @@
-import { useInput } from "ink";
+import { useInput, type Key } from "ink";
 import { useCallback, useMemo, useRef } from "react";
 import type { KeyboardAdapter, KeyboardEvent, KeyHandler } from "../types.ts";
 
-function normalizeKeyName(input: string, key: { return?: boolean; escape?: boolean; backspace?: boolean; delete?: boolean; tab?: boolean; upArrow?: boolean; downArrow?: boolean; leftArrow?: boolean; rightArrow?: boolean; pageUp?: boolean; pageDown?: boolean; home?: boolean; end?: boolean; ctrl?: boolean; shift?: boolean; meta?: boolean; }): KeyboardEvent {
+function normalizeKeyName(input: string, key: Key): KeyboardEvent {
     const event: KeyboardEvent = {
         name: input,
         sequence: input,

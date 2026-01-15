@@ -109,7 +109,7 @@ function EditorModalView({
     // so we don't need to handle it here.
     useActiveKeyHandler(
         (event) => {
-            if (event.name === "return") {
+            if (event.name === "return" || event.name === "enter") {
                 return true;
             }
 
