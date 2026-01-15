@@ -5,6 +5,7 @@
 - Don't create index.ts files that re-export things from other files. Always import directly from the file you need.
 - Prefer classes over standalone functions when it makes sense.
 - Before doing something, check the patterns used in the rest of the codebase.
+- Never use `import("...")` dynamic imports. Always use static imports (unless absolutely necessary).
 
 ## Bun specifics
 This is a Bun-only project. Never check if something might not be supported in another environment. You can assume Bun is always available.
