@@ -1,15 +1,15 @@
 import { AppContext, type AppConfig } from "./context.ts";
-import { type AnyCommand, ConfigValidationError, type CommandResult } from "./command.ts";
+import { type AnyCommand, ConfigValidationError, type CommandResult, type CommandExecutionContext } from "./command.ts";
 import { CommandRegistry } from "./registry.ts";
 import { ExecutionMode } from "../types/execution.ts";
 import { LogLevel, type LoggerConfig } from "./logger.ts";
-import { generateAppHelp, generateCommandHelp } from "./help.ts";
 import {
   extractCommandChain,
   schemaToParseArgsOptions,
   parseOptionValues,
   validateOptions,
 } from "../cli/parser.ts";
+import type { OptionSchema } from "../types/command.ts";
 import { parseArgs, type ParseArgsConfig } from "util";
 import { createVersionCommand } from "../builtins/version.ts";
 import { createHelpCommandForParent, createRootHelpCommand } from "../builtins/help.ts";
@@ -19,11 +19,33 @@ import { KNOWN_COMMANDS, RESERVED_TOP_LEVEL_COMMAND_NAMES } from "./knownCommand
  * Global options available on all commands.
  * These are handled by the framework before dispatching to commands.
  */
+
+export type TuiModeOptions = "opentui" | "ink";
+export type ModeOptions = TuiModeOptions | "cli" | "default";
+
 export interface GlobalOptions {
   "log-level"?: string;
   "detailed-logs"?: boolean;
-  "interactive"?: boolean;
+  "mode"?: string;
 }
+
+export const GLOBAL_OPTIONS_SCHEMA = {
+  "log-level": {
+    type: "string",
+    description: "Minimum log level (e.g. info, debug)",
+  },
+  "detailed-logs": {
+    type: "boolean",
+    description: "Enable detailed logging",
+    default: false,
+  },
+  mode: {
+    type: "string",
+    description: "Execution mode",
+    default: "default",
+    enum: ["opentui", "ink", "cli", "default"],
+  },
+} satisfies OptionSchema;
 
 /**
  * Application configuration options.
@@ -71,7 +93,7 @@ export interface ApplicationHooks {
  *   name: "myapp",
  *   version: "1.0.0",
  *   commands: [new RunCommand(), new CheckCommand()],
- *   defaultCommand: "interactive",
+ *   defaultCommand: "version",
  * });
  * 
  * await app.run();
@@ -79,6 +101,12 @@ export interface ApplicationHooks {
  */
 export class Application {
   readonly name: string;
+
+  /**
+   * Default mode used when `--mode=default` is specified.
+   * Base Application defaults to `cli`.
+   */
+  protected defaultMode: ModeOptions = "cli";
   readonly displayName: string;
   readonly version: string;
   readonly commitHash?: string;
@@ -126,7 +154,8 @@ export class Application {
     }
 
     // Register root help command
-    this.registry.register(createRootHelpCommand(commands, this.name, this.version));
+    // Use the full registry list so built-ins like `version` are included.
+    this.registry.register(createRootHelpCommand(this.registry.list(), this.name, this.version));
   }
 
   private assertNoReservedCommands(commands: AnyCommand[]): void {
@@ -212,6 +241,15 @@ export class Application {
       const { globalOptions, remainingArgs } = this.parseGlobalOptions(argv);
       this.applyGlobalOptions(globalOptions);
 
+      const mode = globalOptions["mode"] as ModeOptions ?? "default";
+      const resolvedMode = mode === "default" ? this.defaultMode : mode;
+
+      if (resolvedMode !== "cli") {
+        throw new Error(
+          `Mode '${resolvedMode}' is not supported by Application. Use TuiApplication or set --mode=cli.`
+        );
+      }
+
       // Extract command path from args
       const { commands: commandPath, remaining: flagArgs } = extractCommandChain(remainingArgs);
 
@@ -229,11 +267,13 @@ export class Application {
         }
 
         // Show help
-        console.log(generateAppHelp(this.registry.list(), {
-          appName: this.name,
-          version: this.version,
-        }));
-        return;
+        const rootHelp = this.registry.get(KNOWN_COMMANDS.help);
+        if (rootHelp) {
+          await this.executeCommand(rootHelp, [], [KNOWN_COMMANDS.help]);
+          return;
+        }
+
+        throw new Error("Root help command not registered");
       }
 
       // Check for unknown command in path
@@ -284,46 +324,29 @@ export class Application {
     const parseArgsConfig = schemaToParseArgsOptions(schema);
 
     let parsedValues: Record<string, unknown> = {};
-    let parseError: string | undefined;
 
-    try {
-      const parseArgsOptions = {
-        args: flagArgs,
-        options: parseArgsConfig.options as ParseArgsConfig["options"],
-        allowPositionals: false,
-        strict: true, // Enable strict mode to catch unknown options
-      };
-      const result = parseArgs(parseArgsOptions);
-      parsedValues = result.values;
-    } catch (err) {
-      // Capture parse error (e.g., unknown option)
-      parseError = (err as Error).message;
-    }
+    const parseArgsOptions = {
+      args: flagArgs,
+      options: parseArgsConfig.options as ParseArgsConfig["options"],
+      allowNegative: true,
+      allowPositionals: false,
+      strict: false,
+    };
 
-    // If there was a parse error, show it and help
-    if (parseError) {
-      AppContext.current.logger.error(`Error: ${parseError}\n`);
-      console.log(generateCommandHelp(command, {
-        appName: this.name,
-        commandPath: commandPath.length > 0 ? commandPath : [command.name],
-      }));
-      process.exitCode = 1;
-      return;
-    }
+    const result = parseArgs(parseArgsOptions);
+    parsedValues = result.values;
 
     let options;
     try {
       options = parseOptionValues(schema, parsedValues);
-    } catch (err) {
-      // Enum validation error from parseOptionValues
-      AppContext.current.logger.error(`Error: ${(err as Error).message}\n`);
-      console.log(generateCommandHelp(command, {
-        appName: this.name,
-        commandPath: commandPath.length > 0 ? commandPath : [command.name],
-      }));
-      process.exitCode = 1;
-      return;
-    }
+     } catch (err) {
+       // Enum validation error from parseOptionValues
+       AppContext.current.logger.error(`Error: ${(err as Error).message}\n`);
+       await this.printHelpForCommand(command, commandPath);
+       process.exitCode = 1;
+       return;
+     }
+
 
     // Validate options (required, min/max, etc.)
     const errors = validateOptions(schema, options);
@@ -331,11 +354,7 @@ export class Application {
       for (const error of errors) {
         AppContext.current.logger.error(`Error: ${error.message}`);
       }
-      console.log(); // Blank line
-      console.log(generateCommandHelp(command, {
-        appName: this.name,
-        commandPath: commandPath.length > 0 ? commandPath : [command.name],
-      }));
+      await this.printHelpForCommand(command, commandPath);
       process.exitCode = 1;
       return;
     }
@@ -362,7 +381,8 @@ export class Application {
       }
 
       // Execute the command with the config
-      const result = await command.execute(config);
+      const ctx: CommandExecutionContext = { signal: new AbortController().signal };
+      const result = await command.execute(config, ctx);
 
       // In CLI mode, handle result output
       if (mode === ExecutionMode.Cli && result) {
@@ -404,6 +424,17 @@ export class Application {
     }
   }
 
+  private async printHelpForCommand(command: AnyCommand, commandPath: string[]): Promise<void> {
+    const resolvedCommandPath = commandPath.length > 0 ? commandPath : [command.name];
+
+    const helpCommand = command.subCommands?.find((sub) => sub.name === KNOWN_COMMANDS.help);
+    if (!helpCommand) {
+      throw new Error(`Help command not injected for '${resolvedCommandPath.join(" ")}'`);
+    }
+
+    await this.executeCommand(helpCommand, [], [...resolvedCommandPath, KNOWN_COMMANDS.help]);
+  }
+
   /**
    * Detect the execution mode based on command and args.
    */
@@ -425,35 +456,46 @@ export class Application {
     globalOptions: GlobalOptions;
     remainingArgs: string[];
   } {
-    const globalOptions: GlobalOptions = {};
+    const parseArgsConfig = schemaToParseArgsOptions(GLOBAL_OPTIONS_SCHEMA);
+
+    const result = parseArgs({
+      args: argv,
+      options: parseArgsConfig.options as ParseArgsConfig["options"],
+      allowPositionals: true,
+      allowNegative: true,
+      strict: false,
+      tokens: true,
+    });
+
+    const rawGlobalOptions = parseOptionValues(GLOBAL_OPTIONS_SCHEMA, result.values) as GlobalOptions;
+
+    const globalOptions: GlobalOptions = { ...rawGlobalOptions };
+    
     const remainingArgs: string[] = [];
+    for (const token of result.tokens ?? []) {
+      if (token.kind === "positional") {
+        remainingArgs.push(token.value);
+        continue;
+      }
 
-    let i = 0;
-    while (i < argv.length) {
-      const arg = argv[i]!;
+      if (token.kind === "option") {
+        const name = token.name;
+        if (name && !(name in GLOBAL_OPTIONS_SCHEMA)) {
+          remainingArgs.push(token.rawName);
 
-      if (arg === "--log-level" && i + 1 < argv.length) {
-        globalOptions["log-level"] = argv[i + 1];
-        i += 2;
-      } else if (arg.startsWith("--log-level=")) {
-        globalOptions["log-level"] = arg.slice("--log-level=".length);
-        i += 1;
-      } else if (arg === "--detailed-logs") {
-        globalOptions["detailed-logs"] = true;
-        i += 1;
-      } else if (arg === "--no-detailed-logs") {
-        globalOptions["detailed-logs"] = false;
-        i += 1;
-      } else if (arg === "--interactive" || arg === "-i") {
-        globalOptions["interactive"] = true;
-        i += 1;
-      } else { 
-        remainingArgs.push(arg);
-        i += 1;
+          if (token.value !== undefined) {
+            remainingArgs.push(String(token.value));
+          } else if (token.inlineValue !== undefined) {
+            remainingArgs.push(String((token as { inlineValue?: unknown }).inlineValue));
+          }
+        }
       }
     }
 
-    return { globalOptions, remainingArgs };
+    return {
+      globalOptions,
+      remainingArgs,
+    };
   }
 
   /**

@@ -6,7 +6,7 @@ export function Value({ color = "value", truncate, children }: ValueProps & { ch
     const fg = SemanticColors[color] ?? SemanticColors.value;
 
     return (
-        <text fg={fg} {...({ truncate } as any)}>
+        <text fg={fg} {...({ truncate })}>
             {children}
         </text>
     );

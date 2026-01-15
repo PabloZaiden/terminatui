@@ -99,15 +99,9 @@ useEffect(() => {
 
 
 
-**Note:** Ink scrolling will use `ink-scroll-view`:
-```typescript
-import ScrollView from 'ink-scroll-view';
-
-// In Ink adapter
-<ScrollView height={height}>
-    {children}
-</ScrollView>
-```
+**Note:** In this project, Ink scrolling is currently treated as a non-goal.
+- The Ink `ScrollView` adapter is an intentional no-op.
+- Screens that depend heavily on scrolling should be redesigned for the line-based Ink UI style.
 
 ### 4. Input/Select Components (`EditorModal.tsx`)
 

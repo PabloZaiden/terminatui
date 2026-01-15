@@ -72,7 +72,7 @@ Contains:
 | **Phase 0B** | Component-chain keyboard handling (architecture improvement) | ⏸️ Deferred (not needed) |
 | **Phase 1** | Create semantic component library (OpenTUI impl) | ✅ Complete |
 | **Phase 2** | Refactor existing components to use semantic layer | ✅ Complete |
-| **Phase 3** | Implement Ink adapter | Not Started |
+| **Phase 3** | Implement Ink adapter | ✅ Complete |
 | **Phase 4** | Dual-renderer cutover (keep OpenTUI + Ink) | Not Started |
 
 ## 🏗️ Proposed Architecture
@@ -124,10 +124,10 @@ Each component abstracts rendering details so adapters can implement them differ
 - [x] Phase 2 complete: App UI fully uses semantic components (no raw OpenTUI primitives/imports outside adapter)
 
 **Next Steps:**
-1. Do a quick manual UI parity pass (modals, status bar, command selector, config forms)
-2. Start Phase 3 Ink adapter implementation ([tasks](./phase-3/tasks.md))
+1. Do a quick manual parity pass between OpenTUI and Ink
+2. Proceed to Phase 4: dual-renderer cutover work ([tasks](./phase-4/tasks.md))
 
-**Current Focus:** [Phase 2 - Refactor to Semantic Layer](./phase-2/README.md)
+**Current Focus:** [Phase 4 - Dual-Renderer Cutover](./phase-4/README.md)
 
 ## 🔍 Key Documents to Read (In Order)
 

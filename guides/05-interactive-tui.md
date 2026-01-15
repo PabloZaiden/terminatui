@@ -1,4 +1,4 @@
-# Guide 5: Interactive TUI (Normal)
+# Guide 5: Interactive TUI
 
 Add an auto-generated Terminal User Interface to your CLI.
 
@@ -8,25 +8,34 @@ A task runner with both CLI and interactive TUI modes:
 
 ```bash
 # CLI mode
-taskr run --task build --env production
+taskr --mode cli run --task build --env production
 
-# TUI mode (interactive)
-taskr
+# TUI mode
+# (if your app's default mode is a TUI mode)
+ taskr
 
 # Force TUI mode
-taskr --interactive
-# or
-taskr -i
+ taskr --mode opentui
+ # or
+ taskr --mode ink
+
+# Force CLI mode
+ taskr --mode cli
 ```
 
-When you run without arguments (or pass `--interactive`), an interactive form appears!
+Only the selected mode (`--mode`) or your app's default mode controls whether the app runs in CLI or TUI.
 
 ## Step 1: Create the Command with TUI Metadata
 
 Create `src/commands/run.ts`:
 
 ```typescript
-import { Command, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import {
+  Command,
+  type OptionSchema,
+  type CommandResult,
+  type CommandExecutionContext,
+} from "@pablozaiden/terminatui";
 
 const options = {
   task: {
@@ -75,7 +84,7 @@ export class RunCommand extends Command<typeof options, RunConfig> {
   override readonly displayName = "Run Task";
   override readonly actionLabel = "Start Task";
 
-  async execute(config: RunConfig): Promise<CommandResult> {
+  async execute(config: RunConfig, _execCtx: CommandExecutionContext): Promise<CommandResult> {
     if (config.verbose) {
       console.debug(`Environment: ${config.env}`);
     }
@@ -85,10 +94,10 @@ export class RunCommand extends Command<typeof options, RunConfig> {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     console.log("Task completed!");
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       data: { task: config.task, env: config.env },
-      message: `Task ${config.task} completed successfully`
+      message: `Task ${config.task} completed successfully`,
     };
   }
 }
@@ -103,13 +112,16 @@ import { TuiApplication } from "@pablozaiden/terminatui";
 import { RunCommand } from "./commands/run";
 
 class TaskRunnerApp extends TuiApplication {
+  // Default is CLI; each app decides.
+  protected override defaultMode = "opentui" as const;
+
   constructor() {
     super({
       name: "taskr",
-      displayName: "🚀 Task Runner",  // Shown in TUI header
+      displayName: "🚀 Task Runner", // Shown in TUI header
       version: "1.0.0",
       commands: [new RunCommand()],
-      enableTui: true,  // Default: true
+      enableTui: true, // Default: true
     });
   }
 }
@@ -119,24 +131,24 @@ await new TaskRunnerApp().run();
 
 ## Step 3: Test Both Modes
 
-**CLI Mode** (with arguments):
+**CLI Mode** (forced):
 
 ```bash
-bun src/index.ts run --task build --env production
+bun src/index.ts --mode cli run --task build --env production
 # Running build in production...
 # Task completed!
 ```
 
-**TUI Mode** (no arguments):
+**TUI Mode** (forced):
 
 ```bash
-bun src/index.ts
+bun src/index.ts --mode opentui
 ```
 
 This opens an interactive interface:
 - Use ↑/↓ to navigate fields
 - Press Enter to edit a field
-- Navigate to "CLI Args" button and press Enter to see the CLI command
+- Navigate to "CLI Command" button and press Enter to see the CLI command
 - Press Enter on "Start Task" to run
 - Press Esc to go back
 
@@ -148,13 +160,13 @@ Add these properties to your options for TUI customization:
 {
   type: "string",
   description: "...",
-  
+
   // TUI-specific
-  label: "Display Label",    // Custom field label
-  order: 1,                  // Field sort order
-  group: "Settings",         // Group heading
-  placeholder: "Enter...",   // Placeholder text
-  tuiHidden: false,          // Hide from TUI (still in CLI)
+  label: "Display Label", // Custom field label
+  order: 1, // Field sort order
+  group: "Settings", // Group heading
+  placeholder: "Enter...", // Placeholder text
+  tuiHidden: false, // Hide from TUI (still in CLI)
 }
 ```
 
@@ -164,10 +176,10 @@ Add these properties to your options for TUI customization:
 class MyCommand extends Command {
   // Display name in command selector
   override readonly displayName = "My Command";
-  
+
   // Button text (default: "Run")
   override readonly actionLabel = "Execute";
-  
+
   // Skip config screen, run immediately
   override readonly immediateExecution = false;
 }
@@ -187,6 +199,7 @@ class MyCommand extends Command {
 ## What You Learned
 
 - Use `TuiApplication` instead of `Application`
+- Use `--mode` (or app default mode) to control CLI vs TUI
 - Add TUI metadata to options (label, order, group)
 - Customize with `displayName` and `actionLabel`
 - Both CLI and TUI work with the same command

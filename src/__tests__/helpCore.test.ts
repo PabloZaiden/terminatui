@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   formatExamples,
-  formatGlobalOptions,
+  formatOptionSchema,
   formatOptions,
   formatSubCommands,
   formatUsage,
@@ -158,6 +158,7 @@ describe("Help Generation (core)", () => {
       expect(help).toContain("A test command for testing");
       expect(help).toContain("Options:");
       expect(help).toContain("--verbose");
+      expect(help).toContain("--verbose, --no-verbose");
     });
   });
 
@@ -170,11 +171,57 @@ describe("Help Generation (core)", () => {
     });
   });
 
-  describe("formatGlobalOptions", () => {
-    test("includes log-level and detailed logs", () => {
-      const global = formatGlobalOptions();
+  describe("Global Options section", () => {
+    test("modes via schema and includes mode", () => {
+      const global = formatOptionSchema("Global Options", {
+        "log-level": { type: "string", description: "Minimum log level" },
+        mode: {
+          type: "string",
+          enum: ["opentui", "ink", "cli", "default"],
+          default: "default",
+          description: "Mode",
+        },
+      });
+
+      expect(global).toContain("Global Options");
       expect(global).toContain("--log-level");
-      expect(global).toContain("--detailed-logs");
+      expect(global).toContain("--mode");
+      expect(global).toContain("opentui");
+      expect(global).toContain("ink");
+      expect(global).toContain("cli");
+      expect(global).toContain("default");
+      expect(global).toContain("[default: default]");
+    });
+
+    test("generateCommandHelp includes global options when provided", () => {
+      const cmd = new SimpleCommand({ name: "test", description: "Test" });
+      const help = generateCommandHelp(cmd, {
+        appName: "myapp",
+        globalOptionsSchema: {
+          mode: {
+            type: "string",
+            enum: ["opentui", "ink", "cli", "default"],
+            default: "default",
+            description: "Mode",
+          },
+        },
+      });
+
+      expect(help).toContain("Global Options");
+      expect(help).toContain("--mode");
+    });
+
+    test("generateAppHelp includes global options when provided", () => {
+      const commands = [new SimpleCommand({ name: "run", description: "Run something" })];
+      const help = generateAppHelp(commands, {
+        appName: "myapp",
+        globalOptionsSchema: {
+          mode: { type: "string", enum: ["opentui", "ink", "cli", "default"], description: "Mode" },
+        },
+      });
+
+      expect(help).toContain("Global Options");
+      expect(help).toContain("--mode");
     });
   });
 });

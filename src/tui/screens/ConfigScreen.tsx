@@ -141,9 +141,11 @@ export class ConfigScreen extends ScreenBase {
                         onSelectionChange={setSelectedFieldIndex}
                         onEditField={handleEditField}
                         onAction={handleRun}
-                        additionalButtons={[
-                            { label: "CLI Command", onPress: handleShowCliArgs },
-                        ]}
+                        additionalButtons={
+                            command.supportsCli()
+                                ? [{ label: "CLI Command", onPress: handleShowCliArgs }]
+                                : []
+                        }
                         actionButton={
                             <MenuButton
                                 label={command.actionLabel ?? "Run"}

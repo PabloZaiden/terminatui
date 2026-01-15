@@ -104,11 +104,11 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
 ```typescript
   async execute(
     config: DownloadConfig,
-    execCtx?: CommandExecutionContext
+    execCtx: CommandExecutionContext
   ): Promise<CommandResult> {
     const { url, outputDir, fileName, chunkSize } = config;
     const outputPath = path.join(outputDir, fileName);
-    const signal = execCtx?.signal;
+    const signal = execCtx.signal;
 
     console.log(`Starting download: ${url}`);
     console.log(`Output: ${outputPath}`);
@@ -123,7 +123,8 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
 
     try {
       // Check for cancellation before starting
-      if (signal?.aborted) {
+       if (signal.aborted) {
+
         return { success: false, message: "Download cancelled before start" };
       }
 
@@ -152,7 +153,8 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
       // Read chunks with cancellation checks
       while (true) {
         // Check for cancellation between chunks
-        if (signal?.aborted) {
+      if (signal.aborted) {
+
           console.warn("Download cancelled by user");
           throw new Error("AbortError");
         }
@@ -195,7 +197,8 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
 
     } catch (error) {
       // Handle cancellation
-      if (signal?.aborted || (error as Error).name === "AbortError") {
+       if (signal.aborted || (error as Error).name === "AbortError") {
+
         console.log("\nDownload cancelled.");
         
         // Cleanup partial file

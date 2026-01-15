@@ -28,7 +28,7 @@ interface UseActiveKeyHandlerOptions {
  * ```tsx
  * // In a screen component
  * useActiveKeyHandler((event) => {
- *     if (event.name === "return") {
+ *     if (event.name === "return" || event.name === "enter") {
  *         onSelect();
  *         return true;
  *     }

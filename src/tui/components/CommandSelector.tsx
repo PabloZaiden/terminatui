@@ -115,11 +115,5 @@ function getModeIndicator(command: Command): string {
         return "→";
     }
     
-    const cli = command.supportsCli();
-    const tui = command.supportsTui();
-    
-    if (cli && tui) return "";
-    if (cli) return "[cli]";
-    if (tui) return "[tui]";
     return "";
 }

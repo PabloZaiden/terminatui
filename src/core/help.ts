@@ -12,6 +12,8 @@ export interface HelpOptions {
   version?: string;
   /** Command path leading to this command (e.g., ["app", "remote", "add"]) */
   commandPath?: string[];
+  /** Global options schema for this app */
+  globalOptionsSchema?: Record<string, OptionDef>;
 }
 
 /**
@@ -59,38 +61,34 @@ export function formatSubCommands(command: AnyCommand): string {
 }
 
 /**
- * Format options list.
+ * Format an options schema into a help section.
  */
-export function formatOptions(command: AnyCommand): string {
-  if (!command.options || Object.keys(command.options).length === 0) return "";
+export function formatOptionSchema(title: string, schema: Record<string, OptionDef>): string {
+  if (Object.keys(schema).length === 0) return "";
 
-  const entries = Object.entries(command.options).map(([name, defUntyped]) => {
-    const def = defUntyped as OptionDef;
+  const entries = Object.entries(schema).map(([name, def]) => {
     const alias = def.alias ? `-${def.alias}, ` : "    ";
-    const flag = `${alias}--${name}`;
     const required = def.required ? colors.red(" (required)") : "";
     const defaultVal =
       def.default !== undefined ? colors.dim(` [default: ${def.default}]`) : "";
     const enumVals = def.enum ? colors.dim(` [${def.enum.join(" | ")}]`) : "";
-    const typeHint = colors.dim(` <${def.type}>`);
+
+    const noVariant = def.type === "boolean" ? `, --no-${name}` : "";
+    const flag = `${alias}--${name}${noVariant}`;
+    const typeHint = def.type === "boolean" ? "" : colors.dim(` <${def.type}>`);
 
     return `  ${colors.yellow(flag)}${typeHint}${required}\n      ${def.description}${enumVals}${defaultVal}`;
   });
 
-  return [colors.bold("Options:"), ...entries].join("\n");
+  return [colors.bold(title + ":"), ...entries].join("\n");
 }
 
 /**
- * Format global options section (available on all commands).
+ * Format options list.
  */
-export function formatGlobalOptions(): string {
-  const entries = [
-    `  ${colors.yellow("    --log-level")}${colors.dim(" <string>")}\n      Set minimum log level${colors.dim(" [silly | trace | debug | info | warn | error | fatal]")}`,
-    `  ${colors.yellow("    --detailed-logs")}\n      Include timestamp and level prefix in log output`,
-    `  ${colors.yellow("    --no-detailed-logs")}\n      Disable detailed log format`,
-  ];
-
-  return [colors.bold("Global Options:"), ...entries].join("\n");
+export function formatOptions(command: AnyCommand): string {
+  if (!command.options || Object.keys(command.options).length === 0) return "";
+  return formatOptionSchema("Options", command.options as Record<string, OptionDef>);
 }
 
 /**
@@ -154,7 +152,9 @@ export function generateCommandHelp(command: AnyCommand, options: HelpOptions = 
   }
 
   // Global options (available on all commands)
-  sections.push(`\n${formatGlobalOptions()}`);
+  if (options.globalOptionsSchema && Object.keys(options.globalOptionsSchema).length > 0) {
+    sections.push(`\n${formatOptionSchema("Global Options", options.globalOptionsSchema)}`);
+  }
 
   // Examples
   const examplesSection = formatExamples(command);
@@ -190,6 +190,12 @@ export function generateAppHelp(commands: AnyCommand[], options: HelpOptions = {
 
   // Usage
   sections.push(`${colors.bold("Usage:")}\n  ${appName} [command] [options]\n`);
+
+  // Global options
+  if (options.globalOptionsSchema && Object.keys(options.globalOptionsSchema).length > 0) {
+    sections.push(formatOptionSchema("Global Options", options.globalOptionsSchema));
+    sections.push("");
+  }
 
   // Commands
   if (commands.length > 0) {

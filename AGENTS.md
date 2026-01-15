@@ -1,3 +1,13 @@
+## General guidelines
+
+- Never use `git` operations. That's up to the user.
+- Always prefer simplicity, usability and top level type safety over cleverness.
+- Don't create index.ts files that re-export things from other files. Always import directly from the file you need.
+- Prefer classes over standalone functions when it makes sense.
+- Before doing something, check the patterns used in the rest of the codebase.
+- Never use `import("...")` dynamic imports. Always use static imports (unless absolutely necessary).
+
+## Bun specifics
 This is a Bun-only project. Never check if something might not be supported in another environment. You can assume Bun is always available.
 
 Always use Bun features and APIs where possible.
@@ -31,8 +41,3 @@ test("hello world", () => {
 ```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
-
-## General guidelines
-
-- Always prefer simplicity, usability and top level type safety over cleverness.
-- Don't create index.ts files that re-export things from other files. Always import directly from the file you need.

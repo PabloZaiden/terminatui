@@ -8,7 +8,7 @@ export function Select<TValue extends string>({
     focused,
     onChange,
     onSubmit,
-}: SelectProps<TValue>) {
+}: SelectProps) {
     const selectedIndex = Math.max(
         0,
         options.findIndex((opt) => opt.value === value)

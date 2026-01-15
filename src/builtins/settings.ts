@@ -49,6 +49,10 @@ interface SettingsConfig {
  * In TUI mode, this command provides a UI for configuring these settings.
  */
 export class SettingsCommand extends Command<typeof settingsOptions, SettingsConfig> {
+  override supportsCli(): boolean {
+    return false;
+  }
+
   readonly name = KNOWN_COMMANDS.settings;
   override readonly displayName = "Settings";
   override readonly tuiHidden = true;

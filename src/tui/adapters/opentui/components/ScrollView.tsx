@@ -66,7 +66,7 @@ export function ScrollView({
                 scrollY={scrollY}
                 scrollX={scrollX}
                 focused={focused}
-                {...({ stickyToEnd: resolvedStickyToEnd } as any)}
+                {...({ stickyToEnd: resolvedStickyToEnd })}
                 flexGrow={flex}
                 width={width as any}
                 height={height as any}

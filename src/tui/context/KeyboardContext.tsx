@@ -30,6 +30,15 @@ interface KeyboardContextValue {
      * Returns unregister function.
      */
     setGlobalHandler: (handler: GlobalKeyHandler) => () => void;
+
+    /**
+     * Temporarily capture input (e.g. while an Ink TextInput is focused).
+     *
+     * While captured, only the global handler can receive events; the active handler
+     * stack is skipped. This prevents screens from doing extra work on every
+     * character typed.
+     */
+    setInputCaptured: (captured: boolean) => void;
 }
 
 const KeyboardContext = createContext<KeyboardContextValue | null>(null);
@@ -51,6 +60,7 @@ export function KeyboardProvider({ children }: KeyboardProviderProps) {
 
     const handlerStackRef = useRef<{ id: string; handler: KeyHandler }[]>([]);
     const globalHandlerRef = useRef<GlobalKeyHandler | null>(null);
+    const inputCapturedRef = useRef(false);
 
     const setActiveHandler = useCallback((id: string, handler: KeyHandler) => {
         handlerStackRef.current = handlerStackRef.current.filter((h) => h.id !== id);
@@ -76,6 +86,10 @@ export function KeyboardProvider({ children }: KeyboardProviderProps) {
                 return true;
             }
 
+            if (inputCapturedRef.current) {
+                return false;
+            }
+
             const activeHandler = handlerStackRef.current[handlerStackRef.current.length - 1];
             if (activeHandler) {
                 return activeHandler.handler(event);
@@ -89,9 +103,13 @@ export function KeyboardProvider({ children }: KeyboardProviderProps) {
         };
     }, [keyboard]);
 
+    const setInputCaptured = useCallback((captured: boolean) => {
+        inputCapturedRef.current = captured;
+    }, []);
+
     const value = useMemo<KeyboardContextValue>(
-        () => ({ setActiveHandler, setGlobalHandler }),
-        [setActiveHandler, setGlobalHandler]
+        () => ({ setActiveHandler, setGlobalHandler, setInputCaptured }),
+        [setActiveHandler, setGlobalHandler, setInputCaptured]
     );
 
     return (
