@@ -30,7 +30,12 @@ When you run without arguments (or pass `--interactive`), an interactive form ap
 Create `src/commands/run.ts`:
 
 ```typescript
-import { Command, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import {
+  Command,
+  type OptionSchema,
+  type CommandResult,
+  type CommandExecutionContext,
+} from "@pablozaiden/terminatui";
 
 const options = {
   task: {
@@ -79,7 +84,7 @@ export class RunCommand extends Command<typeof options, RunConfig> {
   override readonly displayName = "Run Task";
   override readonly actionLabel = "Start Task";
 
-  async execute(config: RunConfig): Promise<CommandResult> {
+  async execute(config: RunConfig, _execCtx: CommandExecutionContext): Promise<CommandResult> {
     if (config.verbose) {
       console.debug(`Environment: ${config.env}`);
     }

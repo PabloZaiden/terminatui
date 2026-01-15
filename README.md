@@ -34,7 +34,12 @@ bun add @pablozaiden/terminatui
 ### 1. Define a Command
 
 ```typescript
-import { Command, type AppContext, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import {
+  Command,
+  type OptionSchema,
+  type CommandResult,
+  type CommandExecutionContext,
+} from "@pablozaiden/terminatui";
 
 const greetOptions = {
   name: {
@@ -55,7 +60,10 @@ class GreetCommand extends Command<typeof greetOptions> {
   readonly description = "Greet someone";
   readonly options = greetOptions;
 
-  override execute(ctx: AppContext, config: { name: string; loud: boolean }): CommandResult {
+  override execute(
+    config: { name: string; loud: boolean },
+    _execCtx: CommandExecutionContext
+  ): CommandResult {
     const message = `Hello, ${config.name}!`;
     console.log(config.loud ? message.toUpperCase() : message);
     return { success: true, message };
@@ -132,9 +140,8 @@ abstract class Command<TOptions extends OptionSchema = OptionSchema, TConfig = u
   
   // Required: Main execution method
   abstract execute(
-    ctx: AppContext, 
     config: TConfig,
-    execCtx?: CommandExecutionContext
+    execCtx: CommandExecutionContext
   ): Promise<CommandResult | void> | CommandResult | void;
   
   // Optional: Transform/validate options before execute
@@ -212,6 +219,8 @@ Access application-wide services and configuration:
 
 ```typescript
 import { AppContext } from "@pablozaiden/terminatui";
+import type { CommandExecutionContext } from "@pablozaiden/terminatui";
+import { AbortError } from "@pablozaiden/terminatui";
 
 // Get the current context (set during Application.run())
 const ctx = AppContext.current;
@@ -250,7 +259,7 @@ interface OptionDef {
   tuiHidden?: boolean;       // Hide from TUI form
 }
 
-type OptionSchema = Record<string, OptionDef>;
+type OptionSchema = Record<string, OptionDef>; // See library types
 ```
 
 ## Config Validation with buildConfig
@@ -258,7 +267,7 @@ type OptionSchema = Record<string, OptionDef>;
 Use `buildConfig()` to transform and validate options before execution:
 
 ```typescript
-import { Command, ConfigValidationError, type AppContext, type OptionValues } from "@pablozaiden/terminatui";
+import { Command, ConfigValidationError, type OptionValues } from "@pablozaiden/terminatui";
 
 interface MyConfig {
   resolvedPath: string;
@@ -270,7 +279,7 @@ class MyCommand extends Command<typeof myOptions, MyConfig> {
   readonly description = "Do something";
   readonly options = myOptions;
 
-  override buildConfig(ctx: AppContext, opts: OptionValues<typeof myOptions>): MyConfig {
+  override buildConfig(opts: OptionValues<typeof myOptions>): MyConfig {
     const pathRaw = opts["path"] as string | undefined;
     if (!pathRaw) {
       throw new ConfigValidationError("Missing required option: path", "path");
@@ -287,9 +296,16 @@ class MyCommand extends Command<typeof myOptions, MyConfig> {
     };
   }
 
-  override async execute(ctx: AppContext, config: MyConfig): Promise<CommandResult> {
+  override async execute(
+    config: MyConfig,
+    execCtx: CommandExecutionContext
+  ): Promise<CommandResult> {
     // config is now typed as MyConfig
-    ctx.logger.info(`Processing ${config.count} items from ${config.resolvedPath}`);
+    if (execCtx.signal.aborted) {
+      throw new AbortError("Command was cancelled");
+    }
+
+    AppContext.current.logger.info(`Processing ${config.count} items from ${config.resolvedPath}`);
     return { success: true };
   }
 }
@@ -304,19 +320,18 @@ class LongRunningCommand extends Command<typeof options> {
   // ...
 
   override async execute(
-    ctx: AppContext, 
     config: Config,
-    execCtx?: CommandExecutionContext
+    execCtx: CommandExecutionContext
   ): Promise<CommandResult> {
     for (const item of items) {
       // Check for cancellation
-      if (execCtx?.signal.aborted) {
+      if (execCtx.signal.aborted) {
         throw new AbortError("Command was cancelled");
       }
-      
-      await processItem(item, execCtx?.signal);
+
+      await processItem(item, execCtx.signal);
     }
-    
+
     return { success: true };
   }
 }
@@ -430,14 +445,15 @@ class RunCommand extends Command<typeof runOptions, RunConfig> {
   override readonly immediateExecution = false;     // Run immediately on selection
 
   // Return structured results for display
-  override async execute(ctx: AppContext, config: RunConfig): Promise<CommandResult> {
-    const result = await runTask(config);
-    return { 
-      success: true, 
-      data: result,
-      message: "Task completed"
-    };
-  }
+   override async execute(config: RunConfig, _execCtx: CommandExecutionContext): Promise<CommandResult> {
+     const result = await runTask(config);
+     return {
+       success: true,
+       data: result,
+       message: "Task completed",
+     };
+   }
+
 
   // Custom result rendering (React/TSX)
   override renderResult(result: CommandResult): ReactNode {
