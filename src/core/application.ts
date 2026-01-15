@@ -314,6 +314,7 @@ export class Application {
     const parseArgsOptions = {
       args: flagArgs,
       options: parseArgsConfig.options as ParseArgsConfig["options"],
+      allowNegative: true,
       allowPositionals: false,
       strict: false,
     };

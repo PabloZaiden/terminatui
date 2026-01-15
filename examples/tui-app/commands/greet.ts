@@ -18,7 +18,7 @@ const greetOptions = {
         type: "boolean",
         description: "Use uppercase",
         alias: "l",
-        default: false,
+        default: true,
         label: "Loud Mode",
         order: 2,
         group: "Options",
