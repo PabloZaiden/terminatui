@@ -1,4 +1,22 @@
 import type { ReactNode } from "react";
+import type {
+    ButtonProps,
+    CodeHighlightProps,
+    CodeProps,
+    ContainerProps,
+    FieldProps,
+    LabelProps,
+    MenuButtonProps,
+    MenuItemProps,
+    OverlayProps,
+    PanelProps,
+    ScrollViewProps,
+    SelectProps,
+    SpacerProps,
+    SpinnerProps,
+    TextInputProps,
+    ValueProps,
+} from "../semantic/types.ts";
 
 export type RendererType = "opentui" | "ink";
 
@@ -22,26 +40,26 @@ export interface RendererConfig {
 }
 
 export interface RendererComponents {
-    Field: (props: import("../semantic/types.ts").FieldProps) => ReactNode;
-    Button: (props: import("../semantic/types.ts").ButtonProps) => ReactNode;
-    MenuButton: (props: import("../semantic/types.ts").MenuButtonProps) => ReactNode;
-    MenuItem: (props: import("../semantic/types.ts").MenuItemProps) => ReactNode;
+    Field: (props: FieldProps) => ReactNode;
+    Button: (props: ButtonProps) => ReactNode;
+    MenuButton: (props: MenuButtonProps) => ReactNode;
+    MenuItem: (props: MenuItemProps) => ReactNode;
 
-    Container: (props: import("../semantic/types.ts").ContainerProps) => ReactNode;
-    Panel: (props: import("../semantic/types.ts").PanelProps) => ReactNode;
-    ScrollView: (props: import("../semantic/types.ts").ScrollViewProps) => ReactNode;
+    Container: (props: ContainerProps) => ReactNode;
+    Panel: (props: PanelProps) => ReactNode;
+    ScrollView: (props: ScrollViewProps) => ReactNode;
 
-    Overlay: (props: import("../semantic/types.ts").OverlayProps) => ReactNode;
-    Spacer: (props: import("../semantic/types.ts").SpacerProps) => ReactNode;
-    Spinner: (props: import("../semantic/types.ts").SpinnerProps) => ReactNode;
+    Overlay: (props: OverlayProps) => ReactNode;
+    Spacer: (props: SpacerProps) => ReactNode;
+    Spinner: (props: SpinnerProps) => ReactNode;
 
-    Label: (props: import("../semantic/types.ts").LabelProps) => ReactNode;
-    Value: (props: import("../semantic/types.ts").ValueProps) => ReactNode;
-    Code: (props: import("../semantic/types.ts").CodeProps) => ReactNode;
-    CodeHighlight: (props: import("../semantic/types.ts").CodeHighlightProps) => ReactNode;
+    Label: (props: LabelProps) => ReactNode;
+    Value: (props: ValueProps) => ReactNode;
+    Code: (props: CodeProps) => ReactNode;
+    CodeHighlight: (props: CodeHighlightProps) => ReactNode;
 
-    TextInput: (props: import("../semantic/types.ts").TextInputProps) => ReactNode;
-    Select: (props: import("../semantic/types.ts").SelectProps) => ReactNode;
+    TextInput: (props: TextInputProps) => ReactNode;
+    Select: (props: SelectProps) => ReactNode;
 }
 
 export interface Renderer {
