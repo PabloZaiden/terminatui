@@ -15,21 +15,38 @@ export function extractCommandChain(args: string[]): {
   remaining: string[];
 } {
   const commands: string[] = [];
-  let i = 0;
+  const remaining: string[] = [];
 
-  for (; i < args.length; i++) {
+  for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg?.startsWith("-")) {
-      break;
+
+    if (!arg) {
+      continue;
     }
-    if (arg) {
-      commands.push(arg);
+
+    if (arg.startsWith("-")) {
+      remaining.push(arg);
+
+      const next = args[i + 1];
+      if (next && !next.startsWith("-")) {
+        remaining.push(next);
+        i += 1;
+      }
+
+      continue;
     }
+
+    if (remaining.length > 0) {
+      remaining.push(arg);
+      continue;
+    }
+
+    commands.push(arg);
   }
 
   return {
     commands,
-    remaining: args.slice(i),
+    remaining,
   };
 }
 

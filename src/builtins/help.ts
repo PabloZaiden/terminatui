@@ -2,6 +2,7 @@ import { Command, type AnyCommand } from "../core/command.ts";
 import { generateCommandHelp, generateAppHelp } from "../core/help.ts";
 import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 import type { OptionSchema } from "../types/command.ts";
+import { GLOBAL_OPTIONS_SCHEMA } from "../core/application.ts";
 
 /**
  * Built-in help command that is auto-injected as a subcommand into all commands.
@@ -49,12 +50,18 @@ export class HelpCommand extends Command<OptionSchema> {
       helpText = generateCommandHelp(this.parentCommand, {
         appName: this.appName,
         version: this.appVersion,
+        globalOptionsSchema: GLOBAL_OPTIONS_SCHEMA,
       });
     } else {
       // Show help for the entire application
-      helpText = generateAppHelp(this.allCommands, {
+      const visibleCommands = this.allCommands.filter(
+        (cmd) => !cmd.tuiHidden || cmd.supportsCli()
+      );
+
+      helpText = generateAppHelp(visibleCommands, {
         appName: this.appName,
         version: this.appVersion,
+        globalOptionsSchema: GLOBAL_OPTIONS_SCHEMA,
       });
     }
 

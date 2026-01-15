@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   formatExamples,
-  formatGlobalOptions,
+  formatOptionSchema,
   formatOptions,
   formatSubCommands,
   formatUsage,
@@ -170,11 +170,51 @@ describe("Help Generation (core)", () => {
     });
   });
 
-  describe("formatGlobalOptions", () => {
-    test("includes log-level and detailed logs", () => {
-      const global = formatGlobalOptions();
+  describe("Global Options section", () => {
+    test("renders via schema and includes interactive + renderer", () => {
+      const global = formatOptionSchema("Global Options", {
+        "log-level": { type: "string", description: "Minimum log level" },
+        interactive: { type: "boolean", alias: "i", description: "Interactive mode" },
+        renderer: {
+          type: "string",
+          enum: ["opentui", "ink"],
+          description: "Renderer",
+        },
+      });
+
+      expect(global).toContain("Global Options");
       expect(global).toContain("--log-level");
-      expect(global).toContain("--detailed-logs");
+      expect(global).toContain("--interactive");
+      expect(global).toContain("-i");
+      expect(global).toContain("--renderer");
+      expect(global).toContain("opentui");
+      expect(global).toContain("ink");
+    });
+
+    test("generateCommandHelp includes global options when provided", () => {
+      const cmd = new SimpleCommand({ name: "test", description: "Test" });
+      const help = generateCommandHelp(cmd, {
+        appName: "myapp",
+        globalOptionsSchema: {
+          interactive: { type: "boolean", alias: "i", description: "Interactive mode" },
+        },
+      });
+
+      expect(help).toContain("Global Options");
+      expect(help).toContain("--interactive");
+    });
+
+    test("generateAppHelp includes global options when provided", () => {
+      const commands = [new SimpleCommand({ name: "run", description: "Run something" })];
+      const help = generateAppHelp(commands, {
+        appName: "myapp",
+        globalOptionsSchema: {
+          renderer: { type: "string", enum: ["opentui", "ink"], description: "Renderer" },
+        },
+      });
+
+      expect(help).toContain("Global Options");
+      expect(help).toContain("--renderer");
     });
   });
 });
