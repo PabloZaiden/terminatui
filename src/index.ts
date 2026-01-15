@@ -18,5 +18,5 @@ export * from "./tui/TuiRoot.tsx";
 export * from "./tui/registry.ts";
 export * from "./tui/theme.ts";
 export * from "./types/command.ts";
-// Note: `src/types/execution.ts` exports `ExecutionMode`, but `ExecutionOutcome` lives in `ExecutorContext`.
-// Root exports prefer `ExecutionOutcome` from the context.
+
+export * from "./tui/components/JsonHighlight.tsx";
