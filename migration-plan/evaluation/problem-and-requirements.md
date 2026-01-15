@@ -145,8 +145,8 @@ Migrate from OpenTUI to **Ink** (v5.x), a mature, widely-used React-based TUI re
 ### Technical Assumptions
 
 1. **Ink Capabilities**
-   - Assume Ink v6.x has all required features for our use cases
-   - Assume third-party Ink libraries (ink-scroll-view, ink-titled-box, etc.) are stable and v6-compatible
+   - Assume Ink v6.x is sufficient for a line-based UI style
+   - Assume third-party Ink widget libraries (e.g. `ink-text-input`, `ink-select-input`) are stable and v6-compatible
    - **Confirmed:** Ink v6 is required for React 19 compatibility (Ink v5 does NOT work with React 19)
    - Assume keyboard input can be adequately abstracted between renderers
 
@@ -156,9 +156,9 @@ Migrate from OpenTUI to **Ink** (v5.x), a mature, widely-used React-based TUI re
    - Assume no hidden components or edge cases in current codebase
 
 3. **Performance**
-   - Assume Ink performance equals or exceeds OpenTUI
+   - Assume Ink performance is acceptable for the line-based approach
    - Assume no significant rendering bottlenecks in Ink
-   - Assume scrolling performance with ink-scroll-view is acceptable
+   - Avoid assuming ScrollView parity/performance (scrolling is not a core goal of the Ink renderer here)
 
 4. **Abstraction Feasibility**
    - Assume common TUI concepts (panels, scrolling, inputs) can be abstracted

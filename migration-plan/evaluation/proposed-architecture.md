@@ -81,31 +81,28 @@ src/tui/
 - All existing functionality preserved
 - No visual regressions
 
-### Phase 3: Implement Ink Adapter
+### Phase 3: Implement Ink Adapter (Line-Based)
 
-**Goal:** Create Ink renderer implementation
+**Goal:** Provide an Ink renderer option for the semantic TUI layer, using a line-based terminal UI style (minimal decoration, no border/overlay parity).
 
 **Tasks:**
-1. Add Ink dependencies (`ink`, `ink-scroll-view`)
+1. Add Ink dependencies (`ink`, plus minimal input widgets)
 2. Implement Ink renderer class
-3. Implement all 12 semantic components for Ink
-4. Implement Ink keyboard adapter
-5. Handle scrolling with `ink-scroll-view`
-6. Test each component in isolation
-7. Integration testing with full app
+3. Implement semantic components for Ink (minimal/no-op where appropriate)
+4. Implement Ink keyboard adapter (`useInput`)
+5. Wire renderer selection (`--renderer ink|opentui`)
+6. Integration testing with full app
 
-**Key Differences to Handle:**
+**Key Differences (Intentional):**
 
-| Feature | OpenTUI | Ink | Implementation Strategy |
-|---------|---------|-----|------------------------|
-| Layout | Native flexbox | Yoga layout | Map flexbox props directly |
-| Scrolling | Built-in `<scrollbox>` | `ink-scroll-view` library | Wrap in semantic `<ScrollView>` |
-| Borders | `border={true}` | Built-in on `<Box>` (v6) | Use Ink's native borders |
-| Titled Borders | `title` prop | `@rwirnsberger/ink-titled-box` | Use library for titled panels |
-| Colors | Direct hex/names | `chalk` colors | Map theme colors to chalk |
-| Keyboard | `useKeyboard()` | `useInput()`/`useFocus()` | Adapter hook |
-| Mouse | Built-in | `useStdin()` | Optional - not critical |
-| Refs | `ScrollBoxRenderable` | `ref` forwarding | Normalize ref interface |
+| Feature | OpenTUI | Ink | Strategy |
+|---------|---------|-----|----------|
+| Layout | Strong layout primitives | Limited/line-first | Prefer plain text + simple flex |
+| Scrolling | Built-in `<scrollbox>` | Not a core goal here | Ink `ScrollView` can be a no-op |
+| Borders/Boxes | Common UI pattern | Possible but discouraged | Avoid borders as a design convention |
+| Overlays | True overlays | Not really | Don’t try to visually stack modals |
+| Colors | Direct hex/names | `chalk`/Ink styling | Keep mapping simple and readable |
+| Keyboard | `useKeyboard()` | `useInput()` | Normalize into shared keyboard events |
 
 ### Phase 4: Dual-Renderer Cutover
 

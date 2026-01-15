@@ -24,8 +24,11 @@ bun add @pablozaiden/terminatui
 
 ## Status
 
-- **Current focus:** Renderer migration. Phase 1 (semantic component layer + OpenTUI adapter) ✅ complete. Phase 2 (refactor app UI to semantic; no OpenTUI imports outside adapter) ✅ complete. Next: Phase 3 Ink adapter.
-
+- **Current focus:** Renderer migration.
+  - Phase 1 (semantic component layer + OpenTUI adapter) ✅ complete
+  - Phase 2 (refactor app UI to semantic; no OpenTUI imports outside adapter) ✅ complete
+  - Phase 3 (Ink adapter + renderer selection) ✅ complete
+  - Next: Phase 4 (dual-renderer parity + docs)
 ## Quick Start
 
 ### 1. Define a Command

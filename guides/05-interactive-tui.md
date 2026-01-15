@@ -1,4 +1,4 @@
-# Guide 5: Interactive TUI (Normal)
+# Guide 5: Interactive TUI
 
 Add an auto-generated Terminal User Interface to your CLI.
 
@@ -11,12 +11,16 @@ A task runner with both CLI and interactive TUI modes:
 taskr run --task build --env production
 
 # TUI mode (interactive)
-taskr
+ taskr
 
-# Force TUI mode
-taskr --interactive
-# or
-taskr -i
+ # Force TUI mode
+ taskr --interactive
+ # or
+ taskr -i
+
+ # Select renderer (optional)
+ taskr --interactive --renderer ink
+ taskr --interactive --renderer opentui
 ```
 
 When you run without arguments (or pass `--interactive`), an interactive form appears!
@@ -136,7 +140,7 @@ bun src/index.ts
 This opens an interactive interface:
 - Use ↑/↓ to navigate fields
 - Press Enter to edit a field
-- Navigate to "CLI Args" button and press Enter to see the CLI command
+- Navigate to "CLI Command" button and press Enter to see the CLI command
 - Press Enter on "Start Task" to run
 - Press Esc to go back
 
