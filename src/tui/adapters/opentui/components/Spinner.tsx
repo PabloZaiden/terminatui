@@ -8,5 +8,5 @@ export function Spinner({ active }: SpinnerProps) {
         return "";
     }
 
-    return `${frame} `;
+    return <text>{frame} </text>;
 }

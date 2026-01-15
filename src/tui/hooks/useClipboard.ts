@@ -50,8 +50,6 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 export interface UseClipboardResult {
-    /** Copy text to clipboard */
-    copy: (text: string) => boolean;
     /** Last action message for status display */
     lastAction: string;
     /** Set the last action message */
@@ -66,11 +64,6 @@ export interface UseClipboardResult {
  */
 export function useClipboard(): UseClipboardResult {
     const [lastAction, setLastAction] = useState("");
-    
-    const copy = useCallback((text: string): boolean => {
-        void copyToClipboard(text);
-        return true;
-    }, []);
 
     const copyWithMessage = useCallback((text: string, label: string) => {
         void (async () => {
@@ -84,5 +77,5 @@ export function useClipboard(): UseClipboardResult {
         })();
     }, []);
 
-    return { copy, lastAction, setLastAction, copyWithMessage };
+    return { lastAction, setLastAction, copyWithMessage };
 }
