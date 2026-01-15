@@ -23,7 +23,7 @@ const BG_BLUE = "\x1b[44m";
 /**
  * Check if terminal supports colors
  */
-export function supportsColors(): boolean {
+function supportsColors(): boolean {
   if (typeof process === "undefined") return false;
   if (process.env["NO_COLOR"]) return false;
   if (process.env["FORCE_COLOR"]) return true;

@@ -2,50 +2,43 @@ import {
     createContext,
     useContext,
     useCallback,
+    useEffect,
+    useMemo,
     useRef,
     type ReactNode,
 } from "react";
-import { useKeyboard } from "@opentui/react";
-import type { KeyEvent } from "@opentui/core";
+import type { KeyboardEvent, KeyHandler } from "../adapters/types.ts";
+import { useRenderer } from "./RendererContext.tsx";
 
-/**
- * Priority levels for keyboard event handlers.
- * Higher priority handlers are called first.
- */
-export enum KeyboardPriority {
-    /** Modal/overlay handlers - highest priority, intercept first */
-    Modal = 100,
-    /** Focused section handlers - handle section-specific keys */
-    Focused = 50,
-    /** Global handlers - app-wide shortcuts, lowest priority */
-    Global = 0,
+function useRendererKeyboard() {
+    return useRenderer().keyboard;
 }
 
-/**
- * Extended keyboard event with custom stop propagation.
- * Use `stopPropagation()` to prevent lower-priority handlers from receiving the event.
- * Use `key.preventDefault()` only when you want to also block OpenTUI primitives.
- */
-export interface KeyboardEvent {
-    /** The underlying OpenTUI KeyEvent */
-    key: KeyEvent;
-    /** Stop propagation to lower-priority handlers in our system */
-    stopPropagation: () => void;
-    /** Whether propagation was stopped */
-    stopped: boolean;
-}
 
-export type KeyboardHandler = (event: KeyboardEvent) => void;
-
-interface RegisteredHandler {
-    id: string;
-    handler: KeyboardHandler;
-    priority: KeyboardPriority;
-}
+export type GlobalKeyHandler = (event: KeyboardEvent) => boolean;
 
 interface KeyboardContextValue {
-    register: (id: string, handler: KeyboardHandler, priority: KeyboardPriority) => void;
-    unregister: (id: string) => void;
+    /**
+     * Set the active handler (only one at a time - the topmost screen/modal).
+     * Returns unregister function.
+     */
+    setActiveHandler: (id: string, handler: KeyHandler) => () => void;
+
+    /**
+     * Set the global handler (processed before active handler).
+     * Only one global handler is supported.
+     * Returns unregister function.
+     */
+    setGlobalHandler: (handler: GlobalKeyHandler) => () => void;
+
+    /**
+     * Temporarily capture input (e.g. while an Ink TextInput is focused).
+     *
+     * While captured, only the global handler can receive events; the active handler
+     * stack is skipped. This prevents screens from doing extra work on every
+     * character typed.
+     */
+    setInputCaptured: (captured: boolean) => void;
 }
 
 const KeyboardContext = createContext<KeyboardContextValue | null>(null);
@@ -55,58 +48,79 @@ interface KeyboardProviderProps {
 }
 
 /**
- * Provider that coordinates all keyboard handlers via a single useKeyboard call.
- * Handlers are invoked in descending priority order (highest first).
- * Propagation stops when a handler calls `stopPropagation()`.
+ * Provider that coordinates keyboard handling with a simple model:
+ * 1. Global handler processes keys first (for app-wide shortcuts like Ctrl+L, Ctrl+Y, Esc)
+ * 2. If not handled, the active handler (topmost screen/modal) gets the key
+ * 
+ * Only ONE active handler is registered at a time - when a modal opens, it becomes
+ * the active handler; when it closes, the previous handler is restored.
  */
 export function KeyboardProvider({ children }: KeyboardProviderProps) {
-    const handlersRef = useRef<RegisteredHandler[]>([]);
+    const keyboard = useRendererKeyboard();
 
-    const register = useCallback(
-        (id: string, handler: KeyboardHandler, priority: KeyboardPriority) => {
-            // Remove existing handler with same id (if any)
-            handlersRef.current = handlersRef.current.filter((h) => h.id !== id);
-            // Add new handler
-            handlersRef.current.push({ id, handler, priority });
-            // Sort by priority descending (highest first)
-            handlersRef.current.sort((a, b) => b.priority - a.priority);
-        },
-        []
-    );
+    const handlerStackRef = useRef<{ id: string; handler: KeyHandler }[]>([]);
+    const globalHandlerRef = useRef<GlobalKeyHandler | null>(null);
+    const inputCapturedRef = useRef(false);
 
-    const unregister = useCallback((id: string) => {
-        handlersRef.current = handlersRef.current.filter((h) => h.id !== id);
+    const setActiveHandler = useCallback((id: string, handler: KeyHandler) => {
+        handlerStackRef.current = handlerStackRef.current.filter((h) => h.id !== id);
+        handlerStackRef.current.push({ id, handler });
+
+        return () => {
+            handlerStackRef.current = handlerStackRef.current.filter((h) => h.id !== id);
+        };
     }, []);
 
-    // Single useKeyboard call that dispatches to all registered handlers
-    useKeyboard((key: KeyEvent) => {
-        // Create our wrapper event with custom stop propagation
-        const event: KeyboardEvent = {
-            key,
-            stopped: false,
-            stopPropagation() {
-                this.stopped = true;
-            },
-        };
+    const setGlobalHandler = useCallback((handler: GlobalKeyHandler) => {
+        const previous = globalHandlerRef.current;
+        globalHandlerRef.current = handler;
 
-        for (const { handler } of handlersRef.current) {
-            // Stop if our propagation was stopped or if preventDefault was called
-            if (event.stopped || key.defaultPrevented) {
-                break;
+        return () => {
+            globalHandlerRef.current = previous;
+        };
+    }, []);
+
+    useEffect(() => {
+        const unregister = keyboard.setGlobalHandler((event: KeyboardEvent) => {
+            if (globalHandlerRef.current?.(event)) {
+                return true;
             }
-            handler(event);
-        }
-    });
+
+            if (inputCapturedRef.current) {
+                return false;
+            }
+
+            const activeHandler = handlerStackRef.current[handlerStackRef.current.length - 1];
+            if (activeHandler) {
+                return activeHandler.handler(event);
+            }
+
+            return false;
+        });
+
+        return () => {
+            unregister();
+        };
+    }, [keyboard]);
+
+    const setInputCaptured = useCallback((captured: boolean) => {
+        inputCapturedRef.current = captured;
+    }, []);
+
+    const value = useMemo<KeyboardContextValue>(
+        () => ({ setActiveHandler, setGlobalHandler, setInputCaptured }),
+        [setActiveHandler, setGlobalHandler, setInputCaptured]
+    );
 
     return (
-        <KeyboardContext.Provider value={{ register, unregister }}>
+        <KeyboardContext.Provider value={value}>
             {children}
         </KeyboardContext.Provider>
     );
 }
 
 /**
- * Access the keyboard context for handler registration.
+ * Access the keyboard context.
  * @throws Error if used outside of KeyboardProvider
  */
 export function useKeyboardContext(): KeyboardContextValue {

@@ -1,21 +1,32 @@
 /**
- * Default TUI theme colors.
+ * Default TUI theme.
+ *
+ * This is intentionally semantic: UI code should reference meanings
+ * (e.g. "error", "mutedText", "selectionBackground") rather than hardcoding colors.
  */
-export const Theme = {
-    background: "#0b0c10",
+export const SemanticColors = {
+    background: "#0f1117",
+    panelBackground: "#0f1117",
+    overlay: "#101218",
+
+    text: "#d6dde6",
+    mutedText: "#666666",
+    inverseText: "#0b0c10",
+    
     border: "#2c2f36",
-    borderFocused: "#5da9e9",
-    borderSelected: "#61afef",
-    label: "#c0cad6",
-    value: "#98c379",
-    actionButton: "#a0e8af",
-    header: "#a8b3c1",
-    statusText: "#d6dde6",
-    overlay: "#0e1117",
-    overlayTitle: "#e5c07b",
-    error: "#f78888",
+    focusBorder: "#5da9e9",
+
+    primary: "#61afef",
+    primaryText: "#0b0c10",
+
     success: "#98c379",
     warning: "#f5c542",
+    error: "#f78888",
+
+    value: "#98c379",
+    code: "#c0cad6",
+
+    selectionBackground: "#61afef",
+    selectionText: "#0b0c10",
 } as const;
 
-export type ThemeColors = typeof Theme;

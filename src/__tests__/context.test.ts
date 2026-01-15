@@ -3,7 +3,7 @@ import { AppContext, type AppConfig } from "../core/context.ts";
 
 describe("AppContext", () => {
   afterEach(() => {
-    AppContext.clearCurrent();
+    AppContext.setCurrent(new AppContext({ name: "empty", version: "0.0.0" }));
   });
 
   describe("constructor", () => {
@@ -22,36 +22,11 @@ describe("AppContext", () => {
   });
 
   describe("static current", () => {
-    test("throws when no current context", () => {
-      expect(() => AppContext.current).toThrow(
-        "AppContext.current accessed before initialization"
-      );
-    });
-
     test("returns current context after setCurrent", () => {
       const config: AppConfig = { name: "test", version: "1.0.0" };
       const ctx = new AppContext(config);
       AppContext.setCurrent(ctx);
       expect(AppContext.current).toBe(ctx);
-    });
-
-    test("hasCurrent returns false when no context", () => {
-      expect(AppContext.hasCurrent()).toBe(false);
-    });
-
-    test("hasCurrent returns true after setCurrent", () => {
-      const config: AppConfig = { name: "test", version: "1.0.0" };
-      const ctx = new AppContext(config);
-      AppContext.setCurrent(ctx);
-      expect(AppContext.hasCurrent()).toBe(true);
-    });
-
-    test("clearCurrent clears the context", () => {
-      const config: AppConfig = { name: "test", version: "1.0.0" };
-      const ctx = new AppContext(config);
-      AppContext.setCurrent(ctx);
-      AppContext.clearCurrent();
-      expect(AppContext.hasCurrent()).toBe(false);
     });
   });
 

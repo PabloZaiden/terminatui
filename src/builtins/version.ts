@@ -1,12 +1,11 @@
 import { Command } from "../core/command.ts";
-import type { AppContext } from "../core/context.ts";
 import { colors } from "../cli/output/colors.ts";
 import type { OptionSchema } from "../types/command.ts";
 
 /**
  * Configuration for version command.
  */
-export interface VersionConfig {
+interface VersionConfig {
   /** Application name */
   appName: string;
   /** Application version (e.g., "1.0.0") */
@@ -19,7 +18,7 @@ export interface VersionConfig {
  * Format version string with optional commit hash.
  * If commitHash is empty or undefined, shows "(dev)".
  */
-export function formatVersion(version: string, commitHash?: string): string {
+function formatVersion(version: string, commitHash?: string): string {
   const hashPart = commitHash && commitHash.length > 0 
     ? commitHash.substring(0, 7) 
     : "(dev)";
@@ -33,6 +32,7 @@ export function formatVersion(version: string, commitHash?: string): string {
 export class VersionCommand extends Command<OptionSchema> {
   readonly name = "version";
   readonly description = "Show version information";
+  override readonly tuiHidden = true;
   readonly options = {} as const;
   readonly aliases = ["--version", "-v"];
 
@@ -54,7 +54,7 @@ export class VersionCommand extends Command<OptionSchema> {
     return formatVersion(this.appVersion, this.commitHash);
   }
 
-  override async execute(_ctx: AppContext): Promise<void> {
+  override async execute(): Promise<void> {
     const versionDisplay = this.getFormattedVersion();
     console.log(`${colors.bold(this.appName)} ${colors.dim(`v${versionDisplay}`)}`);
   }

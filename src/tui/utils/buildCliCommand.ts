@@ -79,6 +79,7 @@ export function buildCliCommand<T extends OptionSchema>(
         }
     }
 
+    parts.push("--mode", "cli");
     return parts.join(" ");
 }
 

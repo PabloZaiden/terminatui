@@ -1,20 +1,14 @@
-import { Theme } from "../theme.ts";
+import { Container } from "../semantic/Container.tsx";
+import { CodeHighlight } from "../semantic/CodeHighlight.tsx";
+import type { CodeTokenType } from "../semantic/types.ts";
 
 /**
  * JSON syntax highlighting types and colors
  */
-type JsonTokenType = "key" | "string" | "number" | "boolean" | "null" | "punctuation";
+type JsonTokenType = Exclude<CodeTokenType, "unknown">;
 type JsonToken = { type: JsonTokenType; value: string };
 type JsonLineTokens = JsonToken[];
 
-const TOKEN_COLORS: Record<JsonTokenType, string> = {
-    key: "#61afef",      // blue
-    string: "#98c379",   // green
-    number: "#d19a66",   // orange
-    boolean: "#c678dd",  // purple
-    null: "#c678dd",     // purple
-    punctuation: Theme.label,
-};
 
 function tokenizeJson(value: unknown, indent = 0): JsonLineTokens[] {
     const pad = "  ".repeat(indent);
@@ -115,14 +109,13 @@ export interface JsonHighlightProps {
 export function JsonHighlight({ value }: JsonHighlightProps) {
     const lines = tokenizeJson(value);
     return (
-        <box flexDirection="column">
+        <Container flexDirection="column" gap={0}>
             {lines.map((tokens, lineIdx) => (
-                <text key={`json-${lineIdx}`}>
-                    {tokens.map((token, tokenIdx) => (
-                        <span key={tokenIdx} fg={TOKEN_COLORS[token.type]}>{token.value}</span>
-                    ))}
-                </text>
+                <CodeHighlight
+                    key={`json-${lineIdx}`}
+                    tokens={tokens.map((token) => ({ type: token.type, value: token.value }))}
+                />
             ))}
-        </box>
+        </Container>
     );
 }

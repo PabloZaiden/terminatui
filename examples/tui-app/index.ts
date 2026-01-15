@@ -12,8 +12,11 @@
  *   bun examples/tui-app/index.ts greet --name "World" --loud
  */
 
-import { TuiApplication } from "../../src/index.ts";
-import { GreetCommand, MathCommand, StatusCommand, ConfigCommand } from "./commands/index.ts";
+import { TuiApplication } from "../../src/tui/TuiApplication.tsx";
+import { ConfigCommand } from "./commands/config/index.ts";
+import { GreetCommand } from "./commands/greet.ts";
+import { MathCommand } from "./commands/math.ts";
+import { StatusCommand } from "./commands/status.ts";
 
 class ExampleApp extends TuiApplication {
     constructor() {
@@ -32,4 +35,4 @@ class ExampleApp extends TuiApplication {
 }
 
 // Run the app
-await new ExampleApp().run(Bun.argv.slice(2));
+await new ExampleApp().run();

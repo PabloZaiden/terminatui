@@ -23,7 +23,6 @@ import path from "node:path";
 import { 
   Command, 
   ConfigValidationError,
-  type AppContext, 
   type OptionSchema, 
   type OptionValues,
   type CommandResult,
@@ -69,10 +68,7 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
   readonly displayName = "File Downloader";
   readonly actionLabel = "Download";
 
-  override buildConfig(
-    _ctx: AppContext,
-    opts: OptionValues<typeof options>
-  ): DownloadConfig {
+  override buildConfig(opts: OptionValues<typeof options>): DownloadConfig {
     // Validate URL
     const urlStr = opts["url"] as string;
     if (!urlStr) {
@@ -107,16 +103,15 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
 
 ```typescript
   async execute(
-    ctx: AppContext,
     config: DownloadConfig,
-    execCtx?: CommandExecutionContext
+    execCtx: CommandExecutionContext
   ): Promise<CommandResult> {
     const { url, outputDir, fileName, chunkSize } = config;
     const outputPath = path.join(outputDir, fileName);
-    const signal = execCtx?.signal;
+    const signal = execCtx.signal;
 
-    ctx.logger.info(`Starting download: ${url}`);
-    ctx.logger.info(`Output: ${outputPath}`);
+    console.log(`Starting download: ${url}`);
+    console.log(`Output: ${outputPath}`);
 
     // Create output directory
     await Bun.write(path.join(outputDir, ".keep"), "");
@@ -128,7 +123,8 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
 
     try {
       // Check for cancellation before starting
-      if (signal?.aborted) {
+       if (signal.aborted) {
+
         return { success: false, message: "Download cancelled before start" };
       }
 
@@ -157,8 +153,9 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
       // Read chunks with cancellation checks
       while (true) {
         // Check for cancellation between chunks
-        if (signal?.aborted) {
-          ctx.logger.warn("Download cancelled by user");
+      if (signal.aborted) {
+
+          console.warn("Download cancelled by user");
           throw new Error("AbortError");
         }
 
@@ -177,10 +174,10 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
           const percent = ((downloadedBytes / totalBytes) * 100).toFixed(1);
           const mbDownloaded = (downloadedBytes / 1024 / 1024).toFixed(2);
           const mbTotal = (totalBytes / 1024 / 1024).toFixed(2);
-          process.stdout.write(`\rProgress: ${percent}% (${mbDownloaded}/${mbTotal} MB)`);
+          Bun.write(Bun.stdout, `\rProgress: ${percent}% (${mbDownloaded}/${mbTotal} MB)`);
         } else {
           const mbDownloaded = (downloadedBytes / 1024 / 1024).toFixed(2);
-          process.stdout.write(`\rDownloaded: ${mbDownloaded} MB`);
+          Bun.write(Bun.stdout, `\rDownloaded: ${mbDownloaded} MB`);
         }
       }
 
@@ -200,7 +197,8 @@ export class DownloadCommand extends Command<typeof options, DownloadConfig> {
 
     } catch (error) {
       // Handle cancellation
-      if (signal?.aborted || (error as Error).name === "AbortError") {
+       if (signal.aborted || (error as Error).name === "AbortError") {
+
         console.log("\nDownload cancelled.");
         
         // Cleanup partial file

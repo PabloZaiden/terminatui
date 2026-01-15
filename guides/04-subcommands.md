@@ -17,7 +17,7 @@ dbctl db status
 Create `src/commands/db/migrate.ts`:
 
 ```typescript
-import { Command, type AppContext, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import { Command, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
 
 const options = {
   target: {
@@ -37,7 +37,7 @@ export class MigrateCommand extends Command<typeof options> {
   readonly description = "Run database migrations";
   readonly options = options;
 
-  execute(ctx: AppContext, config: { target: string; dry: boolean }): CommandResult {
+  execute(config: { target: string; dry: boolean }): CommandResult {
     ctx.logger.info(`Migrating to: ${config.target}`);
     
     if (config.dry) {
@@ -55,7 +55,7 @@ export class MigrateCommand extends Command<typeof options> {
 Create `src/commands/db/seed.ts`:
 
 ```typescript
-import { Command, type AppContext, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import { Command, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
 
 const options = {
   file: {
@@ -71,7 +71,7 @@ export class SeedCommand extends Command<typeof options> {
   readonly description = "Seed the database with data";
   readonly options = options;
 
-  execute(ctx: AppContext, config: { file: string }): CommandResult {
+  execute(config: { file: string }): CommandResult {
     ctx.logger.info(`Seeding from: ${config.file}`);
     console.log(`Loading seed data from ${config.file}...`);
     console.log("Database seeded successfully!");
@@ -83,14 +83,14 @@ export class SeedCommand extends Command<typeof options> {
 Create `src/commands/db/status.ts`:
 
 ```typescript
-import { Command, type AppContext, type CommandResult } from "@pablozaiden/terminatui";
+import { Command, type CommandResult } from "@pablozaiden/terminatui";
 
 export class StatusCommand extends Command {
   readonly name = "status";
   readonly description = "Show database status";
   readonly options = {};
 
-  execute(_ctx: AppContext): CommandResult {
+  execute(): CommandResult {
     console.log("Database Status:");
     console.log("  Connected: Yes");
     console.log("  Version: 1.2.3");
@@ -105,7 +105,7 @@ export class StatusCommand extends Command {
 Create `src/commands/db/index.ts`:
 
 ```typescript
-import { Command, type AppContext, type CommandResult } from "@pablozaiden/terminatui";
+import { Command, type CommandResult } from "@pablozaiden/terminatui";
 import { MigrateCommand } from "./migrate";
 import { SeedCommand } from "./seed";
 import { StatusCommand } from "./status";
@@ -123,7 +123,7 @@ export class DbCommand extends Command {
   ];
 
   // Parent command can have its own execute (optional)
-  execute(_ctx: AppContext): CommandResult {
+  execute(): CommandResult {
     console.log("Use 'dbctl db <command>' for database operations.");
     console.log("Available: migrate, seed, status");
     return { success: true };

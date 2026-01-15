@@ -1,7 +1,8 @@
-import { test, expect, describe, mock, beforeEach, afterEach } from "bun:test";
-import { createVersionCommand, formatVersion } from "../builtins/version.ts";
-import { createHelpCommand } from "../commands/help.ts";
-import { defineCommand } from "../types/command.ts";
+import { test, expect, describe, beforeEach, afterEach } from "bun:test";
+import { createVersionCommand } from "../builtins/version.ts";
+import { createHelpCommandForParent, createRootHelpCommand } from "../builtins/help.ts";
+import { Command } from "../core/command.ts";
+import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 
 describe("Built-in Commands", () => {
   let originalLog: typeof console.log;
@@ -19,27 +20,6 @@ describe("Built-in Commands", () => {
     console.log = originalLog;
   });
 
-  describe("formatVersion", () => {
-    test("formats version with commit hash", () => {
-      const result = formatVersion("1.0.0", "abc1234567890");
-      expect(result).toBe("1.0.0 - abc1234");
-    });
-
-    test("formats version with short commit hash", () => {
-      const result = formatVersion("1.0.0", "abc1234");
-      expect(result).toBe("1.0.0 - abc1234");
-    });
-
-    test("shows (dev) when no commit hash", () => {
-      const result = formatVersion("1.0.0");
-      expect(result).toBe("1.0.0 - (dev)");
-    });
-
-    test("shows (dev) when commit hash is empty", () => {
-      const result = formatVersion("1.0.0", "");
-      expect(result).toBe("1.0.0 - (dev)");
-    });
-  });
 
   describe("VersionCommand", () => {
     test("creates command with name 'version'", () => {
@@ -70,64 +50,36 @@ describe("Built-in Commands", () => {
     });
   });
 
-  describe("createHelpCommand", () => {
-    const mockCommands = [
-      defineCommand({
-        name: "run",
-        description: "Run something",
-        execute: () => {},
-      }),
-      defineCommand({
-        name: "build",
-        description: "Build something",
-        execute: () => {},
-      }),
-    ];
-
-    test("creates command with name 'help'", () => {
-      const cmd = createHelpCommand({ getCommands: () => mockCommands });
-      expect(cmd.name).toBe("help");
+  describe("HelpCommand", () => {
+    test("createRootHelpCommand creates command with name 'help'", () => {
+      const cmd = createRootHelpCommand([], "myapp", "1.0.0");
+      expect(cmd.name).toBe(KNOWN_COMMANDS.help);
     });
 
-    test("has description", () => {
-      const cmd = createHelpCommand({ getCommands: () => mockCommands });
-      expect(cmd.description).toBeDefined();
+    test("is hidden in TUI", () => {
+      const cmd = createRootHelpCommand([], "myapp", "1.0.0");
+      expect(cmd.tuiHidden).toBe(true);
+      expect(cmd.supportsTui()).toBe(false);
     });
 
-    test("has aliases including --help", () => {
-      const cmd = createHelpCommand({ getCommands: () => mockCommands });
-      expect(cmd.aliases).toContain("--help");
+    test("execute prints app help", async () => {
+      const cmd = createRootHelpCommand([], "myapp", "1.0.0");
+      await cmd.execute();
+      expect(logOutput.join("\n")).toContain("myapp");
     });
 
-    test("is hidden by default", () => {
-      const cmd = createHelpCommand({ getCommands: () => mockCommands });
-      expect(cmd.hidden).toBe(true);
-    });
+    test("createHelpCommandForParent prints parent help", async () => {
+      class ParentCommand extends Command {
+        readonly name = "run";
+        readonly description = "Run something";
+        readonly options = {} as const;
 
-    test("has command option", () => {
-      const cmd = createHelpCommand({ getCommands: () => mockCommands });
-      expect(cmd.options?.["command"]).toBeDefined();
-    });
+        override async execute(): Promise<void> {}
+      }
 
-    test("execute calls getCommands", () => {
-      const getCommands = mock(() => mockCommands);
-      const cmd = createHelpCommand({ getCommands });
-      // @ts-expect-error - testing with partial options
-      cmd.execute({ options: {}, args: [], commandPath: ["help"] });
-      expect(getCommands).toHaveBeenCalled();
-    });
-
-    test("shows help for specific command when provided", () => {
-      const cmd = createHelpCommand({
-        getCommands: () => mockCommands,
-        appName: "myapp",
-      });
-      cmd.execute({
-        options: { command: "run" },
-        args: [],
-        commandPath: ["help"],
-      });
-      expect(logOutput.join("")).toContain("run");
+      const cmd = createHelpCommandForParent(new ParentCommand(), "myapp", "1.0.0");
+      await cmd.execute();
+      expect(logOutput.join("\n")).toContain("run");
     });
   });
 });

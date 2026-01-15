@@ -19,8 +19,7 @@ fileutil count --dir ./src --ext .ts
 Create `src/commands/list.ts`:
 
 ```typescript
-import { readdirSync } from "fs";
-import { Command, type AppContext, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import { Command, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
 
 const options = {
   dir: {
@@ -36,9 +35,9 @@ export class ListCommand extends Command<typeof options> {
   readonly description = "List files in a directory";
   readonly options = options;
 
-  execute(_ctx: AppContext, config: { dir: string }): CommandResult {
+  async execute(config: { dir: string }): Promise<CommandResult> {
     try {
-      const files = readdirSync(config.dir);
+      const files = await Array.fromAsync(new Bun.Glob("*").scan({ cwd: config.dir, onlyFiles: false }));
       console.log(`Files in ${config.dir}:`);
       files.forEach((file) => console.log(`  ${file}`));
       return { success: true, message: `Found ${files.length} files` };
@@ -54,8 +53,7 @@ export class ListCommand extends Command<typeof options> {
 Create `src/commands/count.ts`:
 
 ```typescript
-import { readdirSync } from "fs";
-import { Command, type AppContext, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import { Command, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
 
 const options = {
   dir: {
@@ -76,9 +74,9 @@ export class CountCommand extends Command<typeof options> {
   readonly description = "Count files in a directory";
   readonly options = options;
 
-  execute(_ctx: AppContext, config: { dir: string; ext?: string }): CommandResult {
+  async execute(config: { dir: string; ext?: string }): Promise<CommandResult> {
     try {
-      let files = readdirSync(config.dir);
+      let files = await Array.fromAsync(new Bun.Glob("*").scan({ cwd: config.dir, onlyFiles: false }));
       
       if (config.ext) {
         files = files.filter((f) => f.endsWith(config.ext!));

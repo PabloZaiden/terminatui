@@ -1,23 +1,24 @@
 import { EventEmitter } from "events";
-import { Logger as TsLogger } from "tslog";
+import { Logger as TsLogger, type IMeta } from "tslog";
 
 /**
  * Log levels from least to most severe.
  */
 export enum LogLevel {
-  Silly = 0,
-  Trace = 1,
-  Debug = 2,
-  Info = 3,
-  Warn = 4,
-  Error = 5,
-  Fatal = 6,
+  silly = 0,
+  trace = 1,
+  debug = 2,
+  info = 3,
+  warn = 4,
+  error = 5,
+  fatal = 6,
 }
 
 /**
  * Event emitted when a log message is written.
  */
 export interface LogEvent {
+  rawMessage: string;
   message: string;
   level: LogLevel;
   timestamp: Date;
@@ -42,14 +43,12 @@ export interface LoggerConfig {
 export class Logger {
   private tsLogger: TsLogger<unknown>;
   private readonly eventEmitter = new EventEmitter();
-  private tuiMode: boolean;
   private detailed: boolean;
   private minLevel: LogLevel;
 
   constructor(config: LoggerConfig = {}) {
-    this.tuiMode = config.tuiMode ?? false;
     this.detailed = config.detailed ?? false;
-    this.minLevel = config.minLevel ?? LogLevel.Info;
+    this.minLevel = config.minLevel ?? LogLevel.info;
 
     this.tsLogger = this.createTsLogger(this.minLevel);
   }
@@ -63,27 +62,19 @@ export class Logger {
           logMetaMarkup: string,
           logArgs: unknown[],
           logErrors: string[],
-          logMeta: unknown
+          logMeta?: IMeta
         ) => {
           const baseLine = `${logMetaMarkup}${(logArgs as string[]).join(" ")}${logErrors.join("")}`;
           const simpleLine = `${(logArgs as string[]).join(" ")}${logErrors.join("")}`;
-          const meta = logMeta as Record<string, unknown>;
-          const levelFromMeta =
-            typeof meta?.["logLevelId"] === "number"
-              ? (meta["logLevelId"] as LogLevel)
-              : LogLevel.Info;
-
+          const level = logMeta?.logLevelId as LogLevel ?? LogLevel.info;
           const output = this.detailed ? baseLine : simpleLine;
 
-          if (this.tuiMode) {
-            this.eventEmitter.emit("log", {
-              message: output,
-              level: levelFromMeta,
-              timestamp: new Date(),
-            } satisfies LogEvent);
-          } else {
-            process.stderr.write(output + "\n");
-          }
+          this.eventEmitter.emit("log", {
+            message: output,
+            rawMessage: simpleLine,
+            level: level,
+            timestamp: new Date(),
+          } satisfies LogEvent);
         },
       },
     });
@@ -95,13 +86,6 @@ export class Logger {
   onLogEvent(listener: (event: LogEvent) => void): () => void {
     this.eventEmitter.on("log", listener);
     return () => this.eventEmitter.off("log", listener);
-  }
-
-  /**
-   * Enable or disable TUI mode.
-   */
-  setTuiMode(enabled: boolean): void {
-    this.tuiMode = enabled;
   }
 
   /**
@@ -127,33 +111,46 @@ export class Logger {
   }
 
   // Logging methods
-  silly(...args: unknown[]): void {
-    this.tsLogger.silly(...args);
+    silly(...args: unknown[]): void {
+    this.tsLogger.silly(...asStringArray(args));
   }
 
   trace(...args: unknown[]): void {
-    this.tsLogger.trace(...args);
+    this.tsLogger.trace(...asStringArray(args));
   }
 
   debug(...args: unknown[]): void {
-    this.tsLogger.debug(...args);
+    this.tsLogger.debug(...asStringArray(args));
   }
 
   info(...args: unknown[]): void {
-    this.tsLogger.info(...args);
+    this.tsLogger.info(...asStringArray(args));
   }
 
   warn(...args: unknown[]): void {
-    this.tsLogger.warn(...args);
+    this.tsLogger.warn(...asStringArray(args));
   }
 
   error(...args: unknown[]): void {
-    this.tsLogger.error(...args);
+    this.tsLogger.error(...asStringArray(args));
   }
 
   fatal(...args: unknown[]): void {
-    this.tsLogger.fatal(...args);
+    this.tsLogger.fatal(...asStringArray(args));
   }
+}
+
+function asStringArray(args: unknown[]): string[] {
+  return args.map(arg => {
+    if (typeof arg === "string") {
+      return arg;
+    }
+    try {
+      return JSON.stringify(arg);
+    } catch {
+      return String(arg);
+    }
+  });
 }
 
 /**

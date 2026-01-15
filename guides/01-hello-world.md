@@ -28,7 +28,12 @@ bun add @pablozaiden/terminatui
 Create `src/greet.ts`:
 
 ```typescript
-import { Command, type AppContext, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import {
+  Command,
+  type OptionSchema,
+  type CommandResult,
+  type CommandExecutionContext,
+} from "@pablozaiden/terminatui";
 
 const options = {
   name: {
@@ -43,7 +48,7 @@ export class GreetCommand extends Command<typeof options> {
   readonly description = "Greet someone";
   readonly options = options;
 
-  execute(_ctx: AppContext, config: { name: string }): CommandResult {
+  execute(config: { name: string }, _execCtx: CommandExecutionContext): CommandResult {
     console.log(`Hello, ${config.name}!`);
     return { success: true };
   }

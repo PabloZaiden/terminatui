@@ -1,10 +1,8 @@
-import { 
-    Command, 
-    type AppContext, 
-    type OptionSchema, 
-    type OptionValues,
-    type CommandResult 
-} from "../../../src/index.ts";
+import type { ReactNode } from "react";
+import { Command, type CommandResult } from "../../../src/core/command";
+import { AppContext } from "../../../src/core/context";
+import type { OptionSchema, OptionValues } from "../../../src/types/command";
+import { JsonHighlight } from "../../../src/tui/components/JsonHighlight.tsx";
 
 const greetOptions = {
     name: {
@@ -20,7 +18,7 @@ const greetOptions = {
         type: "boolean",
         description: "Use uppercase",
         alias: "l",
-        default: false,
+        default: true,
         label: "Loud Mode",
         order: 2,
         group: "Options",
@@ -48,14 +46,18 @@ export class GreetCommand extends Command<typeof greetOptions> {
         { command: "greet --name World --loud --times 3", description: "Loud greeting 3 times" },
     ];
 
-    override async execute(ctx: AppContext, opts: OptionValues<typeof greetOptions>): Promise<CommandResult> {
+    override async execute(opts: OptionValues<typeof greetOptions>): Promise<CommandResult> {
         const greeting = this.createGreeting(opts);
-        ctx.logger.info(greeting);
+        AppContext.current.logger.trace(greeting);
         return {
             success: true,
-            data: { greeting, timestamp: new Date().toISOString() },
+            data: { greeting, timestamp: new Date().toISOString(), meta: { loud: opts.loud, times: opts.times } },
             message: greeting,
         };
+    }
+
+    override renderResult(result: CommandResult): ReactNode {
+        return JsonHighlight({ value: result.data });
     }
 
     override getClipboardContent(result: CommandResult): string | undefined {

@@ -36,7 +36,7 @@ bun add @pablozaiden/terminatui
 
 # Create your first command
 cat > src/index.ts << 'EOF'
-import { Command, Application, type AppContext, type OptionSchema } from "@pablozaiden/terminatui";
+import { Command, Application, type OptionSchema } from "@pablozaiden/terminatui";
 
 const options = {
   name: { type: "string", description: "Your name" },
@@ -47,7 +47,7 @@ class HelloCommand extends Command<typeof options> {
   readonly description = "Say hello";
   readonly options = options;
 
-  async execute(ctx: AppContext, config: Record<string, unknown>) {
+  async execute(config: Record<string, unknown>) {
     const name = config["name"] ?? "World";
     console.log(`Hello, ${name}!`);
     return { success: true };
@@ -60,7 +60,11 @@ class MyCLI extends Application {
   }
 }
 
+// Recommended: let Terminatui read `Bun.argv.slice(2)`
 await new MyCLI().run();
+
+// For tests or programmatic invocation:
+// await new MyCLI().runFromArgs(["hello", "--name", "Developer"]);
 EOF
 
 # Run it
@@ -69,6 +73,6 @@ bun src/index.ts hello --name "Developer"
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) or Node.js 18+
+- [Bun](https://bun.sh)
 - Basic TypeScript knowledge
 - Terminal/command-line familiarity

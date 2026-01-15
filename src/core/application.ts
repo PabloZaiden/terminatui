@@ -1,30 +1,51 @@
 import { AppContext, type AppConfig } from "./context.ts";
-import { type AnyCommand, ConfigValidationError, type CommandResult } from "./command.ts";
+import { type AnyCommand, ConfigValidationError, type CommandResult, type CommandExecutionContext } from "./command.ts";
 import { CommandRegistry } from "./registry.ts";
 import { ExecutionMode } from "../types/execution.ts";
 import { LogLevel, type LoggerConfig } from "./logger.ts";
-import { generateAppHelp, generateCommandHelp } from "./help.ts";
-import {
-  createVersionCommand,
-  createHelpCommandForParent,
-  createRootHelpCommand,
-} from "../builtins/index.ts";
 import {
   extractCommandChain,
   schemaToParseArgsOptions,
   parseOptionValues,
   validateOptions,
 } from "../cli/parser.ts";
+import type { OptionSchema } from "../types/command.ts";
 import { parseArgs, type ParseArgsConfig } from "util";
+import { createVersionCommand } from "../builtins/version.ts";
+import { createHelpCommandForParent, createRootHelpCommand } from "../builtins/help.ts";
+import { KNOWN_COMMANDS, RESERVED_TOP_LEVEL_COMMAND_NAMES } from "./knownCommands.ts";
 
 /**
  * Global options available on all commands.
  * These are handled by the framework before dispatching to commands.
  */
+
+export type TuiModeOptions = "opentui" | "ink";
+export type ModeOptions = TuiModeOptions | "cli" | "default";
+
 export interface GlobalOptions {
   "log-level"?: string;
   "detailed-logs"?: boolean;
+  "mode"?: string;
 }
+
+export const GLOBAL_OPTIONS_SCHEMA = {
+  "log-level": {
+    type: "string",
+    description: "Minimum log level (e.g. info, debug)",
+  },
+  "detailed-logs": {
+    type: "boolean",
+    description: "Enable detailed logging",
+    default: false,
+  },
+  mode: {
+    type: "string",
+    description: "Execution mode",
+    default: "default",
+    enum: ["opentui", "ink", "cli", "default"],
+  },
+} satisfies OptionSchema;
 
 /**
  * Application configuration options.
@@ -53,11 +74,11 @@ export interface ApplicationConfig {
  */
 export interface ApplicationHooks {
   /** Called before running any command */
-  onBeforeRun?: (ctx: AppContext, commandName: string) => Promise<void> | void;
+  onBeforeRun?: (commandName: string) => Promise<void> | void;
   /** Called after command completes (success or failure) */
-  onAfterRun?: (ctx: AppContext, commandName: string, error?: Error) => Promise<void> | void;
+  onAfterRun?: (commandName: string, error?: Error) => Promise<void> | void;
   /** Called when an error occurs */
-  onError?: (ctx: AppContext, error: Error) => Promise<void> | void;
+  onError?: (error: Error) => Promise<void> | void;
 }
 
 /**
@@ -72,19 +93,24 @@ export interface ApplicationHooks {
  *   name: "myapp",
  *   version: "1.0.0",
  *   commands: [new RunCommand(), new CheckCommand()],
- *   defaultCommand: "interactive",
+ *   defaultCommand: "version",
  * });
  * 
- * await app.run(process.argv.slice(2));
+ * await app.run();
  * ```
  */
 export class Application {
   readonly name: string;
+
+  /**
+   * Default mode used when `--mode=default` is specified.
+   * Base Application defaults to `cli`.
+   */
+  protected defaultMode: ModeOptions = "cli";
   readonly displayName: string;
   readonly version: string;
   readonly commitHash?: string;
   readonly registry: CommandRegistry;
-  readonly context: AppContext;
 
   private readonly defaultCommandName?: string;
   private hooks: ApplicationHooks = {};
@@ -102,8 +128,10 @@ export class Application {
       version: config.version,
       ...config.config,
     };
-    this.context = new AppContext(appConfig, config.logger);
-    AppContext.setCurrent(this.context);
+    const context = new AppContext(appConfig, config.logger);
+    AppContext.setCurrent(context);
+
+    context.logger.silly(`Application initialized: ${this.name} v${this.version}`);
 
     // Create registry and register commands
     this.registry = new CommandRegistry();
@@ -114,6 +142,8 @@ export class Application {
    * Register commands and inject help subcommands.
    */
   private registerCommands(commands: AnyCommand[]): void {
+    this.assertNoReservedCommands(commands);
+
     // Register version command at top level
     this.registry.register(createVersionCommand(this.name, this.version, this.commitHash));
 
@@ -124,7 +154,35 @@ export class Application {
     }
 
     // Register root help command
-    this.registry.register(createRootHelpCommand(commands, this.name, this.version));
+    // Use the full registry list so built-ins like `version` are included.
+    this.registry.register(createRootHelpCommand(this.registry.list(), this.name, this.version));
+  }
+
+  private assertNoReservedCommands(commands: AnyCommand[]): void {
+    for (const command of commands) {
+      this.assertNoReservedCommand(command, []);
+    }
+  }
+
+  private assertNoReservedCommand(command: AnyCommand, path: string[]): void {
+    if (RESERVED_TOP_LEVEL_COMMAND_NAMES.has(command.name as never)) {
+      throw new Error(
+        `Command name '${command.name}' is reserved by Terminatui and cannot be registered`
+      );
+    }
+
+    if (command.subCommands) {
+      for (const subCommand of command.subCommands) {
+        if (subCommand.name === KNOWN_COMMANDS.help) {
+          const commandPath = [...path, command.name].join(" ");
+          throw new Error(
+            `Subcommand name '${KNOWN_COMMANDS.help}' is reserved and is automatically injected (found under '${commandPath}')`
+          );
+        }
+
+        this.assertNoReservedCommand(subCommand, [...path, command.name]);
+      }
+    }
   }
 
   /**
@@ -144,10 +202,11 @@ export class Application {
 
     // Recursively inject into subcommands
     for (const subCommand of command.subCommands) {
-      if (subCommand.name !== "help") {
+      if (subCommand.name !== KNOWN_COMMANDS.help) {
         this.injectHelpCommand(subCommand);
       }
     }
+
   }
 
   /**
@@ -158,15 +217,38 @@ export class Application {
   }
 
   /**
-   * Run the application with the given arguments.
-   * 
-   * @param argv Command-line arguments (typically process.argv.slice(2))
+   * Run the application using Bun's process args.
+   *
+   * This is the common entrypoint for real apps.
    */
-  async run(argv: string[]): Promise<void> {
+  async run(): Promise<void> {
+    return this.runFromArgs(Bun.argv.slice(2));
+  }
+
+  /**
+   * Run the application with explicit argv.
+   *
+   * Useful for tests or manual programmatic invocation.
+   */
+  async runFromArgs(argv: string[]): Promise<void> {
+    // configure logger
+    AppContext.current.logger.onLogEvent((event) => {
+      process.stderr.write(event.message + "\n");
+    });
+
     try {
       // Parse global options first
       const { globalOptions, remainingArgs } = this.parseGlobalOptions(argv);
       this.applyGlobalOptions(globalOptions);
+
+      const mode = globalOptions["mode"] as ModeOptions ?? "default";
+      const resolvedMode = mode === "default" ? this.defaultMode : mode;
+
+      if (resolvedMode !== "cli") {
+        throw new Error(
+          `Mode '${resolvedMode}' is not supported by Application. Use TuiApplication or set --mode=cli.`
+        );
+      }
 
       // Extract command path from args
       const { commands: commandPath, remaining: flagArgs } = extractCommandChain(remainingArgs);
@@ -185,16 +267,18 @@ export class Application {
         }
 
         // Show help
-        console.log(generateAppHelp(this.registry.list(), {
-          appName: this.name,
-          version: this.version,
-        }));
-        return;
+        const rootHelp = this.registry.get(KNOWN_COMMANDS.help);
+        if (rootHelp) {
+          await this.executeCommand(rootHelp, [], [KNOWN_COMMANDS.help]);
+          return;
+        }
+
+        throw new Error("Root help command not registered");
       }
 
       // Check for unknown command in path
-      if (remainingPath.length > 0 && remainingPath[0] !== "help") {
-        console.error(`Unknown command: ${remainingPath.join(" ")}`);
+      if (remainingPath.length > 0 && remainingPath[0] !== KNOWN_COMMANDS.help) {
+        AppContext.current.logger.error(`Unknown command: ${remainingPath.join(" ")}`);
         process.exitCode = 1;
         return;
       }
@@ -240,65 +324,44 @@ export class Application {
     const parseArgsConfig = schemaToParseArgsOptions(schema);
 
     let parsedValues: Record<string, unknown> = {};
-    let parseError: string | undefined;
-    
-    try {
-      const parseArgsOptions = {
-        args: flagArgs,
-        options: parseArgsConfig.options as ParseArgsConfig["options"],
-        allowPositionals: false,
-        strict: true, // Enable strict mode to catch unknown options
-      };
-      const result = parseArgs(parseArgsOptions);
-      parsedValues = result.values;
-    } catch (err) {
-      // Capture parse error (e.g., unknown option)
-      parseError = (err as Error).message;
-    }
 
-    // If there was a parse error, show it and help
-    if (parseError) {
-      console.error(`Error: ${parseError}\n`);
-      console.log(generateCommandHelp(command, {
-        appName: this.name,
-        commandPath: commandPath.length > 0 ? commandPath : [command.name],
-      }));
-      process.exitCode = 1;
-      return;
-    }
+    const parseArgsOptions = {
+      args: flagArgs,
+      options: parseArgsConfig.options as ParseArgsConfig["options"],
+      allowNegative: true,
+      allowPositionals: false,
+      strict: false,
+    };
+
+    const result = parseArgs(parseArgsOptions);
+    parsedValues = result.values;
 
     let options;
     try {
       options = parseOptionValues(schema, parsedValues);
-    } catch (err) {
-      // Enum validation error from parseOptionValues
-      console.error(`Error: ${(err as Error).message}\n`);
-      console.log(generateCommandHelp(command, {
-        appName: this.name,
-        commandPath: commandPath.length > 0 ? commandPath : [command.name],
-      }));
-      process.exitCode = 1;
-      return;
-    }
+     } catch (err) {
+       // Enum validation error from parseOptionValues
+       AppContext.current.logger.error(`Error: ${(err as Error).message}\n`);
+       await this.printHelpForCommand(command, commandPath);
+       process.exitCode = 1;
+       return;
+     }
+
 
     // Validate options (required, min/max, etc.)
     const errors = validateOptions(schema, options);
     if (errors.length > 0) {
       for (const error of errors) {
-        console.error(`Error: ${error.message}`);
+        AppContext.current.logger.error(`Error: ${error.message}`);
       }
-      console.log(); // Blank line
-      console.log(generateCommandHelp(command, {
-        appName: this.name,
-        commandPath: commandPath.length > 0 ? commandPath : [command.name],
-      }));
+      await this.printHelpForCommand(command, commandPath);
       process.exitCode = 1;
       return;
     }
 
     // Call onBeforeRun hook
     if (this.hooks.onBeforeRun) {
-      await this.hooks.onBeforeRun(this.context, command.name);
+      await this.hooks.onBeforeRun(command.name);
     }
 
     let error: Error | undefined;
@@ -306,20 +369,21 @@ export class Application {
     try {
       // Call beforeExecute hook on command
       if (command.beforeExecute) {
-        await command.beforeExecute(this.context, options);
+        await command.beforeExecute(options);
       }
 
       // Build config if command implements buildConfig, otherwise pass options as-is
       let config: unknown;
       if (command.buildConfig) {
-        config = await command.buildConfig(this.context, options);
+        config = await command.buildConfig(options);
       } else {
         config = options;
       }
 
       // Execute the command with the config
-      const result = await command.execute(this.context, config);
-      
+      const ctx: CommandExecutionContext = { signal: new AbortController().signal };
+      const result = await command.execute(config, ctx);
+
       // In CLI mode, handle result output
       if (mode === ExecutionMode.Cli && result) {
         const commandResult = result as CommandResult;
@@ -339,7 +403,7 @@ export class Application {
       // Always call afterExecute hook
       if (command.afterExecute) {
         try {
-          await command.afterExecute(this.context, options, error);
+          await command.afterExecute(options, error);
         } catch (afterError) {
           // afterExecute error takes precedence if no prior error
           if (!error) {
@@ -351,13 +415,24 @@ export class Application {
 
     // Call onAfterRun hook
     if (this.hooks.onAfterRun) {
-      await this.hooks.onAfterRun(this.context, command.name, error);
+      await this.hooks.onAfterRun(command.name, error);
     }
 
     // Re-throw if there was an error
     if (error) {
       throw error;
     }
+  }
+
+  private async printHelpForCommand(command: AnyCommand, commandPath: string[]): Promise<void> {
+    const resolvedCommandPath = commandPath.length > 0 ? commandPath : [command.name];
+
+    const helpCommand = command.subCommands?.find((sub) => sub.name === KNOWN_COMMANDS.help);
+    if (!helpCommand) {
+      throw new Error(`Help command not injected for '${resolvedCommandPath.join(" ")}'`);
+    }
+
+    await this.executeCommand(helpCommand, [], [...resolvedCommandPath, KNOWN_COMMANDS.help]);
   }
 
   /**
@@ -377,43 +452,57 @@ export class Application {
    * Parse global options from argv.
    * Returns the parsed global options and remaining args.
    */
-  private parseGlobalOptions(argv: string[]): {
+  protected parseGlobalOptions(argv: string[]): {
     globalOptions: GlobalOptions;
     remainingArgs: string[];
   } {
-    const globalOptions: GlobalOptions = {};
+    const parseArgsConfig = schemaToParseArgsOptions(GLOBAL_OPTIONS_SCHEMA);
+
+    const result = parseArgs({
+      args: argv,
+      options: parseArgsConfig.options as ParseArgsConfig["options"],
+      allowPositionals: true,
+      allowNegative: true,
+      strict: false,
+      tokens: true,
+    });
+
+    const rawGlobalOptions = parseOptionValues(GLOBAL_OPTIONS_SCHEMA, result.values) as GlobalOptions;
+
+    const globalOptions: GlobalOptions = { ...rawGlobalOptions };
+    
     const remainingArgs: string[] = [];
+    for (const token of result.tokens ?? []) {
+      if (token.kind === "positional") {
+        remainingArgs.push(token.value);
+        continue;
+      }
 
-    let i = 0;
-    while (i < argv.length) {
-      const arg = argv[i]!;
+      if (token.kind === "option") {
+        const name = token.name;
+        if (name && !(name in GLOBAL_OPTIONS_SCHEMA)) {
+          remainingArgs.push(token.rawName);
 
-      if (arg === "--log-level" && i + 1 < argv.length) {
-        globalOptions["log-level"] = argv[i + 1];
-        i += 2;
-      } else if (arg.startsWith("--log-level=")) {
-        globalOptions["log-level"] = arg.slice("--log-level=".length);
-        i += 1;
-      } else if (arg === "--detailed-logs") {
-        globalOptions["detailed-logs"] = true;
-        i += 1;
-      } else if (arg === "--no-detailed-logs") {
-        globalOptions["detailed-logs"] = false;
-        i += 1;
-      } else {
-        remainingArgs.push(arg);
-        i += 1;
+          if (token.value !== undefined) {
+            remainingArgs.push(String(token.value));
+          } else if (token.inlineValue !== undefined) {
+            remainingArgs.push(String((token as { inlineValue?: unknown }).inlineValue));
+          }
+        }
       }
     }
 
-    return { globalOptions, remainingArgs };
+    return {
+      globalOptions,
+      remainingArgs,
+    };
   }
 
   /**
    * Apply global options to the application context.
    */
-  private applyGlobalOptions(options: GlobalOptions): void {
-    const logger = this.context.logger;
+  protected applyGlobalOptions(options: GlobalOptions): void {
+    const logger = AppContext.current.logger;
 
     // Apply detailed-logs
     if (options["detailed-logs"] !== undefined) {
@@ -438,24 +527,17 @@ export class Application {
    */
   private async handleError(error: Error): Promise<void> {
     if (this.hooks.onError) {
-      await this.hooks.onError(this.context, error);
+      await this.hooks.onError(error);
     } else {
       // Default error handling
       if (error instanceof ConfigValidationError) {
         // Format validation errors more clearly
         const fieldInfo = error.field ? ` (${error.field})` : "";
-        console.error(`Configuration error${fieldInfo}: ${error.message}`);
+        AppContext.current.logger.error(`Configuration error${fieldInfo}: ${error.message}`);
       } else {
-        console.error(`Error: ${error.message}`);
+        AppContext.current.logger.error(`Error: ${error.message}`);
       }
       process.exitCode = 1;
     }
-  }
-
-  /**
-   * Get the application context.
-   */
-  getContext(): AppContext {
-    return this.context;
   }
 }

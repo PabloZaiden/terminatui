@@ -1,44 +1,28 @@
-import { createCliRenderer } from "@opentui/core";
-import { createRoot } from "@opentui/react";
-import { Application, type ApplicationConfig } from "../core/application.ts";
+import { createRenderer } from "./adapters/factory.ts";
+import { RendererProvider } from "./context/RendererContext.tsx";
+import { Application, type ModeOptions, type ApplicationConfig, type TuiModeOptions } from "../core/application.ts";
 import type { AnyCommand } from "../core/command.ts";
-import { TuiApp } from "./TuiApp.tsx";
-import { Theme } from "./theme.ts";
-import type { LogSource, LogEvent } from "./hooks/index.ts";
-import { LogLevel as TuiLogLevel } from "./hooks/index.ts";
-import { LogLevel as CoreLogLevel, type LogEvent as CoreLogEvent } from "../core/logger.ts";
-import type { FieldConfig } from "./components/types.ts";
+import { TuiRoot } from "./TuiRoot.tsx";
+import { LogLevel } from "../core/logger.ts";
 import { createSettingsCommand } from "../builtins/settings.ts";
+import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 import { loadPersistedParameters } from "./utils/parameterPersistence.ts";
-
-/**
- * Custom field configuration for TUI forms.
- * Allows adding application-specific fields that aren't part of command options.
- */
-export interface CustomField extends FieldConfig {
-    /** Default value for the field */
-    default?: unknown;
-    /** Called when the field value changes */
-    onChange?: (value: unknown, allValues: Record<string, unknown>) => void;
-}
+import { AppContext } from "../core/context.ts";
+import { registerAllModals, registerAllScreens } from "./registry.ts";
 
 /**
  * Extended configuration for TUI-enabled applications.
  */
 export interface TuiApplicationConfig extends ApplicationConfig {
-    /** Enable interactive TUI mode */
+    /** Enable TUI mode (when renderer is opentui/ink/default) */
     enableTui?: boolean;
-    /** Log source for TUI log panel */
-    logSource?: LogSource;
-    /** Custom fields to add to the TUI form */
-    customFields?: CustomField[];
 }
 
 /**
  * Application class with built-in TUI support.
  * 
  * Extends the base Application to provide automatic TUI rendering
- * when running interactively or with the --interactive flag.
+ * when running with `--renderer` set to a TUI renderer (or default).
  * 
  * @example
  * ```typescript
@@ -53,19 +37,15 @@ export interface TuiApplicationConfig extends ApplicationConfig {
  *   }
  * }
  * 
- * await new MyApp().run(process.argv.slice(2));
+ * await new MyApp().run();
  * ```
  */
 export class TuiApplication extends Application {
     private readonly enableTui: boolean;
-    private readonly logSource?: LogSource;
-    private readonly customFields?: CustomField[];
 
     constructor(config: TuiApplicationConfig) {
         super(config);
         this.enableTui = config.enableTui ?? true;
-        this.logSource = config.logSource;
-        this.customFields = config.customFields;
     }
 
     /**
@@ -74,106 +54,70 @@ export class TuiApplication extends Application {
      * If no arguments are provided and TUI is enabled, launches the TUI.
      * Otherwise, runs in CLI mode.
      */
-    override async run(argv: string[] = process.argv.slice(2)): Promise<void> {
-        // Check for --interactive or -i flag
-        const hasInteractiveFlag = argv.includes("--interactive") || argv.includes("-i");
-        const filteredArgs = argv.filter((arg) => arg !== "--interactive" && arg !== "-i");
+    override async run(): Promise<void> {
+        return this.runFromArgs(Bun.argv.slice(2));
+    }
 
-        // Launch TUI if:
-        // 1. Explicit --interactive flag, or
-        // 2. No args and TUI is enabled
-        if (hasInteractiveFlag || (filteredArgs.length === 0 && this.enableTui)) {
-            await this.runTui();
+    override async runFromArgs(argv: string[]): Promise<void> {
+        const { globalOptions } = this.parseGlobalOptions(argv);
+
+        const mode = globalOptions["mode"] as ModeOptions ?? "default";
+        const resolvedMode = mode === "default" ? this.defaultMode : mode;
+
+        if (resolvedMode === "cli") {
+            await super.runFromArgs(argv);
             return;
         }
 
-        // Otherwise run CLI mode
-        await super.run(filteredArgs);
+        if (!this.enableTui) {
+            throw new Error("TUI mode is disabled for this application");
+        }
+
+        if (resolvedMode === "opentui" || resolvedMode === "ink") {
+            this.applyGlobalOptions(globalOptions);
+
+            await this.runTui(resolvedMode);
+            return;
+        }
+
+        throw new Error(`Unknown mode '${resolvedMode}'`);
     }
 
     /**
-     * Launch the interactive TUI.
+     * Launch the TUI.
      */
-    async runTui(): Promise<void> {
+    async runTui(rendererType: TuiModeOptions): Promise<void> {
+        await registerAllScreens();
+        await registerAllModals();
+        
         // Get all commands that support TUI or have options
         const commands = this.getExecutableCommands();
 
         // Load and apply persisted settings (log-level, detailed-logs)
         this.loadPersistedSettings();
 
-        // Enable TUI mode on the logger so logs go to the event emitter
-        // instead of stderr (which would corrupt the TUI display)
-        this.context.logger.setTuiMode(true);
-
-        // Create a log source from the logger if one wasn't provided
-        const logSource = this.logSource ?? this.createLogSourceFromLogger();
-
-        const renderer = await createCliRenderer({
+        const renderer = await createRenderer(rendererType, {
             useAlternateScreen: true,
-            useConsole: false,
-            exitOnCtrlC: true,
-            backgroundColor: Theme.background,
-            useMouse: true,
-            enableMouseMovement: true,
-            openConsoleOnError: false,
         });
 
         return new Promise<void>((resolve) => {
             const handleExit = () => {
-                // Restore CLI mode on exit
-                this.context.logger.setTuiMode(false);
                 renderer.destroy();
                 resolve();
             };
 
-            const root = createRoot(renderer);
-            root.render(
-                <TuiApp
-                    name={this.name}
-                    displayName={this.displayName}
-                    version={this.version}
-                    commands={commands}
-                    context={this.context}
-                    logSource={logSource}
-                    customFields={this.customFields}
-                    onExit={handleExit}
-                />
+            renderer.render(
+                <RendererProvider renderer={renderer}>
+                    <TuiRoot
+                        name={this.name}
+                        displayName={this.displayName}
+                        version={this.version}
+                        commands={commands}
+                        onExit={handleExit}
+                    />
+                </RendererProvider>
             );
-
-            renderer.start();
         });
-    }
-
-    /**
-     * Create a LogSource adapter from the application logger.
-     */
-    private createLogSourceFromLogger(): LogSource {
-        const logger = this.context.logger;
-        
-        // Map core log levels to TUI log levels
-        const mapLogLevel = (level: CoreLogLevel): TuiLogLevel => {
-            switch (level) {
-                case CoreLogLevel.Silly: return TuiLogLevel.Silly;
-                case CoreLogLevel.Trace: return TuiLogLevel.Trace;
-                case CoreLogLevel.Debug: return TuiLogLevel.Debug;
-                case CoreLogLevel.Info: return TuiLogLevel.Info;
-                case CoreLogLevel.Warn: return TuiLogLevel.Warn;
-                case CoreLogLevel.Error: return TuiLogLevel.Error;
-                case CoreLogLevel.Fatal: return TuiLogLevel.Fatal;
-                default: return TuiLogLevel.Info;
-            }
-        };
-
-        return {
-            subscribe: (callback: (event: LogEvent) => void) => {
-                return logger.onLogEvent((coreEvent: CoreLogEvent) => {
-                    callback({
-                        level: mapLogLevel(coreEvent.level),
-                        message: coreEvent.message,
-                    });
-                });
-            },
-        };
     }
 
     /**
@@ -182,22 +126,20 @@ export class TuiApplication extends Application {
      */
     private loadPersistedSettings(): void {
         try {
-            const settings = loadPersistedParameters(this.name, "settings");
-            
+            const settings = loadPersistedParameters(this.name, KNOWN_COMMANDS.settings);
+
             // Apply log-level if set
             if (settings["log-level"]) {
                 const levelStr = String(settings["log-level"]).toLowerCase();
-                const level = Object.entries(CoreLogLevel).find(
-                    ([key, val]) => typeof val === "number" && key.toLowerCase() === levelStr
-                )?.[1] as CoreLogLevel | undefined;
+                const level = LogLevel[levelStr as keyof typeof LogLevel];
                 if (level !== undefined) {
-                    this.context.logger.setMinLevel(level);
+                    AppContext.current.logger.setMinLevel(level);
                 }
             }
-            
+
             // Apply detailed-logs if set
             if (settings["detailed-logs"] !== undefined) {
-                this.context.logger.setDetailed(Boolean(settings["detailed-logs"]));
+                AppContext.current.logger.setDetailed(Boolean(settings["detailed-logs"]));
             }
         } catch {
             // Silently ignore errors loading settings
@@ -212,15 +154,16 @@ export class TuiApplication extends Application {
         const userCommands = this.registry
             .list()
             .filter((cmd) => {
-                // Exclude version and help from main menu
-                if (cmd.name === "version" || cmd.name === "help") {
+                // Exclude internal/built-in commands from the TUI main menu
+                if (cmd.tuiHidden) {
                     return false;
                 }
-                // Exclude settings if already defined by user (they shouldn't)
-                if (cmd.name === "settings") {
+
+                // Extra safety: keep known internal command names out
+                if (cmd.name === KNOWN_COMMANDS.help || cmd.name === KNOWN_COMMANDS.version || cmd.name === KNOWN_COMMANDS.settings) {
                     return false;
                 }
-                // Include commands that have options or execute methods
+
                 return true;
             });
 

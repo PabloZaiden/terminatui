@@ -1,8 +1,11 @@
 import { useRef, useEffect, type ReactNode } from "react";
-import type { ScrollBoxRenderable } from "@opentui/core";
-import { Theme } from "../theme.ts";
-import { FieldRow } from "./FieldRow.tsx";
-import { useKeyboardHandler, KeyboardPriority } from "../hooks/useKeyboardHandler.ts";
+import { Field } from "../semantic/Field.tsx";
+import { MenuButton } from "../semantic/MenuButton.tsx";
+import { Panel } from "../semantic/Panel.tsx";
+import { ScrollView, type ScrollViewRef } from "../semantic/ScrollView.tsx";
+import { Container } from "../semantic/Container.tsx";
+import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
+import type { KeyboardEvent } from "../adapters/types.ts";
 import type { FieldConfig } from "./types.ts";
 
 interface ConfigFormProps {
@@ -26,6 +29,10 @@ interface ConfigFormProps {
     getDisplayValue?: (key: string, value: unknown, type: string) => string;
     /** The action button component */
     actionButton: ReactNode;
+    /** Optional additional buttons rendered before the main action button */
+    additionalButtons?: { label: string; onPress: () => void }[];
+    /** Optional handler for additional keys (called before default handling) */
+    onKeyDown?: (event: KeyboardEvent) => boolean;
 }
 
 /**
@@ -56,72 +63,80 @@ export function ConfigForm({
     onAction,
     getDisplayValue = defaultGetDisplayValue,
     actionButton,
+    additionalButtons = [],
+    onKeyDown,
 }: ConfigFormProps) {
-    const borderColor = focused ? Theme.borderFocused : Theme.border;
-    const scrollboxRef = useRef<ScrollBoxRenderable>(null);
-    const totalFields = fieldConfigs.length + 1; // +1 for action button
+    const scrollViewRef = useRef<ScrollViewRef | null>(null);
+    const totalItems = fieldConfigs.length + additionalButtons.length + 1; // fields + additional buttons + action button
 
     // Auto-scroll to keep selected item visible
     useEffect(() => {
-        if (scrollboxRef.current) {
-            scrollboxRef.current.scrollTo(selectedIndex);
-        }
+        scrollViewRef.current?.scrollToIndex(selectedIndex);
     }, [selectedIndex]);
 
-    // Handle keyboard events at Focused priority (only when focused)
-    useKeyboardHandler(
-        (event) => {
-            const { key } = event;
+    // Handle keyboard events (only when focused)
+    useActiveKeyHandler(
+        (event: KeyboardEvent) => {
+            // Let parent handle first if provided
+            if (onKeyDown?.(event)) {
+                return true;
+            }
+
+            const key = event;
 
             // Arrow key navigation
             if (key.name === "down") {
-                const newIndex = Math.min(selectedIndex + 1, totalFields - 1);
+                const newIndex = Math.min(selectedIndex + 1, totalItems - 1);
                 onSelectionChange(newIndex);
-                event.stopPropagation();
-                return;
+                return true;
             }
 
             if (key.name === "up") {
                 const newIndex = Math.max(selectedIndex - 1, 0);
                 onSelectionChange(newIndex);
-                event.stopPropagation();
-                return;
+                return true;
             }
 
-            // Enter to edit field or run action
+            // Enter to edit field, press additional button, or run action
             if (key.name === "return" || key.name === "enter") {
-                if (selectedIndex === fieldConfigs.length) {
-                    onAction();
-                } else {
+                if (selectedIndex < fieldConfigs.length) {
+                    // It's a field
                     const fieldConfig = fieldConfigs[selectedIndex];
                     if (fieldConfig) {
                         onEditField(fieldConfig.key);
                     }
+                } else if (selectedIndex < fieldConfigs.length + additionalButtons.length) {
+                    // It's an additional button
+                    const buttonIndex = selectedIndex - fieldConfigs.length;
+                    additionalButtons[buttonIndex]?.onPress();
+                } else {
+                    // It's the main action button
+                    onAction();
                 }
-                event.stopPropagation();
-                return;
+                return true;
             }
+
+            return false;
         },
-        KeyboardPriority.Focused,
         { enabled: focused }
     );
 
     return (
-        <box
-            flexDirection="column"
-            border={true}
-            borderStyle="rounded"
-            borderColor={borderColor}
+        <Panel
             title={title}
-            flexGrow={1}
+            focused={focused}
+            flex={1}
             padding={1}
+            flexDirection="column"
         >
-            <scrollbox
-                ref={scrollboxRef}
-                scrollY={true}
-                flexGrow={1}
+            <ScrollView
+                axis="vertical"
+                flex={1}
+                scrollRef={(ref) => {
+                    scrollViewRef.current = ref;
+                }}
             >
-                <box flexDirection="column" gap={0}>
+                <Container flexDirection="column" gap={0}>
                     {fieldConfigs.map((field, idx) => {
                         const isSelected = idx === selectedIndex;
                         const displayValue = getDisplayValue(
@@ -131,18 +146,29 @@ export function ConfigForm({
                         );
 
                         return (
-                            <FieldRow
+                            <Field
                                 key={field.key}
                                 label={field.label}
                                 value={displayValue}
-                                isSelected={isSelected}
+                                selected={isSelected}
+                            />
+                        );
+                    })}
+
+                    {additionalButtons.map((btn, idx) => {
+                        const buttonSelectedIndex = fieldConfigs.length + idx;
+                        return (
+                            <MenuButton
+                                key={btn.label}
+                                label={btn.label}
+                                selected={selectedIndex === buttonSelectedIndex}
                             />
                         );
                     })}
 
                     {actionButton}
-                </box>
-            </scrollbox>
-        </box>
+                </Container>
+            </ScrollView>
+        </Panel>
     );
 }
