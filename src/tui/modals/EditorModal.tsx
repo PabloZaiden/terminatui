@@ -6,6 +6,7 @@ import { Select } from "../semantic/Select.tsx";
 import { TextInput } from "../semantic/TextInput.tsx";
 import { Label } from "../semantic/Label.tsx";
 import type { ModalComponent, ModalDefinition } from "../registry.ts";
+import { useKeyboardContext } from "../context/KeyboardContext.tsx";
 
 export interface EditorModalParams {
     fieldKey: string;
@@ -70,6 +71,7 @@ function EditorModalView({
     onCancel,
     fieldConfigs,
 }: EditorModalViewProps) {
+    const { setInputCaptured } = useKeyboardContext();
     const [inputValue, setInputValue] = useState("");
     const [selectIndex, setSelectIndex] = useState(0);
 
@@ -89,15 +91,36 @@ function EditorModalView({
         }
     }, [fieldKey, currentValue, visible, fieldConfigs]);
 
+    // While the editor is open, avoid extra per-keystroke work by preventing the
+    // underlying screen from receiving key events.
+    useEffect(() => {
+        if (!visible || !fieldKey) {
+            return;
+        }
+
+        setInputCaptured(true);
+        return () => {
+            setInputCaptured(false);
+        };
+    }, [visible, fieldKey, setInputCaptured]);
+
     // Register as active handler to block underlying screen from receiving events.
     // The native input/select components handle Enter internally via onSubmit/onSelect,
-    // so we don't need to handle it here. We just need to be the active handler.
+    // so we don't need to handle it here.
     useActiveKeyHandler(
-        () => {
-            // Let native components handle everything - we're just blocking the screen below
+        (event) => {
+            if (event.name === "return") {
+                return true;
+            }
+
+            if (event.name === "escape") {
+                onCancel();
+                return true;
+            }
+
             return false;
         },
-        { enabled: visible && fieldKey !== null }
+        { enabled: visible && Boolean(fieldKey) }
     );
 
     if (!visible || !fieldKey) {

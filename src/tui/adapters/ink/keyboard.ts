@@ -18,6 +18,8 @@ function normalizeKeyName(input: string, key: { return?: boolean; escape?: boole
     } else if (key.backspace) {
         event.name = "backspace";
     } else if (key.delete) {
+        // Terminals often send escape sequences for “Delete” that some libraries
+        // expose as `delete`, others as `del`. Keep it normalized.
         event.name = "delete";
     } else if (key.tab) {
         event.name = "tab";
