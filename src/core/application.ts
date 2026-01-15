@@ -23,6 +23,7 @@ export interface GlobalOptions {
   "log-level"?: string;
   "detailed-logs"?: boolean;
   "interactive"?: boolean;
+  "renderer"?: "opentui" | "ink";
 }
 
 /**
@@ -447,6 +448,26 @@ export class Application {
       } else if (arg === "--interactive" || arg === "-i") {
         globalOptions["interactive"] = true;
         i += 1;
+      } else if (arg === "--renderer" && i + 1 < argv.length) {
+        const type = argv[i + 1];
+        if (type === "opentui" || type === "ink") {
+          globalOptions["renderer"] = type;
+          globalOptions["interactive"] = true;
+          i += 2;
+        } else {
+          remainingArgs.push(arg);
+          i += 1;
+        }
+      } else if (arg.startsWith("--renderer=")) {
+        const type = arg.slice("--renderer=".length);
+        if (type === "opentui" || type === "ink") {
+          globalOptions["renderer"] = type;
+          globalOptions["interactive"] = true;
+          i += 1;
+        } else {
+          remainingArgs.push(arg);
+          i += 1;
+        }
       } else { 
         remainingArgs.push(arg);
         i += 1;

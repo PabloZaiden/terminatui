@@ -63,11 +63,12 @@ export class TuiApplication extends Application {
          // Launch TUI if:
          // 1. Explicit --interactive flag, or
          // 2. No args and TUI is enabled
-         if (globalOptions["interactive"] || (remainingArgs.length === 0 && this.enableTui)) {
-             this.applyGlobalOptions(globalOptions);
-             await this.runTui();
-             return;
-         }
+           if (globalOptions["interactive"] || (remainingArgs.length === 0 && this.enableTui)) {
+               this.applyGlobalOptions(globalOptions);
+               const rendererType = globalOptions["renderer"] ?? "opentui";
+               await this.runTui(rendererType);
+               return;
+           }
 
          await super.runFromArgs(remainingArgs);
      }
@@ -75,14 +76,14 @@ export class TuiApplication extends Application {
     /**
      * Launch the interactive TUI.
      */
-    async runTui(): Promise<void> {
-        // Get all commands that support TUI or have options
+     async runTui(rendererType: "opentui" | "ink" = "opentui"): Promise<void> {
+         // Get all commands that support TUI or have options
         const commands = this.getExecutableCommands();
 
         // Load and apply persisted settings (log-level, detailed-logs)
         this.loadPersistedSettings();
 
-        const renderer = await createRenderer("opentui", {
+        const renderer = await createRenderer(rendererType, {
             useAlternateScreen: true,
         });
 
