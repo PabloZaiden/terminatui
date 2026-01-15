@@ -7,7 +7,7 @@ export function Field({ label, value, selected, onActivate }: FieldProps) {
     const valueColor = selected ? SemanticColors.value : SemanticColors.text;
 
     return (
-        <box flexDirection="row" gap={1} {...({ onClick: onActivate } as any)}>
+        <box flexDirection="row" gap={1} {...({ onClick: onActivate })}>
             <text fg={labelColor}>
                 {prefix}
                 {label}:

@@ -1,5 +1,6 @@
 import { Text } from "ink";
 import type { LabelProps } from "../../../semantic/types.ts";
+import { toPlainText } from "../utils.ts";
 
 const COLOR_MAP: Record<string, string> = {
     text: "white",
@@ -11,23 +12,6 @@ const COLOR_MAP: Record<string, string> = {
     value: "magenta",
     code: "gray",
 };
-
-function toPlainText(node: unknown): string {
-    if (node === null || node === undefined || typeof node === "boolean") {
-        return "";
-    }
-    if (typeof node === "string" || typeof node === "number") {
-        return String(node);
-    }
-    if (Array.isArray(node)) {
-        return node.map(toPlainText).join("");
-    }
-    if (typeof node === "object" && node && "props" in node) {
-        const anyNode = node as any;
-        return toPlainText(anyNode.props?.children);
-    }
-    return "";
-}
 
 export function Label({ color, bold, italic, children }: LabelProps) {
     const text = toPlainText(children);

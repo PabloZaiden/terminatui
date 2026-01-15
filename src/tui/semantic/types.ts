@@ -161,16 +161,16 @@ export interface TextInputProps {
     onSubmit?: () => void;
 }
 
-export interface SelectOption<TValue extends string = string> {
+export interface SelectOption {
     label: string;
-    value: TValue;
+    value: string;
 }
 
-export interface SelectProps<TValue extends string = string> {
-    options: SelectOption<TValue>[];
-    value: TValue;
+export interface SelectProps {
+    options: SelectOption[];
+    value: string;
     focused?: boolean;
-    onChange: (value: TValue) => void;
+    onChange: (value: string) => void;
     onSubmit?: () => void;
 }
 

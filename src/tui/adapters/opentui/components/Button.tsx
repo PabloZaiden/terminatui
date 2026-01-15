@@ -6,7 +6,7 @@ export function Button({ label, selected, onActivate }: ButtonProps) {
     const bg = selected ? SemanticColors.selectionBackground : undefined;
 
     return (
-        <text fg={fg} bg={bg} {...({ onClick: onActivate } as any)}>
+        <text fg={fg} bg={bg} {...({ onClick: onActivate })}>
             {label}
         </text>
     );

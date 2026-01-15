@@ -98,10 +98,8 @@ export class InkRenderer implements Renderer {
             {
                 exitOnCtrlC: true,
                 patchConsole: false,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                stdout: process.stdout as any,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                stdin: process.stdin as any,
+                stdout: process.stdout,
+                stdin: process.stdin,
             }
         );
     }

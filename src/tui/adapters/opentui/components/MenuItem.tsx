@@ -16,7 +16,7 @@ export function MenuItem({
 
     return (
         <box flexDirection="column">
-            <text fg={fg} bg={bg} {...({ onClick: onActivate } as any)}>
+            <text fg={fg} bg={bg} {...({ onClick: onActivate })}>
                 {prefix}{displayLabel}
             </text>
             {description ? (

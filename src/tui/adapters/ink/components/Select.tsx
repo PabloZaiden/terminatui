@@ -3,7 +3,7 @@ import { Text } from "ink";
 import { useMemo } from "react";
 import type { SelectProps } from "../../../semantic/types.ts";
 
-type Item<TValue extends string> = { label: string; value: TValue };
+type Item = { label: string; value: string };
 
 type ItemComponentProps = {
     isSelected?: boolean;
@@ -16,9 +16,9 @@ function ItemComponent({ label }: ItemComponentProps) {
     return <Text>{label}</Text>;
 }
 
-export function Select<TValue extends string>({ options, value, focused, onChange, onSubmit }: SelectProps<TValue>) {
+export function Select({ options, value, focused, onChange, onSubmit }: SelectProps) {
     const items = useMemo(
-        () => options.map((o) => ({ label: o.label, value: o.value }) as Item<TValue>),
+        () => options.map((o) => ({ label: o.label, value: o.value }) as Item),
         [options]
     );
 
@@ -33,11 +33,11 @@ export function Select<TValue extends string>({ options, value, focused, onChang
     return (
         <InkSelectInput
             key={key}
-            items={items as any}
+            items={items}
             isFocused={focused}
             initialIndex={initialIndex}
-            itemComponent={ItemComponent as any}
-            onHighlight={(item: any) => onChange(item.value as TValue)}
+            itemComponent={ItemComponent}
+            onHighlight={(item) => onChange(item.value)}
             onSelect={() => onSubmit?.()}
         />
     );
