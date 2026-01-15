@@ -34,11 +34,7 @@ export const GLOBAL_OPTIONS_SCHEMA = {
   "detailed-logs": {
     type: "boolean",
     description: "Enable detailed logging",
-  },
-  "no-detailed-logs": {
-    type: "boolean",
-    description: "Disable detailed logging",
-    tuiHidden: true,
+    default: false,
   },
   interactive: {
     type: "boolean",
@@ -451,20 +447,15 @@ export class Application {
       args: argv,
       options: parseArgsConfig.options as ParseArgsConfig["options"],
       allowPositionals: true,
+      allowNegative: true,
       strict: false,
       tokens: true,
     });
 
-    const rawGlobalOptions = parseOptionValues(GLOBAL_OPTIONS_SCHEMA, result.values) as GlobalOptions & {
-      "no-detailed-logs"?: boolean;
-    };
+    const rawGlobalOptions = parseOptionValues(GLOBAL_OPTIONS_SCHEMA, result.values) as GlobalOptions;
 
     const globalOptions: GlobalOptions = { ...rawGlobalOptions };
-    if (rawGlobalOptions["no-detailed-logs"]) {
-      globalOptions["detailed-logs"] = false;
-    }
-    delete (globalOptions as any)["no-detailed-logs"];
-
+    
     const remainingArgs: string[] = [];
     for (const token of result.tokens ?? []) {
       if (token.kind === "positional") {
@@ -479,8 +470,8 @@ export class Application {
 
           if (token.value !== undefined) {
             remainingArgs.push(String(token.value));
-          } else if ((token as any).inlineValue !== undefined) {
-            remainingArgs.push(String((token as any).inlineValue));
+          } else if ("inlineValue" in token && (token as { inlineValue?: unknown }).inlineValue !== undefined) {
+            remainingArgs.push(String((token as { inlineValue?: unknown }).inlineValue));
           }
         }
       }
