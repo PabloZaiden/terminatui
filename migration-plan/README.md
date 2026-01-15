@@ -73,7 +73,7 @@ Contains:
 | **Phase 1** | Create semantic component library (OpenTUI impl) | ✅ Complete |
 | **Phase 2** | Refactor existing components to use semantic layer | ✅ Complete |
 | **Phase 3** | Implement Ink adapter | ✅ Complete |
-| **Phase 4** | Dual-renderer cutover (keep OpenTUI + Ink) | Not Started |
+| **Phase 4** | Dual-renderer cutover (keep OpenTUI + Ink) | ✅ Complete |
 
 ## 🏗️ Proposed Architecture
 
@@ -123,11 +123,11 @@ Each component abstracts rendering details so adapters can implement them differ
 - [x] Phase 1 complete: Semantic component layer + OpenTUI adapter + renderer interface/factory
 - [x] Phase 2 complete: App UI fully uses semantic components (no raw OpenTUI primitives/imports outside adapter)
 
-**Next Steps:**
-1. Do a quick manual parity pass between OpenTUI and Ink
-2. Proceed to Phase 4: dual-renderer cutover work ([tasks](./phase-4/tasks.md))
+**Status:** Migration complete.
 
-**Current Focus:** [Phase 4 - Dual-Renderer Cutover](./phase-4/README.md)
+**Follow-ups (optional):**
+1. Keep a small manual parity checklist for future tweaks
+2. Run both renderers in CI on every change
 
 ## 🔍 Key Documents to Read (In Order)
 
@@ -194,4 +194,4 @@ Refer to:
 
 **Last Updated:** 2026-01-14  
 **Documents Version:** 1.2  
-**Status:** Phase 2 Complete - Ready for Phase 3
+**Status:** Migration Complete

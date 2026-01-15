@@ -14,10 +14,10 @@
 **Description:** Provide a stable way to select renderer per app invocation.
 
 **Actions:**
-- [ ] Decide default renderer (likely `opentui` for now)
-- [ ] Ensure `TuiApplication` accepts a renderer option (`"opentui" | "ink"`)
-- [ ] Ensure CLI entry points can pass renderer selection through
-- [ ] Document how to choose renderer (env var / flag / config)
+- [x] Decide default renderer
+- [x] Ensure `TuiApplication` accepts a renderer option (`"opentui" | "ink"`)
+- [x] Ensure CLI entry points can pass renderer selection through
+- [x] Document how to choose renderer (env var / flag / config)
 
 **Validation:**
 - App launches with either renderer
@@ -28,10 +28,10 @@
 **Description:** Confirm the semantic layer provides acceptable parity on both renderers.
 
 **Actions:**
-- [ ] Ensure all 12 semantic components are implemented in Ink adapter
-- [ ] Verify keyboard behavior parity (global shortcuts + active handler)
-- [ ] Verify overlays/modals parity (stacking, closing, focus)
-- [ ] Verify scrolling parity (results, logs)
+- [x] Ensure all 12 semantic components are implemented in Ink adapter
+- [x] Verify keyboard behavior parity (global shortcuts + active handler)
+- [x] Verify overlays/modals parity (stacking, closing, focus)
+- [x] Verify scrolling parity (results, logs)
 
 **Validation:**
 - No major UX regressions between renderers
@@ -42,9 +42,9 @@
 **Description:** Update docs/examples to reflect dual-renderer support.
 
 **Actions:**
-- [ ] Update README/docs to explain renderer selection
-- [ ] Ensure examples can run with `opentui` and `ink`
-- [ ] Add a short “when to choose which renderer” note
+- [x] Update README/docs to explain renderer selection
+- [x] Ensure examples can run with `opentui` and `ink`
+- [x] Add a short “when to choose which renderer” note
 
 **Validation:**
 - Docs are accurate
@@ -55,8 +55,8 @@
 **Description:** Make it hard to regress one renderer while working on the other.
 
 **Actions:**
-- [ ] Run automated checks against both renderers where possible
-- [ ] Add smoke test script(s) that launch both renderers in example app
+- [x] Run automated checks against both renderers where possible
+- [x] Add smoke test script(s) that launch both renderers in example app
 
 **Validation:**
 - Regressions are caught early
@@ -67,11 +67,11 @@
 **Description:** Update README to reflect Ink migration.
 
 **Actions:**
-- [ ] Update dependencies section in README.md
-- [ ] Update any OpenTUI references
-- [ ] Add note about migration from OpenTUI
-- [ ] Update examples if needed
-- [ ] Review for accuracy
+- [x] Update dependencies section in README.md
+- [x] Update any OpenTUI references
+- [x] Add note about migration from OpenTUI
+- [x] Update examples if needed
+- [x] Review for accuracy
 
 **Validation:**
 - README accurate
@@ -83,11 +83,11 @@
 **Description:** Update API documentation for semantic components.
 
 **Actions:**
-- [ ] Document semantic component library
-- [ ] Add examples for custom renderResult with semantic components
-- [ ] Document migration guide for users
-- [ ] Provide before/after code examples
-- [ ] Document any breaking changes
+- [x] Document semantic component library
+- [x] Add examples for custom renderResult with semantic components
+- [x] Document migration guide for users
+- [x] Provide before/after code examples
+- [x] Document any breaking changes
 
 **Validation:**
 - Clear migration path for users
@@ -205,7 +205,7 @@
 **Description:** Complete final validation before declaring migration complete.
 
 **Checklist:**
-- [ ] All tests pass (`bun run test`)
-- [ ] Build succeeds (`bun run build`)
-- [ ] Example app works perfectly
-- [ ] Production app works perfectly
+- [x] Build succeeds (`bun run build`)
+- [x] All tests pass (`bun run test`)
+- [x] Example app works perfectly
+- [x] Production app works perfectly

@@ -90,8 +90,8 @@ The migration is complete and successful when:
 After Phase 4 completion:
 1. Release new version
 2. Update production apps
-3. Archive migration documentation
-4. Celebrate! 🎉
+3. Archive the migration plan (optional)
+4. Keep a dual-renderer smoke test in CI
 
 ---
 
