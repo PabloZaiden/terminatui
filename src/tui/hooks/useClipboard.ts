@@ -1,34 +1,52 @@
 import { useCallback, useState } from "react";
 import * as fs from "fs";
 
-/**
- * Copy text to clipboard using OSC 52 escape sequence.
- * Write directly to /dev/tty to bypass any stdout interception.
- */
+
 function copyWithOsc52(text: string): boolean {
     try {
-        // Strip ANSI codes if Bun is available, otherwise use as-is
-        const cleanText = typeof Bun !== "undefined" 
-            ? Bun.stripANSI(text) 
-            : text.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, "");
+        const cleanText = Bun.stripANSI(text);
         const base64 = Buffer.from(cleanText).toString("base64");
-        // OSC 52 sequence: ESC ] 52 ; c ; <base64> BEL
         const osc52 = `\x1b]52;c;${base64}\x07`;
-        
-        // Try to write directly to the TTY to bypass OpenTUI's stdout capture
+
         try {
-            const fd = fs.openSync('/dev/tty', 'w');
+            const fd = fs.openSync("/dev/tty", "w");
             fs.writeSync(fd, osc52);
             fs.closeSync(fd);
         } catch {
-            // Fallback to stdout if /dev/tty is not available
             process.stdout.write(osc52);
         }
-        
+
         return true;
     } catch {
         return false;
     }
+}
+
+async function copyWithPbcopy(text: string): Promise<boolean> {
+    try {
+        const cleanText = Bun.stripANSI(text);
+        const proc = Bun.spawn(["pbcopy"], {
+            stdin: "pipe",
+            stdout: "ignore",
+            stderr: "ignore",
+        });
+
+        proc.stdin.write(cleanText);
+        proc.stdin.end();
+
+        const exitCode = await proc.exited;
+        return exitCode === 0;
+    } catch {
+        return false;
+    }
+}
+
+export async function copyToClipboard(text: string): Promise<boolean> {
+    if (process.env["TERM_PROGRAM"] === "Apple_Terminal") {
+        return await copyWithPbcopy(text);
+    }
+
+    return copyWithOsc52(text);
 }
 
 export interface UseClipboardResult {
@@ -50,16 +68,20 @@ export function useClipboard(): UseClipboardResult {
     const [lastAction, setLastAction] = useState("");
     
     const copy = useCallback((text: string): boolean => {
-        return copyWithOsc52(text);
+        void copyToClipboard(text);
+        return true;
     }, []);
 
     const copyWithMessage = useCallback((text: string, label: string) => {
-        const success = copyWithOsc52(text);
-        if (success) {
+        void (async () => {
+            const success = await copyToClipboard(text);
+            if (!success) {
+                return;
+            }
+
             setLastAction(`✓ ${label} copied to clipboard`);
-            // Clear message after 2 seconds
             setTimeout(() => setLastAction(""), 2000);
-        }
+        })();
     }, []);
 
     return { copy, lastAction, setLastAction, copyWithMessage };
