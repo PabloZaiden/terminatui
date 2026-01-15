@@ -172,25 +172,25 @@ describe("Help Generation (core)", () => {
   });
 
   describe("Global Options section", () => {
-    test("renders via schema and includes interactive + renderer", () => {
+    test("modes via schema and includes mode", () => {
       const global = formatOptionSchema("Global Options", {
         "log-level": { type: "string", description: "Minimum log level" },
-        interactive: { type: "boolean", alias: "i", description: "Interactive mode" },
-        renderer: {
+        mode: {
           type: "string",
-          enum: ["opentui", "ink"],
-          description: "Renderer",
+          enum: ["opentui", "ink", "cli", "default"],
+          default: "default",
+          description: "Mode",
         },
       });
 
       expect(global).toContain("Global Options");
       expect(global).toContain("--log-level");
-      expect(global).toContain("--interactive");
-      expect(global).toContain("--interactive, --no-interactive");
-      expect(global).toContain("-i");
-      expect(global).toContain("--renderer");
+      expect(global).toContain("--mode");
       expect(global).toContain("opentui");
       expect(global).toContain("ink");
+      expect(global).toContain("cli");
+      expect(global).toContain("default");
+      expect(global).toContain("[default: default]");
     });
 
     test("generateCommandHelp includes global options when provided", () => {
@@ -198,13 +198,17 @@ describe("Help Generation (core)", () => {
       const help = generateCommandHelp(cmd, {
         appName: "myapp",
         globalOptionsSchema: {
-          interactive: { type: "boolean", alias: "i", description: "Interactive mode" },
+          mode: {
+            type: "string",
+            enum: ["opentui", "ink", "cli", "default"],
+            default: "default",
+            description: "Mode",
+          },
         },
       });
 
       expect(help).toContain("Global Options");
-      expect(help).toContain("--interactive");
-      expect(help).toContain("--interactive, --no-interactive");
+      expect(help).toContain("--mode");
     });
 
     test("generateAppHelp includes global options when provided", () => {
@@ -212,12 +216,12 @@ describe("Help Generation (core)", () => {
       const help = generateAppHelp(commands, {
         appName: "myapp",
         globalOptionsSchema: {
-          renderer: { type: "string", enum: ["opentui", "ink"], description: "Renderer" },
+          mode: { type: "string", enum: ["opentui", "ink", "cli", "default"], description: "Mode" },
         },
       });
 
       expect(help).toContain("Global Options");
-      expect(help).toContain("--renderer");
+      expect(help).toContain("--mode");
     });
   });
 });

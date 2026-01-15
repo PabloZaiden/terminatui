@@ -19,11 +19,14 @@ import { KNOWN_COMMANDS, RESERVED_TOP_LEVEL_COMMAND_NAMES } from "./knownCommand
  * Global options available on all commands.
  * These are handled by the framework before dispatching to commands.
  */
+
+export type TuiModeOptions = "opentui" | "ink";
+export type ModeOptions = TuiModeOptions | "cli" | "default";
+
 export interface GlobalOptions {
   "log-level"?: string;
   "detailed-logs"?: boolean;
-  "interactive"?: boolean;
-  "renderer"?: "opentui" | "ink";
+  "mode"?: string;
 }
 
 export const GLOBAL_OPTIONS_SCHEMA = {
@@ -36,15 +39,11 @@ export const GLOBAL_OPTIONS_SCHEMA = {
     description: "Enable detailed logging",
     default: false,
   },
-  interactive: {
-    type: "boolean",
-    alias: "i",
-    description: "Run in interactive TUI mode",
-  },
-  renderer: {
+  mode: {
     type: "string",
-    enum: ["opentui", "ink"] as const,
-    description: "Renderer to use for interactive mode",
+    description: "Execution mode",
+    default: "default",
+    enum: ["opentui", "ink", "cli", "default"],
   },
 } satisfies OptionSchema;
 
@@ -94,7 +93,7 @@ export interface ApplicationHooks {
  *   name: "myapp",
  *   version: "1.0.0",
  *   commands: [new RunCommand(), new CheckCommand()],
- *   defaultCommand: "interactive",
+ *   defaultCommand: "version",
  * });
  * 
  * await app.run();
@@ -102,6 +101,12 @@ export interface ApplicationHooks {
  */
 export class Application {
   readonly name: string;
+
+  /**
+   * Default renderer/mode used when `--renderer=default` is specified.
+   * Base Application defaults to `cli`.
+   */
+  protected defaultRenderer: ModeOptions = "cli";
   readonly displayName: string;
   readonly version: string;
   readonly commitHash?: string;
@@ -235,6 +240,15 @@ export class Application {
       // Parse global options first
       const { globalOptions, remainingArgs } = this.parseGlobalOptions(argv);
       this.applyGlobalOptions(globalOptions);
+
+      const mode = globalOptions["mode"] as ModeOptions ?? "default";
+      const resolvedMode = mode === "default" ? this.defaultRenderer : mode;
+
+      if (resolvedMode !== "cli") {
+        throw new Error(
+          `Mode '${resolvedMode}' is not supported by Application. Use TuiApplication or set --mode=cli.`
+        );
+      }
 
       // Extract command path from args
       const { commands: commandPath, remaining: flagArgs } = extractCommandChain(remainingArgs);

@@ -1,6 +1,6 @@
 import { createRenderer } from "./adapters/factory.ts";
 import { RendererProvider } from "./context/RendererContext.tsx";
-import { Application, type ApplicationConfig } from "../core/application.ts";
+import { Application, type ModeOptions, type ApplicationConfig, type TuiModeOptions } from "../core/application.ts";
 import type { AnyCommand } from "../core/command.ts";
 import { TuiRoot } from "./TuiRoot.tsx";
 import { LogLevel } from "../core/logger.ts";
@@ -13,7 +13,7 @@ import { AppContext } from "../core/context.ts";
  * Extended configuration for TUI-enabled applications.
  */
 export interface TuiApplicationConfig extends ApplicationConfig {
-    /** Enable interactive TUI mode */
+    /** Enable TUI mode (when renderer is opentui/ink/default) */
     enableTui?: boolean;
 }
 
@@ -21,7 +21,7 @@ export interface TuiApplicationConfig extends ApplicationConfig {
  * Application class with built-in TUI support.
  * 
  * Extends the base Application to provide automatic TUI rendering
- * when running interactively or with the --interactive flag.
+ * when running with `--renderer` set to a TUI renderer (or default).
  * 
  * @example
  * ```typescript
@@ -58,25 +58,34 @@ export class TuiApplication extends Application {
      }
 
      override async runFromArgs(argv: string[]): Promise<void> {
-         const { globalOptions, remainingArgs } = this.parseGlobalOptions(argv);
+         const { globalOptions } = this.parseGlobalOptions(argv);
 
-         // Launch TUI if:
-         // 1. Explicit --interactive flag, or
-         // 2. No args and TUI is enabled
-           if (globalOptions["interactive"] || (remainingArgs.length === 0 && this.enableTui)) {
-               this.applyGlobalOptions(globalOptions);
-               const rendererType = globalOptions["renderer"] ?? "opentui";
-               await this.runTui(rendererType);
-               return;
-           }
+        const mode = globalOptions["mode"] as ModeOptions ?? "default";
+        const resolvedMode = mode === "default" ? this.defaultRenderer : mode;
 
-         await super.runFromArgs(remainingArgs);
+        if (resolvedMode === "cli") {
+            await super.runFromArgs(argv);
+            return;
+        }
+
+        if (!this.enableTui) {
+            throw new Error("TUI mode is disabled for this application");
+        }
+
+        if (resolvedMode === "opentui" || resolvedMode === "ink") {
+            this.applyGlobalOptions(globalOptions);
+
+            await this.runTui(resolvedMode);
+            return;
+        }
+
+        throw new Error(`Unknown mode '${resolvedMode}'`);
      }
 
-    /**
-     * Launch the interactive TUI.
-     */
-     async runTui(rendererType: "opentui" | "ink" = "opentui"): Promise<void> {
+     /**
+      * Launch the TUI.
+      */
+     async runTui(rendererType: TuiModeOptions): Promise<void> {
          // Get all commands that support TUI or have options
         const commands = this.getExecutableCommands();
 
