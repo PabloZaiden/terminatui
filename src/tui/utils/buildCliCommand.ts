@@ -31,7 +31,7 @@ export function buildCliCommand<T extends OptionSchema>(
     schema: T,
     values: OptionValues<T>
 ): string {
-    const parts: string[] = [appName, ...commandPath];
+    const parts: string[] = [appName, "--mode", "cli", ...commandPath];
 
     for (const [key, def] of Object.entries(schema) as [keyof T & string, OptionDef][]) {
         const value = values[key];
