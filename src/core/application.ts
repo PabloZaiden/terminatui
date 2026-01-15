@@ -485,7 +485,7 @@ export class Application {
 
           if (token.value !== undefined) {
             remainingArgs.push(String(token.value));
-          } else if ("inlineValue" in token && (token as { inlineValue?: unknown }).inlineValue !== undefined) {
+          } else if (token.inlineValue !== undefined) {
             remainingArgs.push(String((token as { inlineValue?: unknown }).inlineValue));
           }
         }
