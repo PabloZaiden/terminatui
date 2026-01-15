@@ -64,6 +64,7 @@ export interface Renderer {
     initialize: () => Promise<void>;
     render: (node: ReactNode) => void;
     destroy: () => void;
+    supportCustomRendering: () => boolean;
 
     keyboard: KeyboardAdapter;
     components: RendererComponents;

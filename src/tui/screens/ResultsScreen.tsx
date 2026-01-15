@@ -5,6 +5,7 @@ import { ResultsPanel } from "../components/ResultsPanel.tsx";
 import { useClipboardProvider } from "../hooks/useClipboardProvider.ts";
 import { type ScreenComponent } from "../registry.ts";
 import { ScreenBase } from "./ScreenBase.ts";
+import { useRenderer } from "../context/RendererContext.tsx";
 
 /**
  * Screen state stored in navigation params.
@@ -36,6 +37,13 @@ export class ResultsScreen extends ScreenBase {
 
             const { result, command } = params;
 
+            const renderer = useRenderer();
+
+            let renderFunction = undefined;
+            if (renderer.supportCustomRendering()) {
+                renderFunction = command.renderResult;
+            }
+
             // Register clipboard provider for this screen
             useClipboardProvider(
                 useCallback(() => {
@@ -52,7 +60,7 @@ export class ResultsScreen extends ScreenBase {
                     result={result as CommandResult | null}
                     error={null}
                     focused={true}
-                    renderResult={command.renderResult}
+                    renderResult={renderFunction}
                 />
             );
         }

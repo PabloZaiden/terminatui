@@ -55,7 +55,7 @@ export class RunningScreen extends ScreenBase {
                 <Panel
                     flexDirection="column"
                     flex={1}
-                    title={`Running ${command.displayName ?? command.name}`}
+                    title={`${command.displayName ?? command.name}`}
                     padding={1}
                     focused
                 >

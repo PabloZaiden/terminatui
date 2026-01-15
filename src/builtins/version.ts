@@ -18,7 +18,7 @@ interface VersionConfig {
  * Format version string with optional commit hash.
  * If commitHash is empty or undefined, shows "(dev)".
  */
-function formatVersion(version: string, commitHash?: string): string {
+export function formatVersion(version: string, commitHash?: string): string {
   const hashPart = commitHash && commitHash.length > 0 
     ? commitHash.substring(0, 7) 
     : "(dev)";

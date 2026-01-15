@@ -6,8 +6,15 @@
     "url": "https://github.com/PabloZaiden/terminatui"
   },
   "type": "module",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "files": [
+    "src/**/*"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
   "scripts": {
     "build": "bunx tsc --noEmit",
     "test": "bun test",
