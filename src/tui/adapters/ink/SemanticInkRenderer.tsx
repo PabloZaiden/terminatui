@@ -33,17 +33,17 @@ function SemanticInkAppShell(props: AppShellProps & { copyToast: string | null }
                     {props.screen}
                 </Container>
 
-                <Panel dense border={true} flexDirection="column" gap={0} height={4}>
-                    <Container flexDirection="row" justifyContent="space-between" padding={{ left: 1, right: 1 }}>
-                        <Container flexDirection="row">
-                            <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
-                            <Label color={props.copyToast ? "success" : "mutedText"} bold={Boolean(props.copyToast)}>
-                                {props.copyToast ?? props.status.message}
-                            </Label>
+                    <Panel dense border={true} flexDirection="column" gap={0} height={4}>
+                        <Container flexDirection="row" justifyContent="space-between" padding={{ left: 1, right: 1 }}>
+                            <Container flexDirection="row" gap={1}>
+                                <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
+                                {props.copyToast ? (
+                                    <Label color="success" bold>{props.copyToast}</Label>
+                                ) : null}
+                            </Container>
+                            <Label color="mutedText">Esc Back  Ctrl+L Logs  Ctrl+Y Copy</Label>
                         </Container>
-                        <Label color="mutedText">Esc Back  Ctrl+L Logs  Ctrl+Y Copy</Label>
-                    </Container>
-                </Panel>
+                    </Panel>
 
                 {props.modals}
             </Container>

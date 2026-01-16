@@ -1,8 +1,8 @@
 import { createCliRenderer, type CliRenderer } from "@opentui/core";
 import { createRoot, type Root } from "@opentui/react";
-import { useLayoutEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { SemanticColors } from "../../theme.ts";
-import type { Renderer, RendererConfig } from "../types.ts";
+import type { KeyboardEvent, Renderer, RendererConfig } from "../types.ts";
 import { SemanticOpenTuiRenderer } from "./SemanticOpenTuiRenderer.tsx";
 import { useOpenTuiKeyboardAdapter } from "./keyboard.ts";
 import { Button } from "./components/Button.tsx";
@@ -24,27 +24,70 @@ import { Value } from "./components/Value.tsx";
 
 import { copyToTerminalClipboard } from "../shared/TerminalClipboard.ts";
 import { useTuiDriver } from "../../driver/context/TuiDriverContext.tsx";
+import type { TuiAction } from "../../actions.ts";
 
-function useOpenTuiCopyHandler(setCopyToast: (message: string) => void) {
+function OpenTuiKeyboardHandler({
+    dispatchAction,
+    getScreenKeyHandler,
+    keyboard,
+    setCopyToast,
+}: {
+    dispatchAction: (action: TuiAction) => void;
+    getScreenKeyHandler: () => ((event: KeyboardEvent) => boolean) | null;
+    keyboard: Renderer["keyboard"];
+    setCopyToast: (message: string | null) => void;
+}) {
     const driver = useTuiDriver();
 
-    return async () => {
-        const payload = driver.getActiveCopyPayload();
-        if (!payload) {
-            return;
-        }
+    useEffect(() => {
+        const cleanup = keyboard.setGlobalHandler((event) => {
+            if (event.name === "escape") {
+                dispatchAction({ type: "nav.back" });
+                return true;
+            }
 
-        await copyToTerminalClipboard(payload.content);
-        setCopyToast(`Copied ${payload.label}`);
-    };
+            if (event.ctrl && event.name === "y") {
+                const payload = driver.getActiveCopyPayload();
+                if (payload) {
+                    void copyToTerminalClipboard(payload.content).then(() => {
+                        setCopyToast(`Copied ${payload.label}`);
+                        setTimeout(() => setCopyToast(null), 1500);
+                    });
+                }
+                return true;
+            }
+
+            if (event.ctrl && event.name === "l") {
+                dispatchAction({ type: "logs.open" });
+                return true;
+            }
+
+            const screenHandler = getScreenKeyHandler();
+            if (screenHandler) {
+                return screenHandler(event);
+            }
+
+            return false;
+        });
+
+        return cleanup;
+    }, [dispatchAction, getScreenKeyHandler, keyboard, driver, setCopyToast]);
+
+    return null;
 }
 
 export class OpenTuiRenderer implements Renderer {
     private readonly semanticRenderer = new SemanticOpenTuiRenderer();
 
     private copyToast: string | null = null;
+    private forceRerenderFn: (() => void) | null = null;
 
-    private semanticScreenKeyHandler: ((event: import("../types.ts").KeyboardEvent) => boolean) | null = null;
+    private semanticScreenKeyHandler: ((event: KeyboardEvent) => boolean) | null = null;
+
+    private setCopyToast = (message: string | null) => {
+        this.copyToast = message;
+        this.forceRerenderFn?.();
+    };
 
     public renderSemanticAppShell: Renderer["renderSemanticAppShell"] = (props) => {
         return this.semanticRenderer.renderAppShell({ ...props, copyToast: this.copyToast });
@@ -52,8 +95,8 @@ export class OpenTuiRenderer implements Renderer {
     public renderSemanticCommandBrowserScreen: Renderer["renderSemanticCommandBrowserScreen"] = (props) => {
         this.semanticScreenKeyHandler = (event) => {
             if (event.ctrl && event.name === "l") {
-                // Adapter-owned logs open.
-                return true;
+                // Adapter-owned logs open — let global handler process it.
+                return false;
             }
 
             if (event.name === "up") {
@@ -80,8 +123,8 @@ export class OpenTuiRenderer implements Renderer {
     public renderSemanticConfigScreen: Renderer["renderSemanticConfigScreen"] = (props) => {
         this.semanticScreenKeyHandler = (event) => {
             if (event.ctrl && event.name === "l") {
-                // Adapter-owned logs open.
-                return true;
+                // Adapter-owned logs open — let global handler process it.
+                return false;
             }
 
             if (event.name === "up") {
@@ -138,41 +181,19 @@ export class OpenTuiRenderer implements Renderer {
 
         return this.semanticRenderer.renderEditorScreen(props);
     };
-    public registerActionDispatcher = (dispatchAction: (action: import("../../actions.ts").TuiAction) => void) => {
-        const [, forceRerender] = useState(0);
-        const copy = useOpenTuiCopyHandler((message) => {
-            this.copyToast = message;
-            forceRerender((x) => x + 1);
-            setTimeout(() => {
-                this.copyToast = null;
-                forceRerender((x) => x + 1);
-            }, 1500);
-        });
 
-        return this.keyboard.setGlobalHandler((event) => {
-            // Avoid interfering with text inputs as much as possible; keep Esc working.
-            if (event.name === "escape") {
-                dispatchAction({ type: "nav.back" });
-                return true;
-            }
-
-            if (event.ctrl && event.name === "y") {
-                void copy();
-                return true;
-            }
-
-            if (event.ctrl && event.name === "l") {
-                dispatchAction({ type: "logs.open" });
-                return true;
-            }
-
-            if (this.semanticScreenKeyHandler) {
-                return this.semanticScreenKeyHandler(event);
-            }
-
-            return false;
-        });
+    public renderKeyboardHandler: Renderer["renderKeyboardHandler"] = ({ dispatchAction }) => {
+        return (
+            <OpenTuiKeyboardHandlerWrapper
+                dispatchAction={dispatchAction}
+                getScreenKeyHandler={() => this.semanticScreenKeyHandler}
+                keyboard={this.keyboard}
+                setCopyToast={this.setCopyToast}
+                setForceRerender={(fn) => { this.forceRerenderFn = fn; }}
+            />
+        );
     };
+
     private renderer: CliRenderer | null = null;
     private root: Root | null = null;
 
@@ -267,4 +288,33 @@ function KeyboardBridge({
     }, [onReady, keyboard]);
 
     return <>{children}</>;
+}
+
+function OpenTuiKeyboardHandlerWrapper({
+    dispatchAction,
+    getScreenKeyHandler,
+    keyboard,
+    setCopyToast,
+    setForceRerender,
+}: {
+    dispatchAction: (action: TuiAction) => void;
+    getScreenKeyHandler: () => ((event: KeyboardEvent) => boolean) | null;
+    keyboard: Renderer["keyboard"];
+    setCopyToast: (message: string | null) => void;
+    setForceRerender: (fn: () => void) => void;
+}) {
+    const [, setTick] = useState(0);
+
+    useLayoutEffect(() => {
+        setForceRerender(() => setTick((x) => x + 1));
+    }, [setForceRerender]);
+
+    return (
+        <OpenTuiKeyboardHandler
+            dispatchAction={dispatchAction}
+            getScreenKeyHandler={getScreenKeyHandler}
+            keyboard={keyboard}
+            setCopyToast={setCopyToast}
+        />
+    );
 }

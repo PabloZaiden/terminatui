@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ✅ COMPLETE** — All Phase A/B/C/D checklist items are done. Verified with passing build and tests.
+> **STATUS: ⏳ PENDING MANUAL TESTING** — Iteration 2.1 code fixes complete. Awaiting manual verification of keyboard navigation and status bar. See **Section 9: Iteration 2.1 Bugfixes**.
 
 This document is a corrective follow-up to:
 
@@ -735,10 +735,118 @@ These items were open questions during the refactor. They have now been resolved
   - **Resolved**: Simple driver-owned getter (`statusMessage`) based on executor state. No explicit store or event system. Adapters can overlay transient feedback (e.g., "Copied…") independently.
 
 
-These items may evolve. If any decision changes, apply the “Document update protocol” first.
+These items may evolve. If any decision changes, apply the "Document update protocol" first.
 
 - Are navigation params meant to be a minimal route id + lightweight ids, or do we allow large domain objects in navigation state?
 - Should execution orchestration live inside config controller, or a separate execution controller shared across screens?
 - Should clipboard be a capability on `AppShell` (top-level) or per-screen/per-modal capability?
-- How are status messages modeled: explicit store vs “events” vs screen-driven message props?
+- How are status messages modeled: explicit store vs "events" vs screen-driven message props?
 
+---
+
+## 9. Iteration 2.1 Bugfixes (manual testing issues)
+
+### Problem summary
+
+Manual testing of the example app revealed three critical bugs affecting both `ink` and `opentui` adapters:
+
+1. **Keyboard navigation not working** — Up/down arrows do not move selection in the command browser.
+2. **App exit not working** — Esc does not exit the app from the root screen.
+3. **"Ready" appears twice in status bar** — Duplicate status rendering.
+
+### Root cause analysis
+
+#### Bug 1 & 2: Keyboard not working
+
+The `registerActionDispatcher` method is defined in both `InkRenderer.tsx:141` and `OpenTuiRenderer.tsx:141` but is **never called** anywhere in the codebase.
+
+This method:
+- Sets up the global keyboard handler via `this.keyboard.setGlobalHandler()`
+- Handles `escape` → `nav.back` action dispatch
+- Handles `up`/`down` → screen-specific navigation via `this.semanticScreenKeyHandler`
+- Handles `ctrl+y` → copy, `ctrl+l` → logs
+
+Without calling `registerActionDispatcher`, no keyboard events are processed.
+
+**Fix:** Wire up `registerActionDispatcher` to be called when the renderer mounts. This likely needs to happen inside the render tree where the action dispatcher (navigation context) is available.
+
+#### Bug 3: "Ready" appears twice
+
+In both `SemanticInkRenderer.tsx:36-44` and `SemanticOpenTuiRenderer.tsx:37-45`, the status bar renders:
+
+```tsx
+<Container flexDirection="row">
+    <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
+    <Label color={props.copyToast ? "success" : "mutedText"} bold={Boolean(props.copyToast)}>
+        {props.copyToast ?? props.status.message}
+    </Label>
+</Container>
+```
+
+The first `<Label>` hardcodes "Ready"/"Executing...".
+The second `<Label>` shows `props.copyToast ?? props.status.message` — and `props.status.message` is ALSO "Ready"/"Executing..." (from `TuiDriver.statusMessage`).
+
+So when there's no copy toast, both labels show "Ready".
+
+**Fix:** The second label should only render when there's a `copyToast`. The status message is already handled by the first label.
+
+**Architectural note:** This duplication is acceptable here because both adapters independently implement their status bar UI. However, the copy-paste pattern led to the same bug in both. This is adapter-local UI (allowed), not shared UI (disallowed).
+
+### Checklist
+
+#### Phase 2.1A: Fix keyboard handling
+
+- [x] Wire up `registerActionDispatcher` in both renderers
+  - [x] Find where action dispatch (navigation) is available in the render tree
+  - [x] Refactored `registerActionDispatcher` → `renderKeyboardHandler` (returns React component)
+  - [x] Created `TuiRootKeyboardHandler` component for proper hook usage
+  - [x] Created `InkKeyboardHandler` and `OpenTuiKeyboardHandler` components
+- [x] Fix selection state reactivity — moved from controller internal state to navigation params
+  - [x] `CommandBrowserRouteParams.selectedIndex` — triggers re-render on selection change
+  - [x] `ConfigRouteParams.selectedFieldIndex` — triggers re-render on selection change
+- [ ] Verify keyboard navigation works in command browser (ink) — **NEEDS MANUAL TEST**
+- [ ] Verify keyboard navigation works in command browser (opentui) — **NEEDS MANUAL TEST**
+- [ ] Verify Esc exits app from root screen (ink) — **NEEDS MANUAL TEST**
+- [ ] Verify Esc exits app from root screen (opentui) — **NEEDS MANUAL TEST**
+
+#### Phase 2.1B: Fix status bar duplication
+
+- [x] Fix `SemanticInkRenderer.tsx` status bar — only show copy toast when present
+- [x] Fix `SemanticOpenTuiRenderer.tsx` status bar — only show copy toast when present
+- [ ] Verify "Ready" appears only once (ink) — **NEEDS MANUAL TEST**
+- [ ] Verify "Ready" appears only once (opentui) — **NEEDS MANUAL TEST**
+
+#### Phase 2.1C: Additional keyboard bug (OpenTUI only)
+
+- [x] Fix `OpenTuiRenderer.tsx:54-57` — Ctrl+L handler returns `true` (blocks global handler)
+  - Should return `false` like the Ink version to allow logs.open action to dispatch
+
+#### Phase 2.1D: Verification
+
+- [x] `bun run build` passes
+- [x] `bun run test` passes (78 tests)
+- [ ] Manual test: ink command browser navigation with up/down — **NEEDS MANUAL TEST**
+- [ ] Manual test: ink Esc to exit from root — **NEEDS MANUAL TEST**
+- [ ] Manual test: opentui command browser navigation with up/down — **NEEDS MANUAL TEST**
+- [ ] Manual test: opentui Esc to exit from root — **NEEDS MANUAL TEST**
+- [ ] Manual test: status bar shows "Ready" only once (both adapters) — **NEEDS MANUAL TEST**
+
+### Implementation notes (iteration 2.1)
+
+**Key architectural changes:**
+
+1. **Keyboard handler refactor**: Changed from `registerActionDispatcher` (a method that used hooks illegally) to `renderKeyboardHandler` (returns a React component). This allows proper use of `useInput` / `useKeyboard` hooks within a component tree.
+
+2. **Selection state moved to navigation params**: Controllers were using internal class state (`#commandSelectedIndex`, `#configSelectedFieldIndex`) which didn't trigger React re-renders. Now selection state lives in route params (`params.selectedIndex`, `params.selectedFieldIndex`) and controllers call `navigation.replace()` to update — this properly triggers re-renders.
+
+**Files modified:**
+- `src/tui/TuiRoot.tsx` — Added `TuiRootKeyboardHandler` component
+- `src/tui/context/ActionContext.tsx` — Simplified, removed callback pattern
+- `src/tui/adapters/types.ts` — Changed `registerActionDispatcher` → `renderKeyboardHandler`
+- `src/tui/adapters/ink/InkRenderer.tsx` — Created `InkKeyboardHandler` component
+- `src/tui/adapters/opentui/OpenTuiRenderer.tsx` — Created `OpenTuiKeyboardHandler` component
+- `src/tui/adapters/ink/SemanticInkRenderer.tsx` — Fixed status bar duplication
+- `src/tui/adapters/opentui/SemanticOpenTuiRenderer.tsx` — Fixed status bar duplication
+- `src/tui/driver/types.ts` — Added `selectedIndex` to `CommandBrowserRouteParams`, `selectedFieldIndex` to `ConfigRouteParams`
+- `src/tui/controllers/CommandBrowserController.tsx` — Use navigation params for selection
+- `src/tui/controllers/ConfigController.tsx` — Use navigation params for selection

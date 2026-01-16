@@ -15,7 +15,6 @@ export class CommandBrowserController {
     }
     #configController: ConfigController;
     #navigation: NavigationAPI;
-    #commandSelectedIndex = 0;
 
     public constructor({
         commands,
@@ -34,6 +33,7 @@ export class CommandBrowserController {
     public render(): { node: React.ReactNode; breadcrumb: string[] } {
         const params = (this.#navigation.current.params ?? { commandPath: [] }) as CommandBrowserRouteParams;
         const commandPath = params.commandPath ?? [];
+        const selectedIndex = params.selectedIndex ?? 0;
 
         const currentCommands = this.getCommandsAtPath(commandPath);
 
@@ -43,16 +43,17 @@ export class CommandBrowserController {
                 <RenderCommandBrowserScreen
                     commandId={commandPath}
                     commands={currentCommands}
-                    selectedCommandIndex={this.clampSelectedIndex(this.#commandSelectedIndex, currentCommands)}
+                    selectedCommandIndex={this.clampSelectedIndex(selectedIndex, currentCommands)}
                     onOpenPath={(nextPath) => {
-                        this.#commandSelectedIndex = 0;
-                        this.#navigation.replace("commandBrowser" satisfies TuiRoute, { commandPath: nextPath });
+                        this.#navigation.replace("commandBrowser" satisfies TuiRoute, { commandPath: nextPath, selectedIndex: 0 });
                     }}
                     onSelectCommand={(index) => {
-                        this.#commandSelectedIndex = this.clampSelectedIndex(index, currentCommands);
+                        const clampedIndex = this.clampSelectedIndex(index, currentCommands);
+                        this.#navigation.replace("commandBrowser" satisfies TuiRoute, { commandPath, selectedIndex: clampedIndex });
                     }}
                     onRunSelected={() => {
-                        const selected = currentCommands[this.#commandSelectedIndex];
+                        const clampedIndex = this.clampSelectedIndex(selectedIndex, currentCommands);
+                        const selected = currentCommands[clampedIndex];
                         if (!selected) {
                             return;
                         }

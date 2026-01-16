@@ -3,8 +3,8 @@ import { LogsProvider } from "./context/LogsContext.tsx";
 import { NavigationProvider, useNavigation } from "./context/NavigationContext.tsx";
 import { TuiAppContextProvider, useTuiApp } from "./context/TuiAppContext.tsx";
 import { ExecutorProvider } from "./context/ExecutorContext.tsx";
-import { ActionProvider } from "./context/ActionContext.tsx";
-
+import { ActionProvider, useAction } from "./context/ActionContext.tsx";
+import { useRenderer } from "./context/RendererContext.tsx";
 
 import { TuiDriverProvider, useTuiDriver } from "./driver/context/TuiDriverContext.tsx";
 
@@ -32,23 +32,14 @@ export function TuiRoot({ name, displayName, version, commands, onExit }: TuiRoo
                         initialScreen={{ route: "commandBrowser", params: { commandPath: [] as string[] } }}
                         onExit={onExit}
                     >
-                        <TuiRootActionProvider>
-                            {() => (
-                                <TuiDriverProvider appName={name} commands={commands}>
-                                    <TuiRootContent />
-                                </TuiDriverProvider>
-                            )}
-                        </TuiRootActionProvider>
-
+                        <TuiDriverProvider appName={name} commands={commands}>
+                            <TuiRootContent />
+                        </TuiDriverProvider>
                     </NavigationProvider>
                 </ExecutorProvider>
             </LogsProvider>
         </TuiAppContextProvider>
     );
-}
-
-function TuiRootActionProvider({ children }: { children: () => React.ReactNode }) {
-    return children();
 }
 
 /**
@@ -62,6 +53,7 @@ function TuiRootContent() {
 
     return (
         <ActionProvider navigation={navigation}>
+            <TuiRootKeyboardHandler />
             {driver.renderAppShell({
                 app: {
                     name,
@@ -71,6 +63,21 @@ function TuiRootContent() {
             })}
         </ActionProvider>
     );
+}
+
+/**
+ * Renders the adapter-specific keyboard handler component.
+ * This component uses hooks properly since it's rendered as a React component.
+ */
+function TuiRootKeyboardHandler() {
+    const renderer = useRenderer();
+    const { dispatchAction } = useAction();
+
+    if (!renderer.renderKeyboardHandler) {
+        return null;
+    }
+
+    return renderer.renderKeyboardHandler({ dispatchAction, getScreenKeyHandler: () => null });
 }
 
 

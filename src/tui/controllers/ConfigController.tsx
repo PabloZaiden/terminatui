@@ -62,8 +62,6 @@ export class ConfigController {
     #navigation: NavigationAPI;
     #executor: ExecutorContextValue;
 
-    #configSelectedFieldIndex = 0;
-
     public constructor({
         appName,
         navigation,
@@ -86,6 +84,8 @@ export class ConfigController {
         }
 
         const title = `Configure: ${params.command.displayName ?? params.command.name}`;
+        const selectedFieldIndex = params.selectedFieldIndex ?? 0;
+        const clampedIndex = Math.min(selectedFieldIndex, Math.max(0, params.fieldConfigs.length));
 
         return {
             breadcrumb: params.commandPath,
@@ -95,14 +95,14 @@ export class ConfigController {
                     commandId={params.commandPath}
                     fieldConfigs={params.fieldConfigs}
                     values={params.values}
-                    selectedFieldIndex={Math.min(
-                        this.#configSelectedFieldIndex,
-                        Math.max(0, params.fieldConfigs.length)
-                    )}
+                    selectedFieldIndex={clampedIndex}
                     onSelectionChange={(index) => {
                         const maxIndex = params.fieldConfigs.length;
                         const nextIndex = Math.max(0, Math.min(index, maxIndex));
-                        this.#configSelectedFieldIndex = nextIndex;
+                        this.#navigation.replace("config" satisfies TuiRoute, {
+                            ...params,
+                            selectedFieldIndex: nextIndex,
+                        });
                     }}
                     onEditField={(fieldId) => {
                         const fieldValue = params.values[fieldId];

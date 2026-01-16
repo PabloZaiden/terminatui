@@ -20,10 +20,12 @@ export type ConfigRouteParams = {
     commandPath: string[];
     values: Record<string, unknown>;
     fieldConfigs: ReturnType<typeof schemaToFieldConfigs>;
+    selectedFieldIndex?: number;
 };
 
 export type CommandBrowserRouteParams = {
     commandPath: string[];
+    selectedIndex?: number;
 };
 
 export type RunningRouteParams = {

@@ -75,7 +75,13 @@ export interface Renderer {
     renderSemanticLogsScreen: (props: import("../semantic/LogsScreen.tsx").LogsScreenProps) => ReactNode;
     renderSemanticEditorScreen: (props: import("../semantic/EditorScreen.tsx").EditorScreenProps) => ReactNode;
 
-    /** Adapter-level key bindings should call into this if supported. */
-    registerActionDispatcher?: (dispatchAction: (action: import("../actions.ts").TuiAction) => void) => () => void;
+    /** 
+     * Renders an invisible component that handles global keyboard bindings.
+     * This component can use hooks and will dispatch actions via the provided dispatcher.
+     */
+    renderKeyboardHandler?: (props: {
+        dispatchAction: (action: import("../actions.ts").TuiAction) => void;
+        getScreenKeyHandler: () => ((event: KeyboardEvent) => boolean) | null;
+    }) => ReactNode;
 
 }

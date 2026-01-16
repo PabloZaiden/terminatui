@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { NavigationAPI } from "./NavigationContext.tsx";
 import type { TuiAction } from "../actions.ts";
 
@@ -13,11 +13,9 @@ const ActionContext = createContext<ActionContextValue | null>(null);
 export function ActionProvider({
     children,
     navigation,
-    onDispatchAction,
 }: {
     children: ReactNode;
     navigation: NavigationAPI;
-    onDispatchAction?: (dispatchAction: TuiActionDispatcher) => () => void;
 }) {
     const dispatchAction = useMemo<TuiActionDispatcher>(() => {
         return (action) => {
@@ -32,11 +30,6 @@ export function ActionProvider({
             }
         };
     }, [navigation]);
-
-    // Allow adapter-level key bindings to call dispatchAction.
-    useEffect(() => {
-        return onDispatchAction?.(dispatchAction);
-    }, [dispatchAction, onDispatchAction]);
 
     return (
         <ActionContext.Provider value={{ dispatchAction }}>

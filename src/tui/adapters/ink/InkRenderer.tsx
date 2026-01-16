@@ -1,8 +1,8 @@
 import { render } from "ink";
 import type { ReactNode } from "react";
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 
-import type { Renderer, RendererConfig } from "../types.ts";
+import type { KeyboardEvent, Renderer, RendererConfig } from "../types.ts";
 import { SemanticInkRenderer } from "./SemanticInkRenderer.tsx";
 import { useInkKeyboardAdapter } from "./keyboard.ts";
 import { copyToTerminalClipboard } from "../shared/TerminalClipboard.ts";
@@ -24,28 +24,74 @@ import { TextInput } from "./components/TextInput.tsx";
 import { Value } from "./components/Value.tsx";
 import { Code } from "./components/Code.tsx";
 import { CodeHighlight } from "./components/CodeHighlight.tsx";
+import type { TuiAction } from "../../actions.ts";
 
-function useInkCopyHandler(setCopyToast: (message: string) => void) {
+function InkKeyboardHandler({
+    dispatchAction,
+    getScreenKeyHandler,
+    keyboard,
+    setCopyToast,
+}: {
+    dispatchAction: (action: TuiAction) => void;
+    getScreenKeyHandler: () => ((event: KeyboardEvent) => boolean) | null;
+    keyboard: Renderer["keyboard"];
+    setCopyToast: (message: string | null) => void;
+}) {
     const driver = useTuiDriver();
 
-    return async () => {
-        const payload = driver.getActiveCopyPayload();
-        if (!payload) {
-            return;
-        }
+    useEffect(() => {
+        const cleanup = keyboard.setGlobalHandler((event) => {
+            // Debug: log keyboard events
+            // console.log("Key event:", event.name, "screenHandler:", getScreenKeyHandler() ? "yes" : "no");
+            
+            if (event.name === "escape") {
+                dispatchAction({ type: "nav.back" });
+                return true;
+            }
 
-        await copyToTerminalClipboard(payload.content);
-        setCopyToast(`Copied ${payload.label}`);
-    };
+            if (event.ctrl && event.name === "y") {
+                const payload = driver.getActiveCopyPayload();
+                if (payload) {
+                    void copyToTerminalClipboard(payload.content).then(() => {
+                        setCopyToast(`Copied ${payload.label}`);
+                        setTimeout(() => setCopyToast(null), 1500);
+                    });
+                }
+                return true;
+            }
+
+            if (event.ctrl && event.name === "l") {
+                dispatchAction({ type: "logs.open" });
+                return true;
+            }
+
+            const screenHandler = getScreenKeyHandler();
+            if (screenHandler) {
+                return screenHandler(event);
+            }
+
+            return false;
+        });
+
+        return cleanup;
+    }, [dispatchAction, getScreenKeyHandler, keyboard, driver, setCopyToast]);
+
+    return null;
 }
- 
+
 export class InkRenderer implements Renderer {
 
     private readonly semanticRenderer = new SemanticInkRenderer();
 
     private copyToast: string | null = null;
+    private forceRerenderFn: (() => void) | null = null;
 
-    private semanticScreenKeyHandler: ((event: import("../types.ts").KeyboardEvent) => boolean) | null = null;
+    private semanticScreenKeyHandler: ((event: KeyboardEvent) => boolean) | null = null;
+
+    private setCopyToast = (message: string | null) => {
+        this.copyToast = message;
+        this.forceRerenderFn?.();
+    };
 
     public renderSemanticAppShell: Renderer["renderSemanticAppShell"] = (props) => {
         // UI policy: transient copy feedback is adapter-owned.
@@ -138,41 +184,19 @@ export class InkRenderer implements Renderer {
 
         return this.semanticRenderer.renderEditorScreen(props);
     };
-    public registerActionDispatcher = (dispatchAction: (action: import("../../actions.ts").TuiAction) => void) => {
-        const [, forceRerender] = useState(0);
-        const copy = useInkCopyHandler((message) => {
-            this.copyToast = message;
-            forceRerender((x) => x + 1);
-            setTimeout(() => {
-                this.copyToast = null;
-                forceRerender((x) => x + 1);
-            }, 1500);
-        });
 
-        return this.keyboard.setGlobalHandler((event) => {
-            // Skip while typing in inputs where possible; keep Esc working.
-            if (event.name === "escape") {
-                dispatchAction({ type: "nav.back" });
-                return true;
-            }
-
-            if (event.ctrl && event.name === "y") {
-                void copy();
-                return true;
-            }
-
-            if (event.ctrl && event.name === "l") {
-                dispatchAction({ type: "logs.open" });
-                return true;
-            }
-
-            if (this.semanticScreenKeyHandler) {
-                return this.semanticScreenKeyHandler(event);
-            }
-
-            return false;
-        });
+    public renderKeyboardHandler: Renderer["renderKeyboardHandler"] = ({ dispatchAction }) => {
+        return (
+            <InkKeyboardHandlerWrapper
+                dispatchAction={dispatchAction}
+                getScreenKeyHandler={() => this.semanticScreenKeyHandler}
+                keyboard={this.keyboard}
+                setCopyToast={this.setCopyToast}
+                setForceRerender={(fn) => { this.forceRerenderFn = fn; }}
+            />
+        );
     };
+
     private instance: ReturnType<typeof render> | null = null;
     private activeKeyboardAdapter: Renderer["keyboard"] | null = null;
 
@@ -286,4 +310,33 @@ function KeyboardBridge({
     }, [onReady, keyboard]);
 
     return node;
+}
+
+function InkKeyboardHandlerWrapper({
+    dispatchAction,
+    getScreenKeyHandler,
+    keyboard,
+    setCopyToast,
+    setForceRerender,
+}: {
+    dispatchAction: (action: TuiAction) => void;
+    getScreenKeyHandler: () => ((event: KeyboardEvent) => boolean) | null;
+    keyboard: Renderer["keyboard"];
+    setCopyToast: (message: string | null) => void;
+    setForceRerender: (fn: () => void) => void;
+}) {
+    const [, setTick] = useState(0);
+
+    useLayoutEffect(() => {
+        setForceRerender(() => setTick((x) => x + 1));
+    }, [setForceRerender]);
+
+    return (
+        <InkKeyboardHandler
+            dispatchAction={dispatchAction}
+            getScreenKeyHandler={getScreenKeyHandler}
+            keyboard={keyboard}
+            setCopyToast={setCopyToast}
+        />
+    );
 }
