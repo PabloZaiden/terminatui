@@ -126,7 +126,7 @@ export class OpenTuiRenderer implements Renderer {
             }
 
             if (event.ctrl && event.name === "y") {
-                dispatchAction({ type: "clipboard.copy" });
+                dispatchAction({ type: "copy" });
                 return true;
             }
 

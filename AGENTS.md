@@ -12,6 +12,7 @@
 - Always make sure you have all your goals written down in a document and agreed upon before starting to code.
 - Always use the ToDo functionality to keep track of the work you're doing, and the last ToDo should always be "verify that all goals are met according to the document, and update the ToDo again".
 - Track the status of the work in that document.
+- After checking the document, update what the next steps to work on are, and what's important to know about it to be able to continue working on it later.
 - Make sure that the goals you are trying to achive are written down, in a way that you can properly verify them later.
 - Don't say something is done until you have verified that all the goals are met.
 - The general loop then is:

@@ -1,5 +1,5 @@
 import { useEffect, useId } from "react";
-import { useClipboardContext, type ClipboardContent, type ClipboardProvider } from "../context/ClipboardContext.tsx";
+import { useOptionalClipboardContext, type ClipboardContent, type ClipboardProvider } from "../context/ClipboardContext.tsx";
 
 /**
  * Hook for registering a clipboard provider.
@@ -27,11 +27,13 @@ export function useClipboardProvider(
     provider: ClipboardProvider,
     enabled: boolean = true
 ): void {
-    const { register } = useClipboardContext();
+    const context = useOptionalClipboardContext();
+    const register = context?.register;
     const id = useId();
 
     useEffect(() => {
         if (!enabled) return;
+        if (!register) return;
 
         const unregister = register(id, provider);
         return unregister;

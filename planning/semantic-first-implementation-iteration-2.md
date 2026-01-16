@@ -543,17 +543,33 @@ This checklist is intentionally exhaustive. It is not just examples (status/clip
 
 ### Phase C: Renderer policy corrections
 
-- [ ] Status / legend becomes semantic contract, adapter-specific rendering
-  - [ ] remove shared UI component usage (currently `src/tui/components/StatusBar.tsx`)
-  - [ ] ensure adapters render status in their own style
-  - [ ] ensure “legend/key hints” are adapter-owned (or absent)
+- [x] Status / legend becomes semantic contract, adapter-specific rendering
+  - [x] remove shared UI component usage (currently `src/tui/components/StatusBar.tsx`)
+  - [x] ensure adapters render status in their own style
+  - [x] ensure “legend/key hints” are adapter-owned (or absent)
 - [ ] Clipboard becomes adapter-owned (including copy keybindings)
   - [x] make clipboard context optional in core (preparatory step)
-  - [ ] move terminal clipboard implementation out of core (`src/tui/hooks/useClipboard.ts`)
+  - [x] move terminal clipboard implementation out of core (`src/tui/hooks/useClipboard.ts`)
   - [ ] make copy action dispatch optional per renderer (web renderer may not bind)
-  - [ ] screens expose copy capabilities; adapters decide to implement them
+  - [ ] screens expose copy capabilities; adapters decide to implement them (in progress: driver resolves payload; adapter still copies via core hook)
 - [ ] Remove any shared UI components used by both adapters
   - [ ] audit `src/tui/components/*` used inside adapters; convert to semantic contracts or adapter-specific UI
+
+## Next steps (current)
+
+These are the highest-leverage remaining slices to complete iteration 2.
+
+1) **Finish adapter-owned clipboard**
+   - Stop copying from `src/tui/TuiRoot.tsx`.
+   - Move copy mechanism + any copy feedback/status messaging into adapters (or `src/tui/adapters/shared/*`).
+   - Keep core limited to exposing the active payload via `TuiDriver.getActiveCopyPayload()`.
+
+2) **Audit and remove remaining shared UI usage in adapters**
+   - Follow Phase C checklist item “Remove any shared UI components used by both adapters”.
+   - Convert remaining shared concrete UI (`src/tui/components/*`) to semantic contracts or adapter-specific UI.
+
+3) **Update “Current state” section**
+   - Keep `## 6. Current state` accurate as we complete each slice.
 
 ### Phase D: Remove leftover coupling (root must become a thin host)
 

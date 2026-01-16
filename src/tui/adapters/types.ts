@@ -77,4 +77,5 @@ export interface Renderer {
 
     /** Adapter-level key bindings should call into this if supported. */
     registerActionDispatcher?: (dispatchAction: (action: import("../actions.ts").TuiAction) => void) => () => void;
+
 }

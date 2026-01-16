@@ -10,7 +10,6 @@ export interface EditorScreenProps {
 
     cliArguments?: {
         command: string;
-        onActivate: () => void;
     };
 
     onChangeText?: (text: string) => void;

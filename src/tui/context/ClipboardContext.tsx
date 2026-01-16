@@ -1,5 +1,7 @@
 import { createContext, useContext, useRef, useCallback, type ReactNode } from "react";
 
+export const CLIPBOARD_CONTEXT_OPTIONAL = "__terminatui_clipboard_optional__";
+
 /**
  * Clipboard content that can be provided by a screen or modal.
  */
@@ -78,10 +80,6 @@ export function ClipboardProviderComponent({ children }: ClipboardProviderProps)
 /**
  * Access the clipboard context.
  */
-export function useClipboardContext(): ClipboardContextValue {
-    const context = useContext(ClipboardContext);
-    if (!context) {
-        throw new Error("useClipboardContext must be used within a ClipboardProviderComponent");
-    }
-    return context;
+export function useOptionalClipboardContext(): ClipboardContextValue | null {
+    return useContext(ClipboardContext);
 }

@@ -1,7 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import type { NavigationAPI } from "./NavigationContext.tsx";
-import type { ClipboardContextValue } from "./ClipboardContext.tsx";
-import type { UseClipboardResult } from "../hooks/useClipboard.ts";
 import type { TuiAction } from "../actions.ts";
 
 export type TuiActionDispatcher = (action: TuiAction) => void;
@@ -15,14 +13,10 @@ const ActionContext = createContext<ActionContextValue | null>(null);
 export function ActionProvider({
     children,
     navigation,
-    clipboardContext,
-    clipboard,
     onDispatchAction,
 }: {
     children: ReactNode;
     navigation: NavigationAPI;
-    clipboardContext: ClipboardContextValue;
-    clipboard: UseClipboardResult;
     onDispatchAction?: (dispatchAction: TuiActionDispatcher) => () => void;
 }) {
     const dispatchAction = useMemo<TuiActionDispatcher>(() => {
@@ -32,15 +26,7 @@ export function ActionProvider({
                 return;
             }
 
-            if (action.type === "clipboard.copy") {
-                const content = clipboardContext.getContent();
-                if (!content) {
-                    clipboard.setLastAction("Nothing to copy");
-                    setTimeout(() => clipboard.setLastAction(""), 1500);
-                    return;
-                }
-
-                clipboard.copyWithMessage(content.content, content.label);
+            if (action.type === "copy") {
                 return;
             }
 
@@ -48,7 +34,7 @@ export function ActionProvider({
                 navigation.openModal("logs");
             }
         };
-    }, [clipboard, clipboardContext, navigation]);
+    }, [navigation]);
 
     // Allow adapter-level key bindings to call dispatchAction.
     useEffect(() => {
