@@ -26,7 +26,11 @@ export function ActionProvider({
 
 
             if (action.type === "logs.open") {
-                navigation.openModal("logs");
+                // Prevent stacking: only open if logs modal is not already open
+                const isLogsAlreadyOpen = navigation.modalStack.some((m) => m.id === "logs");
+                if (!isLogsAlreadyOpen) {
+                    navigation.openModal("logs");
+                }
             }
         };
     }, [navigation]);

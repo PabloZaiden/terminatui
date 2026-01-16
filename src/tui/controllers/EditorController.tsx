@@ -4,33 +4,20 @@ import { RenderEditorScreen } from "../semantic/render.tsx";
 
 import type { CopyPayload, EditorModalParams } from "../driver/types.ts";
 
-type EditorBufferState =
-    | {
-          fieldKey: string;
-          valueString: string;
-      }
-    | null;
-
 export class EditorController {
     #navigation: NavigationAPI;
-    #editorBuffer: EditorBufferState = null;
 
     private getSelectIndexForValue(options: { value: string }[], value: string): number {
         const index = options.findIndex((o) => o.value === value);
         return index >= 0 ? index : 0;
     }
 
-    private setSelectBuffer(
-        fieldKey: string,
-        options: { value: string }[],
-        nextIndex: number
-    ): void {
-        const clamped = Math.max(0, Math.min(nextIndex, Math.max(0, options.length - 1)));
-        const next = options[clamped];
-        this.#editorBuffer = {
-            fieldKey,
-            valueString: next ? next.value : "",
-        };
+    private updateModalBuffer(params: EditorModalParams, bufferValue: string, selectIndex?: number): void {
+        this.#navigation.updateModal<EditorModalParams>({
+            ...params,
+            bufferValue,
+            selectIndex,
+        });
     }
 
     private parseValueByFieldType(type: string, valueString: string, fallback: unknown): unknown {
@@ -66,10 +53,7 @@ export class EditorController {
             return null;
         }
 
-        const valueString =
-            this.#editorBuffer?.fieldKey === params.fieldKey
-                ? this.#editorBuffer.valueString
-                : String(params.currentValue ?? "");
+        const valueString = params.bufferValue ?? String(params.currentValue ?? "");
 
         return {
             label: `Field: ${params.fieldKey}`,
@@ -83,8 +67,7 @@ export class EditorController {
         }
 
         const fieldConfig = modalParams.fieldConfigs.find((f) => f.key === modalParams.fieldKey);
-        const bufferString =
-            this.#editorBuffer?.fieldKey === modalParams.fieldKey ? this.#editorBuffer.valueString : undefined;
+        const bufferString = modalParams.bufferValue;
 
         const canShowCli = Boolean(modalParams.cliCommand);
 
@@ -95,7 +78,7 @@ export class EditorController {
             }));
 
             const currentValueString = bufferString ?? String(modalParams.currentValue ?? "");
-            const index = this.getSelectIndexForValue(options, currentValueString);
+            const index = modalParams.selectIndex ?? this.getSelectIndexForValue(options, currentValueString);
 
             return (
                 <RenderEditorScreen
@@ -108,21 +91,17 @@ export class EditorController {
                     selectIndex={index}
                     cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
                     onChangeSelectIndex={(nextIndex) => {
-                        this.setSelectBuffer(modalParams.fieldKey, options, nextIndex);
+                        const clamped = Math.max(0, Math.min(nextIndex, Math.max(0, options.length - 1)));
+                        const next = options[clamped];
+                        this.updateModalBuffer(modalParams, next ? next.value : "", clamped);
                     }}
                     onSubmit={() => {
-                        const valueString =
-                            this.#editorBuffer?.fieldKey === modalParams.fieldKey
-                                ? this.#editorBuffer.valueString
-                                : String(modalParams.currentValue ?? "");
-
+                        const valueString = bufferString ?? String(modalParams.currentValue ?? "");
                         const match = fieldConfig.options?.find((o) => String(o.value) === valueString);
                         modalParams.onSubmit(match?.value ?? valueString);
-                        this.#editorBuffer = null;
                     }}
                     onCancel={() => {
                         this.#navigation.closeModal();
-                        this.#editorBuffer = null;
                     }}
                 />
             );
@@ -136,7 +115,7 @@ export class EditorController {
 
             const currentBool =
                 bufferString !== undefined ? bufferString.trim().toLowerCase() === "true" : Boolean(modalParams.currentValue);
-            const index = currentBool ? 0 : 1;
+            const index = modalParams.selectIndex ?? (currentBool ? 0 : 1);
 
             return (
                 <RenderEditorScreen
@@ -149,16 +128,15 @@ export class EditorController {
                     selectIndex={index}
                     cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
                     onChangeSelectIndex={(nextIndex) => {
-                        this.setSelectBuffer(modalParams.fieldKey, options, nextIndex);
+                        const clamped = Math.max(0, Math.min(nextIndex, 1));
+                        this.updateModalBuffer(modalParams, options[clamped]!.value, clamped);
                     }}
                     onSubmit={() => {
                         const normalized = (bufferString ?? String(Boolean(modalParams.currentValue))).trim().toLowerCase();
                         modalParams.onSubmit(normalized === "true");
-                        this.#editorBuffer = null;
                     }}
                     onCancel={() => {
                         this.#navigation.closeModal();
-                        this.#editorBuffer = null;
                     }}
                 />
             );
@@ -175,27 +153,21 @@ export class EditorController {
                      cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
 
                 onChangeText={(text) => {
-                    this.#editorBuffer = { fieldKey: modalParams.fieldKey, valueString: text };
+                    this.updateModalBuffer(modalParams, text);
                 }}
                 onSubmit={() => {
-                    const valueString =
-                        this.#editorBuffer?.fieldKey === modalParams.fieldKey
-                            ? this.#editorBuffer.valueString
-                            : String(modalParams.currentValue ?? "");
+                    const valueString = bufferString ?? String(modalParams.currentValue ?? "");
 
                     if (!fieldConfig) {
                         modalParams.onSubmit(valueString);
-                        this.#editorBuffer = null;
                         return;
                     }
 
                     const parsed = this.parseValueByFieldType(fieldConfig.type, valueString, modalParams.currentValue);
                     modalParams.onSubmit(parsed);
-                    this.#editorBuffer = null;
                 }}
                 onCancel={() => {
                     this.#navigation.closeModal();
-                    this.#editorBuffer = null;
                 }}
             />
         );

@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ⏳ PENDING MANUAL TESTING** — Iteration 2.1 code fixes complete. Awaiting manual verification of keyboard navigation and status bar. See **Section 9: Iteration 2.1 Bugfixes**.
+> **STATUS: ⏳ PENDING MANUAL TESTING** — Iteration 2.2 code fixes complete. Awaiting manual verification of editor functionality and logs modal. See **Section 9.2: Iteration 2.2 Bugfixes**.
 
 This document is a corrective follow-up to:
 
@@ -850,3 +850,75 @@ So when there's no copy toast, both labels show "Ready".
 - `src/tui/driver/types.ts` — Added `selectedIndex` to `CommandBrowserRouteParams`, `selectedFieldIndex` to `ConfigRouteParams`
 - `src/tui/controllers/CommandBrowserController.tsx` — Use navigation params for selection
 - `src/tui/controllers/ConfigController.tsx` — Use navigation params for selection
+
+---
+
+## 9.2 Iteration 2.2 Bugfixes (manual testing round 2)
+
+### Problem summary
+
+Manual testing after iteration 2.1 revealed additional bugs:
+
+#### Bug 1: Editor text field not working (ink)
+- Can move cursor but cannot type
+- Backspace moves cursor left but doesn't delete
+- Enter closes form but value is not updated
+
+#### Bug 2: Editor enum/bool/list fields not updating (both adapters)
+- Can select a value but pressing Enter doesn't persist the change
+- Form closes but original value remains
+
+#### Bug 3: Logs modal stacking (both adapters)
+- Opening logs modal works
+- Pressing Ctrl+L again while logs modal is open opens another instance
+- Must close modal twice to return to previous screen
+
+### Root cause analysis
+
+**Bug 1 & 2 (FIXED)**: The `EditorController` was storing editor buffer state in a private class field (`#editorBuffer`) which doesn't trigger React re-renders when updated. The fix was to move this state into the modal params via `navigation.updateModal()`, which properly triggers re-renders.
+
+**Bug 3 (FIXED)**: The `logs.open` action in `ActionContext` was unconditionally calling `navigation.openModal("logs")`. The fix was to check if a logs modal is already in the stack before opening.
+
+### Checklist
+
+#### Phase 2.2A: Fix editor submit flow
+
+- [x] Investigate `EditorController` submit callback
+- [x] Trace editor submit → config values update flow
+- [x] Root cause: editor buffer state in class field doesn't trigger re-renders
+- [x] Fix: Added `bufferValue` and `selectIndex` to `EditorModalParams`
+- [x] Fix: Added `updateModal` method to `NavigationAPI` for reactive modal state updates
+- [x] Fix: Updated `EditorController` to use modal params instead of internal state
+- [ ] Verify editor changes are reflected in config screen — **NEEDS MANUAL TEST**
+
+#### Phase 2.2B: Fix logs modal stacking
+
+- [x] Add guard in action handler to prevent opening logs if already open
+- [ ] Verify single Ctrl+L opens, second Ctrl+L does not stack — **NEEDS MANUAL TEST**
+
+#### Phase 2.2C: Verification
+
+- [x] `bun run build` passes
+- [x] `bun run test` passes (78 tests)
+- [ ] Manual test: ink text field editing works — **NEEDS MANUAL TEST**
+- [ ] Manual test: opentui text field editing works — **NEEDS MANUAL TEST**
+- [ ] Manual test: ink enum/bool/list field selection persists — **NEEDS MANUAL TEST**
+- [ ] Manual test: opentui enum/bool/list field selection persists — **NEEDS MANUAL TEST**
+- [ ] Manual test: logs modal does not stack (both adapters) — **NEEDS MANUAL TEST**
+- [ ] Update planning doc with completion status
+
+### Implementation notes (iteration 2.2)
+
+**Key architectural changes:**
+
+1. **Added `updateModal` to NavigationAPI**: New method that updates the topmost modal's params without closing/reopening. This enables reactive state updates for modal content.
+
+2. **Editor buffer state moved to modal params**: Added `bufferValue?: string` and `selectIndex?: number` to `EditorModalParams`. The `EditorController` now calls `navigation.updateModal()` when text changes or selection changes, which triggers React re-renders.
+
+3. **Logs modal stacking prevention**: The `ActionContext` now checks `navigation.modalStack.some(m => m.id === "logs")` before opening a new logs modal.
+
+**Files modified:**
+- `src/tui/driver/types.ts` — Added `bufferValue` and `selectIndex` to `EditorModalParams`
+- `src/tui/context/NavigationContext.tsx` — Added `updateModal` action and method
+- `src/tui/controllers/EditorController.tsx` — Removed internal buffer state, use modal params instead
+- `src/tui/context/ActionContext.tsx` — Added guard to prevent logs modal stacking

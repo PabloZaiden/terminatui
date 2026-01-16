@@ -11,6 +11,10 @@ export type EditorModalParams = {
     currentValue: unknown;
     fieldConfigs: ReturnType<typeof schemaToFieldConfigs>;
     cliCommand?: string;
+    /** Current buffer value (string representation) - used for reactive updates */
+    bufferValue?: string;
+    /** Current select index for enum/boolean fields */
+    selectIndex?: number;
     onSubmit: (value: unknown) => void;
     onCancel: () => void;
 };
