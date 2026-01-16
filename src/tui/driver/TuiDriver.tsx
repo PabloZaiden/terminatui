@@ -4,13 +4,14 @@ import type { ExecutorContextValue } from "../context/ExecutorContext.tsx";
 import type { LogEvent } from "../../core/logger.ts";
 import type { AppShellProps } from "../semantic/AppShell.tsx";
 
-import { RenderAppShell, RenderRunningScreen } from "../semantic/render.tsx";
+import { RenderAppShell } from "../semantic/render.tsx";
 
 import type { CopyPayload, EditorModalParams, TuiRoute } from "./types.ts";
 import { CommandBrowserController } from "../controllers/CommandBrowserController.tsx";
 import { ConfigController } from "../controllers/ConfigController.tsx";
 import { EditorController } from "../controllers/EditorController.tsx";
 import { LogsController } from "../controllers/LogsController.tsx";
+import { OutcomeController } from "../controllers/OutcomeController.tsx";
 
 export class TuiDriver {
     #navigation: NavigationAPI;
@@ -21,6 +22,7 @@ export class TuiDriver {
     #config: ConfigController;
     #editor: EditorController;
     #logsModal: LogsController;
+    #outcome: OutcomeController;
 
     public constructor({
         appName,
@@ -43,6 +45,7 @@ export class TuiDriver {
         this.#commandBrowser = new CommandBrowserController({ commands, navigation, configController: this.#config });
         this.#editor = new EditorController({ navigation });
         this.#logsModal = new LogsController({ navigation });
+        this.#outcome = new OutcomeController({ navigation });
     }
 
     public get statusMessage(): string {
@@ -116,28 +119,9 @@ export class TuiDriver {
             return { screen: node, breadcrumb };
         }
 
-        if (route === "running") {
-            return { screen: <RenderRunningScreen title="Running" kind="running" /> };
-        }
-
-        if (route === "results") {
-            const params = this.#navigation.current.params as { result: unknown } | undefined;
-            return {
-                screen: <RenderRunningScreen title="Results" kind="results" message={String(params?.result ?? "")} />,
-            };
-        }
-
-        if (route === "error") {
-            const params = this.#navigation.current.params as { error: Error } | undefined;
-            return {
-                screen: (
-                    <RenderRunningScreen
-                        title="Error"
-                        kind="error"
-                        message={String(params?.error?.message ?? "Unknown error")}
-                    />
-                ),
-            };
+        if (route === "running" || route === "results" || route === "error") {
+            const { node } = this.#outcome.render(route);
+            return { screen: node };
         }
 
         return { screen: null };

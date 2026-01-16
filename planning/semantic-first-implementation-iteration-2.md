@@ -416,6 +416,22 @@ But keep it additive and conservative.
 
 ### 3.4 Move clipboard behavior to adapters (and make it capability-driven)
 
+#### 3.4.1 Implementation decision (iteration 2)
+
+We already have `TuiDriver.getActiveCopyPayload()` which resolves the correct copy source (topmost modal, otherwise current screen).
+
+**Decision:** terminal adapters (`ink`, `opentui`) will implement copy by directly calling `useTuiDriver()` to fetch the active payload, and then running terminal clipboard behavior (`copyToTerminalClipboard`) inside the adapter.
+
+Rationale:
+
+- Keeps core (`TuiRoot`) free of copy policy and mechanism.
+- Avoids reintroducing a renderer capability registration API that would need lifecycle management.
+- The adapter render tree already lives under `TuiDriverProvider`, so `useTuiDriver()` is available.
+
+Guardrail:
+
+- Adapters may depend on driver context, but they must not depend on screen/controller internals. The only allowed surface is `getActiveCopyPayload()` (and potentially other driver-owned renderer-policy APIs in the future).
+
 Clipboard has two separate concerns:
 
 1) **Mechanism** (how to copy) -> renderer policy
@@ -515,31 +531,31 @@ This checklist is intentionally exhaustive. It is not just examples (status/clip
 - [ ] Add `src/tui/driver/types.ts` for shared driver/controller types
 - [ ] Add `TuiDriver` skeleton (`src/tui/driver/TuiDriver.ts`)
 - [x] Make clipboard provider registration optional in core (prep for adapter ownership)
-- [ ] Ensure `TuiRoot` only delegates to driver (providers + `driver.renderAppShell()`)
+- [x] Ensure `TuiRoot` only delegates to driver (providers + `driver.renderAppShell()`)
 - [ ] Add a “no new coupling” test heuristic (optional)
   - Example: a test that asserts `TuiRoot` does not import domain helpers like `buildCliCommand` or `schemaToFieldConfigs`
 
 ### Phase B: Move screen ownership out of root
 
 - [ ] Command browser controller
-  - [ ] owns `commandSelectedIndex`
-  - [ ] owns `getCommandsAtPath` traversal + `supportsTui()` filtering
-  - [ ] emits breadcrumb via semantic props
+  - [x] owns `commandSelectedIndex`
+  - [x] owns `getCommandsAtPath` traversal + `supportsTui()` filtering
+  - [x] emits breadcrumb via semantic props
 - [ ] Config controller
-  - [ ] owns `configSelectedFieldIndex`
-  - [ ] owns parameter defaults computation (currently `initializeConfigValues`)
-  - [ ] owns persistence load/save policy (`loadPersistedParameters`/`savePersistedParameters`)
-  - [ ] owns execution orchestration (navigate -> execute -> navigate)
-- [ ] Running/results/error controller
-  - [ ] owns composition choice (don’t hardcode variants in `TuiRoot`)
+  - [x] owns `configSelectedFieldIndex`
+  - [x] owns parameter defaults computation (currently `initializeConfigValues`)
+  - [x] owns persistence load/save policy (`loadPersistedParameters`/`savePersistedParameters`)
+  - [x] owns execution orchestration (navigate -> execute -> navigate)
+- [x] Running/results/error controller
+  - [x] owns composition choice (don’t hardcode variants in `TuiDriver`/`TuiRoot`)
 - [ ] Logs modal controller
-  - [ ] owns log formatting + scroll windowing
-  - [ ] exposes copy content capability (if supported)
+  - [x] owns log formatting + scroll windowing
+  - [x] exposes copy content capability (if supported)
 - [ ] Editor modal controller
-  - [ ] owns editor buffer state and typed coercion/parsing
-  - [ ] owns enum/bool select mapping and index management
-  - [ ] owns CLI arguments affordance (or delegates to CLI args controller)
-  - [ ] exposes copy content capability (if supported)
+  - [x] owns editor buffer state and typed coercion/parsing
+  - [x] owns enum/bool select mapping and index management
+  - [x] owns CLI arguments affordance (or delegates to CLI args controller)
+  - [x] exposes copy content capability (if supported)
 
 ### Phase C: Renderer policy corrections
 
@@ -551,24 +567,72 @@ This checklist is intentionally exhaustive. It is not just examples (status/clip
   - [x] make clipboard context optional in core (preparatory step)
   - [x] move terminal clipboard implementation out of core (`src/tui/hooks/useClipboard.ts`)
   - [ ] make copy action dispatch optional per renderer (web renderer may not bind)
-  - [ ] screens expose copy capabilities; adapters decide to implement them (in progress: driver resolves payload; adapter still copies via core hook)
+  - [x] adapters implement copy by reading active payload from `TuiDriver.getActiveCopyPayload()` and invoking terminal clipboard behavior
 - [ ] Remove any shared UI components used by both adapters
-  - [ ] audit `src/tui/components/*` used inside adapters; convert to semantic contracts or adapter-specific UI
+  - [x] audit `src/tui/components/*` used inside adapters; convert to semantic contracts or adapter-specific UI
+  - [x] adapters no longer import `src/tui/components/*` directly (moved to adapter-local UI)
+
+#### Phase C implementation decision (iteration 2)
+
+We currently have several shared UI components under `src/tui/components/*` that are imported by both terminal adapters via `SemanticInkRenderer` and `SemanticOpenTuiRenderer`:
+
+- `Header`
+- `CommandSelector`
+- `ConfigForm`
+- `ResultsPanel`
+
+These are **concrete UI** (they compose semantic layout and policies together) and therefore violate the guardrail “no shared UI components across renderers”.
+
+**Decision:** move these components into adapter-specific implementation:
+
+- Ink: `src/tui/adapters/ink/ui/*`
+- OpenTUI: `src/tui/adapters/opentui/ui/*`
+
+(Names are flexible but they must live under the adapter and be imported only by that adapter.)
+
+Guardrail: shared code between terminal adapters may remain under `src/tui/adapters/shared/*` but must be **behavior-only** (no React UI).
+
+Implementation approach:
+
+1) create adapter-local copies of each component (minimal behavior-preserving copy)
+2) update `SemanticInkRenderer.tsx` and `SemanticOpenTuiRenderer.tsx` imports to use adapter-local versions
+3) delete nothing yet; once no shared usage remains, we can optionally delete the old shared components or leave them for later cleanup
 
 ## Next steps (current)
 
 These are the highest-leverage remaining slices to complete iteration 2.
 
+### Slice (in progress): adapter-owned clipboard feedback + copy typing cleanup
+
+**Goals (this slice)**
+
+- Terminal adapters show lightweight feedback when Ctrl+Y copies something (e.g. “Copied Logs”).
+- Feedback is adapter-owned UI policy (no shared UI components, no `TuiRoot` logic).
+- `TuiDriver.getActiveCopyPayload()` uses typed route params (reuse `ConfigRouteParams` instead of inline shapes).
+- Verify: `bun run build` then `bun run test`, and update this doc.
+
 1) **Finish adapter-owned clipboard**
-   - Stop copying from `src/tui/TuiRoot.tsx`.
-   - Move copy mechanism + any copy feedback/status messaging into adapters (or `src/tui/adapters/shared/*`).
-   - Keep core limited to exposing the active payload via `TuiDriver.getActiveCopyPayload()`.
+   - [x] Stop copying from `src/tui/TuiRoot.tsx`.
+   - [x] Terminal adapters own copy mechanism using `TuiDriver.getActiveCopyPayload()` + `copyToTerminalClipboard()`.
+   - [ ] Optional: add adapter-owned status message feedback on successful copy (currently silent).
 
 2) **Audit and remove remaining shared UI usage in adapters**
-   - Follow Phase C checklist item “Remove any shared UI components used by both adapters”.
-   - Convert remaining shared concrete UI (`src/tui/components/*`) to semantic contracts or adapter-specific UI.
+   - [x] Replace shared UI imports in adapters by moving adapter-local UI into:
+     - Ink: `src/tui/adapters/ink/ui/*`
+     - OpenTUI: `src/tui/adapters/opentui/ui/*`
+   - Note: old shared versions still exist under `src/tui/components/*` and can be deleted later.
 
-3) **Update “Current state” section**
+3) **Complete Phase B/D coupling removal**
+   - Move leftover route/modals composition out of driver/root and into controllers.
+   - [x] Start with `running`/`results`/`error` (moved to `OutcomeController`).
+   - [x] Config controller owns defaults/persistence/execution orchestration.
+   - [x] Logs modal controller owns formatting/windowing + copy payload.
+   - [x] Editor modal controller owns parsing/coercion + buffer/copy.
+   - [x] Finish Command browser controller checklist items.
+   - Next: consider adapter-owned clipboard feedback/status.
+
+
+4) **Update “Current state” section**
    - Keep `## 6. Current state` accurate as we complete each slice.
 
 ### Phase D: Remove leftover coupling (root must become a thin host)
@@ -604,9 +668,14 @@ These are the highest-leverage remaining slices to complete iteration 2.
 
 Summary: this repo is currently in a transitional hybrid state.
 
-- `src/tui/TuiRoot.tsx` is still doing most orchestration (routing, state, domain UI logic).
-- Adapters render semantic screens, but also rely on shared concrete UI components.
-- Clipboard is partially abstracted as a provider stack, but ownership is still rooted in core.
+- `src/tui/TuiRoot.tsx` is now a thin host (providers + `driver.renderAppShell()`).
+- Adapters render semantic screens and keep concrete UI adapter-local (no shared `src/tui/components/*` imports inside adapters).
+- `TuiDriver` delegates `running`/`results`/`error` composition to `OutcomeController` (no hardcoded outcome variants inside the driver).
+- `CommandBrowserController` now owns selection state, traversal/filtering, and breadcrumb.
+- `ConfigController` now owns config selection state, defaults/persistence policy, and the async run flow (navigate  execute  results/error).
+- `LogsController` now owns log formatting/windowing and provides a copy payload.
+- `EditorController` now owns editor buffer/select state, parsing/coercion, and provides a copy payload.
+- Clipboard mechanism is now adapter-owned (`ink`/`opentui` call `TuiDriver.getActiveCopyPayload()` + terminal clipboard behavior), but copy feedback/status messaging is still minimal.
 
 The goal of iteration 2 is to restore the intended layering so that future renderers (including web) can exist without special-casing the core.
 

@@ -22,6 +22,21 @@ import { Select } from "./components/Select.tsx";
 import { TextInput } from "./components/TextInput.tsx";
 import { Value } from "./components/Value.tsx";
 
+function useOpenTuiCopyHandler() {
+    const driver = useTuiDriver();
+
+    return async () => {
+        const payload = driver.getActiveCopyPayload();
+        if (!payload) {
+            return;
+        }
+
+        await copyToTerminalClipboard(payload.content);
+    };
+}
+import { copyToTerminalClipboard } from "../shared/TerminalClipboard.ts";
+import { useTuiDriver } from "../../driver/context/TuiDriverContext.tsx";
+
 export class OpenTuiRenderer implements Renderer {
     private readonly semanticRenderer = new SemanticOpenTuiRenderer();
 
@@ -118,6 +133,8 @@ export class OpenTuiRenderer implements Renderer {
         return this.semanticRenderer.renderEditorScreen(props);
     };
     public registerActionDispatcher = (dispatchAction: (action: import("../../actions.ts").TuiAction) => void) => {
+        const copy = useOpenTuiCopyHandler();
+
         return this.keyboard.setGlobalHandler((event) => {
             // Avoid interfering with text inputs as much as possible; keep Esc working.
             if (event.name === "escape") {
@@ -126,7 +143,7 @@ export class OpenTuiRenderer implements Renderer {
             }
 
             if (event.ctrl && event.name === "y") {
-                dispatchAction({ type: "copy" });
+                void copy();
                 return true;
             }
 

@@ -2,7 +2,7 @@ import type { NavigationAPI } from "../context/NavigationContext.tsx";
 
 import { RenderEditorScreen } from "../semantic/render.tsx";
 
-import type { EditorModalParams } from "../driver/types.ts";
+import type { CopyPayload, EditorModalParams } from "../driver/types.ts";
 
 type EditorBufferState =
     | {
@@ -15,18 +15,54 @@ export class EditorController {
     #navigation: NavigationAPI;
     #editorBuffer: EditorBufferState = null;
 
+    private getSelectIndexForValue(options: { value: string }[], value: string): number {
+        const index = options.findIndex((o) => o.value === value);
+        return index >= 0 ? index : 0;
+    }
+
+    private setSelectBuffer(
+        fieldKey: string,
+        options: { value: string }[],
+        nextIndex: number
+    ): void {
+        const clamped = Math.max(0, Math.min(nextIndex, Math.max(0, options.length - 1)));
+        const next = options[clamped];
+        this.#editorBuffer = {
+            fieldKey,
+            valueString: next ? next.value : "",
+        };
+    }
+
+    private parseValueByFieldType(type: string, valueString: string, fallback: unknown): unknown {
+        if (type === "number") {
+            const num = Number(valueString);
+            return Number.isFinite(num) ? num : fallback;
+        }
+
+        if (type === "boolean") {
+            const normalized = valueString.trim().toLowerCase();
+            if (normalized === "true") return true;
+            if (normalized === "false") return false;
+            return fallback;
+        }
+
+        return valueString;
+    }
+
     public constructor({ navigation }: { navigation: NavigationAPI }) {
         this.#navigation = navigation;
     }
 
-    public getCopyPayload(): { label: string; content: string } | null {
-        const topModal = this.#navigation.modalStack[this.#navigation.modalStack.length - 1];
-        if (topModal?.id !== "editor") {
+    public getCopyPayload(): CopyPayload | null {
+        const params = this.#navigation.modalStack[this.#navigation.modalStack.length - 1]?.params as
+            | EditorModalParams
+            | undefined;
+        if (!params) {
             return null;
         }
 
-        const params = topModal.params as EditorModalParams | undefined;
-        if (!params) {
+        const activeModalId = this.#navigation.modalStack[this.#navigation.modalStack.length - 1]?.id;
+        if (activeModalId !== "editor") {
             return null;
         }
 
@@ -59,7 +95,7 @@ export class EditorController {
             }));
 
             const currentValueString = bufferString ?? String(modalParams.currentValue ?? "");
-            const index = Math.max(0, options.findIndex((o) => o.value === currentValueString));
+            const index = this.getSelectIndexForValue(options, currentValueString);
 
             return (
                 <RenderEditorScreen
@@ -70,14 +106,9 @@ export class EditorController {
                     editorType="select"
                     selectOptions={options}
                     selectIndex={index}
-                     cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
-
+                    cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
                     onChangeSelectIndex={(nextIndex) => {
-                        const next = options[Math.max(0, Math.min(nextIndex, Math.max(0, options.length - 1)))];
-                        this.#editorBuffer = {
-                            fieldKey: modalParams.fieldKey,
-                            valueString: next ? next.value : "",
-                        };
+                        this.setSelectBuffer(modalParams.fieldKey, options, nextIndex);
                     }}
                     onSubmit={() => {
                         const valueString =
@@ -116,14 +147,9 @@ export class EditorController {
                     editorType="select"
                     selectOptions={options}
                     selectIndex={index}
-                     cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
-
+                    cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
                     onChangeSelectIndex={(nextIndex) => {
-                        const clamped = Math.max(0, Math.min(nextIndex, options.length - 1));
-                        this.#editorBuffer = {
-                            fieldKey: modalParams.fieldKey,
-                            valueString: options[clamped]!.value,
-                        };
+                        this.setSelectBuffer(modalParams.fieldKey, options, nextIndex);
                     }}
                     onSubmit={() => {
                         const normalized = (bufferString ?? String(Boolean(modalParams.currentValue))).trim().toLowerCase();
@@ -137,6 +163,7 @@ export class EditorController {
                 />
             );
         }
+
 
         return (
             <RenderEditorScreen
@@ -162,18 +189,8 @@ export class EditorController {
                         return;
                     }
 
-                    if (fieldConfig.type === "number") {
-                        const num = Number(valueString);
-                        if (Number.isFinite(num)) {
-                            modalParams.onSubmit(num);
-                        } else {
-                            modalParams.onSubmit(modalParams.currentValue);
-                        }
-                        this.#editorBuffer = null;
-                        return;
-                    }
-
-                    modalParams.onSubmit(valueString);
+                    const parsed = this.parseValueByFieldType(fieldConfig.type, valueString, modalParams.currentValue);
+                    modalParams.onSubmit(parsed);
                     this.#editorBuffer = null;
                 }}
                 onCancel={() => {

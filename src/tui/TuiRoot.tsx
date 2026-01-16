@@ -4,8 +4,6 @@ import { NavigationProvider, useNavigation } from "./context/NavigationContext.t
 import { TuiAppContextProvider, useTuiApp } from "./context/TuiAppContext.tsx";
 import { ExecutorProvider } from "./context/ExecutorContext.tsx";
 import { ActionProvider } from "./context/ActionContext.tsx";
-import { useRenderer } from "./context/RendererContext.tsx";
-import { copyToClipboard } from "./hooks/useClipboard.ts";
 
 
 import { TuiDriverProvider, useTuiDriver } from "./driver/context/TuiDriverContext.tsx";
@@ -60,32 +58,10 @@ function TuiRootActionProvider({ children }: { children: () => React.ReactNode }
 function TuiRootContent() {
     const { displayName, name, version } = useTuiApp();
     const driver = useTuiDriver();
-    const renderer = useRenderer();
     const navigation = useNavigation();
 
     return (
-        <ActionProvider
-            navigation={navigation}
-            onDispatchAction={(dispatchAction) => {
-                if (!renderer.registerActionDispatcher) {
-                    return () => {};
-                }
-
-                return renderer.registerActionDispatcher((action) => {
-                    if (action.type === "copy") {
-                        const payload = driver.getActiveCopyPayload();
-                        if (!payload) {
-                            return;
-                        }
-
-                        void copyToClipboard(payload.content);
-                        return;
-                    }
-
-                    dispatchAction(action);
-                });
-            }}
-        >
+        <ActionProvider navigation={navigation}>
             {driver.renderAppShell({
                 app: {
                     name,

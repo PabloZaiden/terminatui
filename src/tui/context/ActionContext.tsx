@@ -26,9 +26,6 @@ export function ActionProvider({
                 return;
             }
 
-            if (action.type === "copy") {
-                return;
-            }
 
             if (action.type === "logs.open") {
                 navigation.openModal("logs");

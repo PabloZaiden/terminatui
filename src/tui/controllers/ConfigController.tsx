@@ -5,13 +5,49 @@ import type { ExecutorContextValue } from "../context/ExecutorContext.tsx";
 import { RenderConfigScreen } from "../semantic/render.tsx";
 
 import { buildCliCommand } from "../utils/buildCliCommand.ts";
-import { schemaToFieldConfigs } from "../utils/schemaToFields.ts";
 import { loadPersistedParameters, savePersistedParameters } from "../utils/parameterPersistence.ts";
 
 import type { OptionDef, OptionSchema } from "../../types/command.ts";
-import type { EditorModalParams, TuiRoute } from "../driver/types.ts";
+import type {
+    ConfigRouteParams,
+    EditorModalParams,
+    TuiRoute,
+} from "../driver/types.ts";
 
 export class ConfigController {
+    public async run(params: ConfigRouteParams): Promise<void> {
+        savePersistedParameters(this.#appName, params.command.name, params.values);
+
+        this.#navigation.push("running" satisfies TuiRoute, {
+            command: params.command,
+            commandPath: params.commandPath,
+            values: params.values,
+        });
+
+        const outcome = await this.#executor.execute(params.command, params.values);
+        if (outcome.cancelled) {
+            this.#navigation.pop();
+            return;
+        }
+
+        if (outcome.success) {
+            this.#navigation.replace("results" satisfies TuiRoute, {
+                command: params.command,
+                commandPath: params.commandPath,
+                values: params.values,
+                result: outcome.result ?? null,
+            });
+            return;
+        }
+
+        this.#navigation.replace("error" satisfies TuiRoute, {
+            command: params.command,
+            commandPath: params.commandPath,
+            values: params.values,
+            error: outcome.error ?? new Error("Unknown error"),
+        });
+    }
+
     public getCopyPayload(params: {
         command: AnyCommand;
         commandPath: string[];
@@ -43,14 +79,7 @@ export class ConfigController {
     }
 
     public render(): { node: React.ReactNode; breadcrumb?: string[] } {
-        const params = this.#navigation.current.params as
-            | {
-                  command: AnyCommand;
-                  commandPath: string[];
-                  values: Record<string, unknown>;
-                  fieldConfigs: ReturnType<typeof schemaToFieldConfigs>;
-              }
-            | undefined;
+        const params = this.#navigation.current.params as ConfigRouteParams | undefined;
 
         if (!params) {
             return { node: null };
@@ -100,36 +129,7 @@ export class ConfigController {
                         });
                     }}
                     onRun={() => {
-                        void (async () => {
-                            savePersistedParameters(this.#appName, params.command.name, params.values);
-                            this.#navigation.push("running" satisfies TuiRoute, {
-                                command: params.command,
-                                commandPath: params.commandPath,
-                                values: params.values,
-                            });
-
-                            const outcome = await this.#executor.execute(params.command, params.values);
-                            if (outcome.cancelled) {
-                                this.#navigation.pop();
-                                return;
-                            }
-
-                            if (outcome.success) {
-                                this.#navigation.replace("results" satisfies TuiRoute, {
-                                    command: params.command,
-                                    commandPath: params.commandPath,
-                                    values: params.values,
-                                    result: outcome.result ?? null,
-                                });
-                            } else {
-                                this.#navigation.replace("error" satisfies TuiRoute, {
-                                    command: params.command,
-                                    commandPath: params.commandPath,
-                                    values: params.values,
-                                    error: outcome.error ?? new Error("Unknown error"),
-                                });
-                            }
-                        })();
+                        void this.run(params);
                     }}
                 />
             ),

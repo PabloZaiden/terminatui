@@ -4,11 +4,15 @@ import type { NavigationAPI } from "../context/NavigationContext.tsx";
 import { RenderCommandBrowserScreen } from "../semantic/render.tsx";
 import { schemaToFieldConfigs } from "../utils/schemaToFields.ts";
 
-import type { TuiRoute } from "../driver/types.ts";
+import type { CommandBrowserRouteParams, TuiRoute } from "../driver/types.ts";
 import type { ConfigController } from "./ConfigController.tsx";
 
 export class CommandBrowserController {
     #commands: AnyCommand[];
+
+    private clampSelectedIndex(index: number, commands: AnyCommand[]): number {
+        return Math.max(0, Math.min(index, Math.max(0, commands.length - 1)));
+    }
     #configController: ConfigController;
     #navigation: NavigationAPI;
     #commandSelectedIndex = 0;
@@ -28,10 +32,10 @@ export class CommandBrowserController {
     }
 
     public render(): { node: React.ReactNode; breadcrumb: string[] } {
-        const params = (this.#navigation.current.params ?? { commandPath: [] }) as { commandPath: string[] };
+        const params = (this.#navigation.current.params ?? { commandPath: [] }) as CommandBrowserRouteParams;
         const commandPath = params.commandPath ?? [];
 
-        const currentCommands = getCommandsAtPath(this.#commands, commandPath);
+        const currentCommands = this.getCommandsAtPath(commandPath);
 
         return {
             breadcrumb: commandPath,
@@ -39,14 +43,13 @@ export class CommandBrowserController {
                 <RenderCommandBrowserScreen
                     commandId={commandPath}
                     commands={currentCommands}
-                    selectedCommandIndex={Math.min(this.#commandSelectedIndex, Math.max(0, currentCommands.length - 1))}
+                    selectedCommandIndex={this.clampSelectedIndex(this.#commandSelectedIndex, currentCommands)}
                     onOpenPath={(nextPath) => {
                         this.#commandSelectedIndex = 0;
                         this.#navigation.replace("commandBrowser" satisfies TuiRoute, { commandPath: nextPath });
                     }}
                     onSelectCommand={(index) => {
-                        const nextIndex = Math.max(0, Math.min(index, Math.max(0, currentCommands.length - 1)));
-                        this.#commandSelectedIndex = nextIndex;
+                        this.#commandSelectedIndex = this.clampSelectedIndex(index, currentCommands);
                     }}
                     onRunSelected={() => {
                         const selected = currentCommands[this.#commandSelectedIndex];
@@ -65,22 +68,22 @@ export class CommandBrowserController {
             ),
         };
     }
-}
 
-function getCommandsAtPath(commands: AnyCommand[], commandPath: string[]): AnyCommand[] {
-    if (commandPath.length === 0) {
-        return commands.filter((cmd) => cmd.supportsTui());
-    }
-
-    let current: AnyCommand[] = commands;
-    for (const pathPart of commandPath) {
-        const found = current.find((c) => c.name === pathPart);
-        if (found?.subCommands) {
-            current = found.subCommands.filter((sub) => sub.supportsTui());
-        } else {
-            break;
+    private getCommandsAtPath(commandPath: string[]): AnyCommand[] {
+        if (commandPath.length === 0) {
+            return this.#commands.filter((cmd) => cmd.supportsTui());
         }
-    }
 
-    return current;
+        let current: AnyCommand[] = this.#commands;
+        for (const pathPart of commandPath) {
+            const found = current.find((c) => c.name === pathPart);
+            if (found?.subCommands) {
+                current = found.subCommands.filter((sub) => sub.supportsTui());
+            } else {
+                break;
+            }
+        }
+
+        return current;
+    }
 }

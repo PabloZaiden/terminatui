@@ -5,6 +5,8 @@ import { useLayoutEffect } from "react";
 import type { Renderer, RendererConfig } from "../types.ts";
 import { SemanticInkRenderer } from "./SemanticInkRenderer.tsx";
 import { useInkKeyboardAdapter } from "./keyboard.ts";
+import { copyToTerminalClipboard } from "../shared/TerminalClipboard.ts";
+import { useTuiDriver } from "../../driver/context/TuiDriverContext.tsx";
 
 import { Button } from "./components/Button.tsx";
 import { Container } from "./components/Container.tsx";
@@ -23,7 +25,21 @@ import { Value } from "./components/Value.tsx";
 import { Code } from "./components/Code.tsx";
 import { CodeHighlight } from "./components/CodeHighlight.tsx";
 
+function useInkCopyHandler() {
+    const driver = useTuiDriver();
+
+    return async () => {
+        const payload = driver.getActiveCopyPayload();
+        if (!payload) {
+            return;
+        }
+
+        await copyToTerminalClipboard(payload.content);
+    };
+}
+ 
 export class InkRenderer implements Renderer {
+
     private readonly semanticRenderer = new SemanticInkRenderer();
 
     private semanticScreenKeyHandler: ((event: import("../types.ts").KeyboardEvent) => boolean) | null = null;
@@ -117,6 +133,8 @@ export class InkRenderer implements Renderer {
         return this.semanticRenderer.renderEditorScreen(props);
     };
     public registerActionDispatcher = (dispatchAction: (action: import("../../actions.ts").TuiAction) => void) => {
+        const copy = useInkCopyHandler();
+
         return this.keyboard.setGlobalHandler((event) => {
             // Skip while typing in inputs where possible; keep Esc working.
             if (event.name === "escape") {
@@ -125,7 +143,7 @@ export class InkRenderer implements Renderer {
             }
 
             if (event.ctrl && event.name === "y") {
-                dispatchAction({ type: "copy" });
+                void copy();
                 return true;
             }
 
