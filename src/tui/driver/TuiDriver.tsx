@@ -6,7 +6,7 @@ import type { AppShellProps } from "../semantic/AppShell.tsx";
 
 import { RenderAppShell } from "../semantic/render.tsx";
 
-import type { CopyPayload, EditorModalParams, TuiRoute } from "./types.ts";
+import type { ConfigRouteParams, CopyPayload, EditorModalParams, TuiRoute } from "./types.ts";
 import { CommandBrowserController } from "../controllers/CommandBrowserController.tsx";
 import { ConfigController } from "../controllers/ConfigController.tsx";
 import { EditorController } from "../controllers/EditorController.tsx";
@@ -55,14 +55,7 @@ export class TuiDriver {
     public getActiveCopyPayload(): CopyPayload | null {
         const currentRoute = this.#navigation.current.route as TuiRoute;
         if (currentRoute === "config") {
-            const params = this.#navigation.current.params as
-                | {
-                      command: AnyCommand;
-                      commandPath: string[];
-                      values: Record<string, unknown>;
-                  }
-                | undefined;
-
+            const params = this.#navigation.current.params as ConfigRouteParams | undefined;
             if (params) {
                 return this.#config.getCopyPayload(params);
             }

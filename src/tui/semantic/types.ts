@@ -125,3 +125,25 @@ export interface SpacerProps {
     size: number;
     axis?: "horizontal" | "vertical";
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FieldConfig types (used by ConfigScreen, schemaToFields, adapter ConfigForm)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type FieldType = "text" | "number" | "boolean" | "enum";
+
+export interface FieldOption {
+    name: string;
+    value: unknown;
+}
+
+export interface FieldConfig {
+    key: string;
+    label: string;
+    type: FieldType;
+    description?: string;
+    required?: boolean;
+    options?: FieldOption[];
+    placeholder?: string;
+    group?: string;
+}

@@ -4,7 +4,7 @@ import { MenuButton } from "../../../semantic/MenuButton.tsx";
 import { Panel } from "../../../semantic/Panel.tsx";
 import { ScrollView, type ScrollViewRef } from "../../../semantic/ScrollView.tsx";
 import { Container } from "../../../semantic/Container.tsx";
-import type { FieldConfig } from "../../../components/types.ts";
+import type { FieldConfig } from "../../../semantic/types.ts";
 
 interface ConfigFormProps {
     title: string;

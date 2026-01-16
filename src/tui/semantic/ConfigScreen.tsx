@@ -1,4 +1,4 @@
-import type { FieldConfig } from "../components/types.ts";
+import type { FieldConfig } from "./types.ts";
 
 export interface ConfigScreenProps {
     title: string;

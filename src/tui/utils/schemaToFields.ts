@@ -1,5 +1,5 @@
 import type { OptionSchema, OptionDef } from "../../types/command.ts";
-import type { FieldConfig, FieldType, FieldOption } from "../components/types.ts";
+import type { FieldConfig, FieldType, FieldOption } from "../semantic/types.ts";
 
 /**
  * Convert an option type to a field type.

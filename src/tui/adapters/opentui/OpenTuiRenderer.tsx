@@ -1,6 +1,6 @@
 import { createCliRenderer, type CliRenderer } from "@opentui/core";
 import { createRoot, type Root } from "@opentui/react";
-import { useLayoutEffect, type ReactNode } from "react";
+import { useLayoutEffect, useState, type ReactNode } from "react";
 import { SemanticColors } from "../../theme.ts";
 import type { Renderer, RendererConfig } from "../types.ts";
 import { SemanticOpenTuiRenderer } from "./SemanticOpenTuiRenderer.tsx";
@@ -22,7 +22,10 @@ import { Select } from "./components/Select.tsx";
 import { TextInput } from "./components/TextInput.tsx";
 import { Value } from "./components/Value.tsx";
 
-function useOpenTuiCopyHandler() {
+import { copyToTerminalClipboard } from "../shared/TerminalClipboard.ts";
+import { useTuiDriver } from "../../driver/context/TuiDriverContext.tsx";
+
+function useOpenTuiCopyHandler(setCopyToast: (message: string) => void) {
     const driver = useTuiDriver();
 
     return async () => {
@@ -32,17 +35,20 @@ function useOpenTuiCopyHandler() {
         }
 
         await copyToTerminalClipboard(payload.content);
+        setCopyToast(`Copied ${payload.label}`);
     };
 }
-import { copyToTerminalClipboard } from "../shared/TerminalClipboard.ts";
-import { useTuiDriver } from "../../driver/context/TuiDriverContext.tsx";
 
 export class OpenTuiRenderer implements Renderer {
     private readonly semanticRenderer = new SemanticOpenTuiRenderer();
 
+    private copyToast: string | null = null;
+
     private semanticScreenKeyHandler: ((event: import("../types.ts").KeyboardEvent) => boolean) | null = null;
 
-    public renderSemanticAppShell: Renderer["renderSemanticAppShell"] = (props) => this.semanticRenderer.renderAppShell(props);
+    public renderSemanticAppShell: Renderer["renderSemanticAppShell"] = (props) => {
+        return this.semanticRenderer.renderAppShell({ ...props, copyToast: this.copyToast });
+    };
     public renderSemanticCommandBrowserScreen: Renderer["renderSemanticCommandBrowserScreen"] = (props) => {
         this.semanticScreenKeyHandler = (event) => {
             if (event.ctrl && event.name === "l") {
@@ -133,7 +139,15 @@ export class OpenTuiRenderer implements Renderer {
         return this.semanticRenderer.renderEditorScreen(props);
     };
     public registerActionDispatcher = (dispatchAction: (action: import("../../actions.ts").TuiAction) => void) => {
-        const copy = useOpenTuiCopyHandler();
+        const [, forceRerender] = useState(0);
+        const copy = useOpenTuiCopyHandler((message) => {
+            this.copyToast = message;
+            forceRerender((x) => x + 1);
+            setTimeout(() => {
+                this.copyToast = null;
+                forceRerender((x) => x + 1);
+            }, 1500);
+        });
 
         return this.keyboard.setGlobalHandler((event) => {
             // Avoid interfering with text inputs as much as possible; keep Esc working.

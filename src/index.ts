@@ -18,4 +18,5 @@ export * from "./tui/TuiRoot.tsx";
 export * from "./tui/theme.ts";
 export * from "./types/command.ts";
 
+// Kept for external consumers.
 export * from "./tui/components/JsonHighlight.tsx";

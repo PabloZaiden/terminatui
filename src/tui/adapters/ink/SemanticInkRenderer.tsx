@@ -19,7 +19,7 @@ import { TextInput } from "../../semantic/TextInput.tsx";
 import { MenuItem } from "../../semantic/MenuItem.tsx";
 import { Select } from "../../semantic/Select.tsx";
 
-function SemanticInkAppShell(props: AppShellProps) {
+function SemanticInkAppShell(props: AppShellProps & { copyToast: string | null }) {
     return (
         <Panel flexDirection="column" flex={1} padding={1} border={false}>
             <Container flexDirection="column" flex={1}>
@@ -37,8 +37,8 @@ function SemanticInkAppShell(props: AppShellProps) {
                     <Container flexDirection="row" justifyContent="space-between" padding={{ left: 1, right: 1 }}>
                         <Container flexDirection="row">
                             <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
-                            <Label color="success" bold>
-                                {props.status.message}
+                            <Label color={props.copyToast ? "success" : "mutedText"} bold={Boolean(props.copyToast)}>
+                                {props.copyToast ?? props.status.message}
                             </Label>
                         </Container>
                         <Label color="mutedText">Esc Back  Ctrl+L Logs  Ctrl+Y Copy</Label>
@@ -52,7 +52,7 @@ function SemanticInkAppShell(props: AppShellProps) {
 }
 
 export class SemanticInkRenderer {
-    renderAppShell(props: AppShellProps): ReactNode {
+    renderAppShell(props: AppShellProps & { copyToast: string | null }): ReactNode {
         return <SemanticInkAppShell {...props} />;
     }
 

@@ -20,7 +20,7 @@ import { MenuItem } from "../../semantic/MenuItem.tsx";
 import { Select } from "../../semantic/Select.tsx";
 
 export class SemanticOpenTuiRenderer {
-    renderAppShell(props: AppShellProps): ReactNode {
+    renderAppShell(props: AppShellProps & { copyToast: string | null }): ReactNode {
         return (
             <Panel flexDirection="column" flex={1} padding={1} border={false}>
                 <Container flexDirection="column" flex={1}>
@@ -38,8 +38,8 @@ export class SemanticOpenTuiRenderer {
                         <Container flexDirection="row" justifyContent="space-between" padding={{ left: 1, right: 1 }}>
                             <Container flexDirection="row">
                                 <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
-                                <Label color="success" bold>
-                                    {props.status.message}
+                                <Label color={props.copyToast ? "success" : "mutedText"} bold={Boolean(props.copyToast)}>
+                                    {props.copyToast ?? props.status.message}
                                 </Label>
                             </Container>
                             <Label color="mutedText">Esc Back  Ctrl+L Logs  Ctrl+Y Copy</Label>

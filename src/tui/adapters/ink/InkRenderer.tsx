@@ -1,6 +1,6 @@
 import { render } from "ink";
 import type { ReactNode } from "react";
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useState } from "react";
 
 import type { Renderer, RendererConfig } from "../types.ts";
 import { SemanticInkRenderer } from "./SemanticInkRenderer.tsx";
@@ -25,7 +25,7 @@ import { Value } from "./components/Value.tsx";
 import { Code } from "./components/Code.tsx";
 import { CodeHighlight } from "./components/CodeHighlight.tsx";
 
-function useInkCopyHandler() {
+function useInkCopyHandler(setCopyToast: (message: string) => void) {
     const driver = useTuiDriver();
 
     return async () => {
@@ -35,6 +35,7 @@ function useInkCopyHandler() {
         }
 
         await copyToTerminalClipboard(payload.content);
+        setCopyToast(`Copied ${payload.label}`);
     };
 }
  
@@ -42,9 +43,14 @@ export class InkRenderer implements Renderer {
 
     private readonly semanticRenderer = new SemanticInkRenderer();
 
+    private copyToast: string | null = null;
+
     private semanticScreenKeyHandler: ((event: import("../types.ts").KeyboardEvent) => boolean) | null = null;
 
-    public renderSemanticAppShell: Renderer["renderSemanticAppShell"] = (props) => this.semanticRenderer.renderAppShell(props);
+    public renderSemanticAppShell: Renderer["renderSemanticAppShell"] = (props) => {
+        // UI policy: transient copy feedback is adapter-owned.
+        return this.semanticRenderer.renderAppShell({ ...props, copyToast: this.copyToast });
+    };
     public renderSemanticCommandBrowserScreen: Renderer["renderSemanticCommandBrowserScreen"] = (props) => {
         this.semanticScreenKeyHandler = (event) => {
             if (event.ctrl && event.name === "l") {
@@ -133,7 +139,15 @@ export class InkRenderer implements Renderer {
         return this.semanticRenderer.renderEditorScreen(props);
     };
     public registerActionDispatcher = (dispatchAction: (action: import("../../actions.ts").TuiAction) => void) => {
-        const copy = useInkCopyHandler();
+        const [, forceRerender] = useState(0);
+        const copy = useInkCopyHandler((message) => {
+            this.copyToast = message;
+            forceRerender((x) => x + 1);
+            setTimeout(() => {
+                this.copyToast = null;
+                forceRerender((x) => x + 1);
+            }, 1500);
+        });
 
         return this.keyboard.setGlobalHandler((event) => {
             // Skip while typing in inputs where possible; keep Esc working.
