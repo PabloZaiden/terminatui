@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ContainerProps, Spacing } from "../../../semantic/types.ts";
+import type { ContainerProps, Spacing } from "../../../semantic/layoutTypes.ts";
 
 function normalizePadding(padding: number | Spacing | undefined):
     | { padding?: number; paddingTop?: number; paddingRight?: number; paddingBottom?: number; paddingLeft?: number }

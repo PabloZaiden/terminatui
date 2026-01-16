@@ -1,4 +1,4 @@
-import type { ScrollViewProps, ScrollViewRef } from "./types.ts";
+import type { ScrollViewProps, ScrollViewRef } from "./layoutTypes.ts";
 import { useRenderer } from "../context/RendererContext.tsx";
 
 export function ScrollView(props: ScrollViewProps) {

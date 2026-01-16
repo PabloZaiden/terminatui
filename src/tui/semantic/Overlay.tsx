@@ -1,4 +1,4 @@
-import type { OverlayProps } from "./types.ts";
+import type { OverlayProps } from "./layoutTypes.ts";
 import { useRenderer } from "../context/RendererContext.tsx";
 
 export function Overlay(props: OverlayProps) {

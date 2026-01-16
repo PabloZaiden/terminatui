@@ -8,8 +8,8 @@ import {
     type ReactNode,
 } from "react";
 
-export interface ScreenEntry<TParams = unknown> {
-    route: string;
+export interface ScreenEntry<TRoute extends string = string, TParams = unknown> {
+    route: TRoute;
     params?: TParams;
     meta?: { focus?: string; breadcrumb?: string[] };
 }
@@ -57,7 +57,7 @@ export interface NavigationAPI {
 }
 
 type NavigationProviderProps<TParams = unknown> = {
-    initialScreen: ScreenEntry<TParams>;
+    initialScreen: ScreenEntry<string, TParams>;
     children: ReactNode;
     /** Called when we can't go back anymore (at root with empty stack) */
     onExit?: () => void;

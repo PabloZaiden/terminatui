@@ -1,9 +1,7 @@
-import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
 import type { Command } from "../../core/command.ts";
 import { MenuItem } from "../semantic/MenuItem.tsx";
 import { Container } from "../semantic/Container.tsx";
 import { Panel } from "../semantic/Panel.tsx";
-import { Label } from "../semantic/Label.tsx";
 
 interface CommandItem {
     /** The command object */
@@ -19,8 +17,6 @@ interface CommandSelectorProps {
     commands: CommandItem[];
     /** Currently selected index */
     selectedIndex: number;
-    /** Called when selection changes */
-    onSelectionChange: (index: number) => void;
     /** Called when a command is selected */
     onSelect: (command: Command) => void;
     /** Breadcrumb path for nested commands */
@@ -33,36 +29,9 @@ interface CommandSelectorProps {
 export function CommandSelector({
     commands,
     selectedIndex,
-    onSelectionChange,
     onSelect,
     breadcrumb,
 }: CommandSelectorProps) {
-    // Active keyboard handler for navigation
-    useActiveKeyHandler((key) => {
-        // Arrow key navigation
-        if (key.name === "down") {
-            const newIndex = Math.min(selectedIndex + 1, commands.length - 1);
-            onSelectionChange(newIndex);
-            return true;
-        }
-
-        if (key.name === "up") {
-            const newIndex = Math.max(selectedIndex - 1, 0);
-            onSelectionChange(newIndex);
-            return true;
-        }
-
-        // Enter to select command
-        if (key.name === "return" || key.name === "enter") {
-            const selected = commands[selectedIndex];
-            if (selected) {
-                onSelect(selected.command);
-            }
-            return true;
-        }
-
-        return false;
-    });
 
     const title = breadcrumb?.length 
         ? `Select Command (${breadcrumb.join(" › ")})`
@@ -98,8 +67,6 @@ export function CommandSelector({
                     })}
                 </Container>
             </Panel>
-
-            <Label color="mutedText">↑/↓ Navigate • Enter Select • Esc {breadcrumb?.length ? "Back" : "Exit"}</Label>
         </Container>
     );
 }

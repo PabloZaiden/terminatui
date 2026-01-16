@@ -4,8 +4,6 @@ import { MenuButton } from "../semantic/MenuButton.tsx";
 import { Panel } from "../semantic/Panel.tsx";
 import { ScrollView, type ScrollViewRef } from "../semantic/ScrollView.tsx";
 import { Container } from "../semantic/Container.tsx";
-import { useActiveKeyHandler } from "../hooks/useActiveKeyHandler.ts";
-import type { KeyboardEvent } from "../adapters/types.ts";
 import type { FieldConfig } from "./types.ts";
 
 interface ConfigFormProps {
@@ -19,12 +17,6 @@ interface ConfigFormProps {
     selectedIndex: number;
     /** Whether the form is focused */
     focused: boolean;
-    /** Called when selection changes */
-    onSelectionChange: (index: number) => void;
-    /** Called when a field should be edited */
-    onEditField: (fieldKey: string) => void;
-    /** Called when the action button is pressed */
-    onAction: () => void;
     /** Function to get display value for a field */
     getDisplayValue?: (key: string, value: unknown, type: string) => string;
     /** The action button component */
@@ -58,68 +50,17 @@ export function ConfigForm({
     values,
     selectedIndex,
     focused,
-    onSelectionChange,
-    onEditField,
-    onAction,
     getDisplayValue = defaultGetDisplayValue,
     actionButton,
     additionalButtons = [],
-    onKeyDown,
 }: ConfigFormProps) {
     const scrollViewRef = useRef<ScrollViewRef | null>(null);
-    const totalItems = fieldConfigs.length + additionalButtons.length + 1; // fields + additional buttons + action button
 
     // Auto-scroll to keep selected item visible
     useEffect(() => {
         scrollViewRef.current?.scrollToIndex(selectedIndex);
     }, [selectedIndex]);
 
-    // Handle keyboard events (only when focused)
-    useActiveKeyHandler(
-        (event: KeyboardEvent) => {
-            // Let parent handle first if provided
-            if (onKeyDown?.(event)) {
-                return true;
-            }
-
-            const key = event;
-
-            // Arrow key navigation
-            if (key.name === "down") {
-                const newIndex = Math.min(selectedIndex + 1, totalItems - 1);
-                onSelectionChange(newIndex);
-                return true;
-            }
-
-            if (key.name === "up") {
-                const newIndex = Math.max(selectedIndex - 1, 0);
-                onSelectionChange(newIndex);
-                return true;
-            }
-
-            // Enter to edit field, press additional button, or run action
-            if (key.name === "return" || key.name === "enter") {
-                if (selectedIndex < fieldConfigs.length) {
-                    // It's a field
-                    const fieldConfig = fieldConfigs[selectedIndex];
-                    if (fieldConfig) {
-                        onEditField(fieldConfig.key);
-                    }
-                } else if (selectedIndex < fieldConfigs.length + additionalButtons.length) {
-                    // It's an additional button
-                    const buttonIndex = selectedIndex - fieldConfigs.length;
-                    additionalButtons[buttonIndex]?.onPress();
-                } else {
-                    // It's the main action button
-                    onAction();
-                }
-                return true;
-            }
-
-            return false;
-        },
-        { enabled: focused }
-    );
 
     return (
         <Panel

@@ -8,7 +8,6 @@ import { createSettingsCommand } from "../builtins/settings.ts";
 import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 import { loadPersistedParameters } from "./utils/parameterPersistence.ts";
 import { AppContext } from "../core/context.ts";
-import { registerAllModals, registerAllScreens } from "./registry.ts";
 
 /**
  * Extended configuration for TUI-enabled applications.
@@ -87,9 +86,6 @@ export class TuiApplication extends Application {
      * Launch the TUI.
      */
     async runTui(rendererType: TuiModeOptions): Promise<void> {
-        await registerAllScreens();
-        await registerAllModals();
-        
         // Get all commands that support TUI or have options
         const commands = this.getExecutableCommands();
 

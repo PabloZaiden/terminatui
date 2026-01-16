@@ -3,6 +3,7 @@ import { createRoot, type Root } from "@opentui/react";
 import { useLayoutEffect, type ReactNode } from "react";
 import { SemanticColors } from "../../theme.ts";
 import type { Renderer, RendererConfig } from "../types.ts";
+import { SemanticOpenTuiRenderer } from "./SemanticOpenTuiRenderer.tsx";
 import { useOpenTuiKeyboardAdapter } from "./keyboard.ts";
 import { Button } from "./components/Button.tsx";
 import { Code } from "./components/Code.tsx";
@@ -22,6 +23,125 @@ import { TextInput } from "./components/TextInput.tsx";
 import { Value } from "./components/Value.tsx";
 
 export class OpenTuiRenderer implements Renderer {
+    private readonly semanticRenderer = new SemanticOpenTuiRenderer();
+
+    private semanticScreenKeyHandler: ((event: import("../types.ts").KeyboardEvent) => boolean) | null = null;
+
+    public renderSemanticAppShell: Renderer["renderSemanticAppShell"] = (props) => this.semanticRenderer.renderAppShell(props);
+    public renderSemanticCommandBrowserScreen: Renderer["renderSemanticCommandBrowserScreen"] = (props) => {
+        this.semanticScreenKeyHandler = (event) => {
+            if (event.ctrl && event.name === "l") {
+                // Adapter-owned logs open.
+                return true;
+            }
+
+            if (event.name === "up") {
+                props.onSelectCommand(props.selectedCommandIndex - 1);
+                return true;
+            }
+
+            if (event.name === "down") {
+                props.onSelectCommand(props.selectedCommandIndex + 1);
+                return true;
+            }
+
+            if (event.name === "return") {
+                props.onRunSelected();
+                return true;
+            }
+
+            return false;
+        };
+
+        return this.semanticRenderer.renderCommandBrowserScreen(props);
+    };
+
+    public renderSemanticConfigScreen: Renderer["renderSemanticConfigScreen"] = (props) => {
+        this.semanticScreenKeyHandler = (event) => {
+            if (event.ctrl && event.name === "l") {
+                // Adapter-owned logs open.
+                return true;
+            }
+
+            if (event.name === "up") {
+                props.onSelectionChange(props.selectedFieldIndex - 1);
+                return true;
+            }
+
+            if (event.name === "down") {
+                props.onSelectionChange(props.selectedFieldIndex + 1);
+                return true;
+            }
+
+            if (event.name === "return") {
+                const fieldConfig = props.fieldConfigs[props.selectedFieldIndex];
+                if (fieldConfig) {
+                    props.onEditField(fieldConfig.key);
+                } else {
+                    props.onRun();
+                }
+                return true;
+            }
+
+            return false;
+        };
+
+        return this.semanticRenderer.renderConfigScreen(props);
+    };
+
+    public renderSemanticRunningScreen: Renderer["renderSemanticRunningScreen"] = (props) => {
+        this.semanticScreenKeyHandler = null;
+        return this.semanticRenderer.renderRunningScreen(props);
+    };
+
+    public renderSemanticLogsScreen: Renderer["renderSemanticLogsScreen"] = (props) => {
+        this.semanticScreenKeyHandler = (event) => {
+            if (event.name === "return") {
+                props.onClose();
+                return true;
+            }
+            return false;
+        };
+
+        return this.semanticRenderer.renderLogsScreen(props);
+    };
+
+    public renderSemanticEditorScreen: Renderer["renderSemanticEditorScreen"] = (props) => {
+        this.semanticScreenKeyHandler = (event) => {
+            if (event.name === "return") {
+                props.onSubmit?.();
+                return true;
+            }
+            return false;
+        };
+
+        return this.semanticRenderer.renderEditorScreen(props);
+    };
+    public registerActionDispatcher = (dispatchAction: (action: import("../../actions.ts").TuiAction) => void) => {
+        return this.keyboard.setGlobalHandler((event) => {
+            // Avoid interfering with text inputs as much as possible; keep Esc working.
+            if (event.name === "escape") {
+                dispatchAction({ type: "nav.back" });
+                return true;
+            }
+
+            if (event.ctrl && event.name === "y") {
+                dispatchAction({ type: "clipboard.copy" });
+                return true;
+            }
+
+            if (event.ctrl && event.name === "l") {
+                dispatchAction({ type: "logs.open" });
+                return true;
+            }
+
+            if (this.semanticScreenKeyHandler) {
+                return this.semanticScreenKeyHandler(event);
+            }
+
+            return false;
+        });
+    };
     private renderer: CliRenderer | null = null;
     private root: Root | null = null;
 

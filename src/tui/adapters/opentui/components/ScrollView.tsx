@@ -1,6 +1,6 @@
 import { useRef, type ReactNode } from "react";
 import type { ScrollBoxRenderable } from "@opentui/core";
-import type { ScrollViewProps, ScrollViewRef, Spacing } from "../../../semantic/types.ts";
+import type { ScrollViewProps, ScrollViewRef, Spacing } from "../../../semantic/layoutTypes.ts";
 
 function normalizePadding(padding: number | Spacing | undefined): any {
     if (padding === undefined) {

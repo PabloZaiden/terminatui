@@ -15,7 +15,6 @@ export * from "./core/registry.ts";
 
 export * from "./tui/TuiApplication.tsx";
 export * from "./tui/TuiRoot.tsx";
-export * from "./tui/registry.ts";
 export * from "./tui/theme.ts";
 export * from "./types/command.ts";
 

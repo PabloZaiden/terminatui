@@ -13,7 +13,7 @@ export interface ClipboardContent {
  */
 export type ClipboardProvider = () => ClipboardContent | null;
 
-interface ClipboardContextValue {
+export interface ClipboardContextValue {
     /**
      * Register a clipboard provider. Returns an unregister function.
      * Providers are stacked - the most recently registered provider is checked first.

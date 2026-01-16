@@ -1,4 +1,4 @@
-import type { ContainerProps } from "./types.ts";
+import type { ContainerProps } from "./layoutTypes.ts";
 import { useRenderer } from "../context/RendererContext.tsx";
 
 export function Container(props: ContainerProps) {

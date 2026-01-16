@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { PanelProps, Spacing } from "../../../semantic/types.ts";
+import type { PanelProps, Spacing } from "../../../semantic/layoutTypes.ts";
 import { SemanticColors } from "../../../theme.ts";
 
 function normalizePadding(

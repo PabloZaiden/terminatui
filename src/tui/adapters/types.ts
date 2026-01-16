@@ -3,20 +3,17 @@ import type {
     ButtonProps,
     CodeHighlightProps,
     CodeProps,
-    ContainerProps,
     FieldProps,
     LabelProps,
     MenuButtonProps,
     MenuItemProps,
-    OverlayProps,
-    PanelProps,
-    ScrollViewProps,
     SelectProps,
     SpacerProps,
     SpinnerProps,
     TextInputProps,
     ValueProps,
 } from "../semantic/types.ts";
+import type { ContainerProps, OverlayProps, PanelProps, ScrollViewProps } from "../semantic/layoutTypes.ts";
 
 export interface KeyboardEvent {
     name: string;
@@ -68,4 +65,16 @@ export interface Renderer {
 
     keyboard: KeyboardAdapter;
     components: RendererComponents;
+
+    renderSemanticAppShell: (props: import("../semantic/AppShell.tsx").AppShellProps) => ReactNode;
+    renderSemanticCommandBrowserScreen: (
+        props: import("../semantic/CommandBrowserScreen.tsx").CommandBrowserScreenProps
+    ) => ReactNode;
+    renderSemanticConfigScreen: (props: import("../semantic/ConfigScreen.tsx").ConfigScreenProps) => ReactNode;
+    renderSemanticRunningScreen: (props: import("../semantic/RunningScreen.tsx").RunningScreenProps) => ReactNode;
+    renderSemanticLogsScreen: (props: import("../semantic/LogsScreen.tsx").LogsScreenProps) => ReactNode;
+    renderSemanticEditorScreen: (props: import("../semantic/EditorScreen.tsx").EditorScreenProps) => ReactNode;
+
+    /** Adapter-level key bindings should call into this if supported. */
+    registerActionDispatcher?: (dispatchAction: (action: import("../actions.ts").TuiAction) => void) => () => void;
 }

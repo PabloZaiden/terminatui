@@ -68,8 +68,9 @@ Responsibilities:
 
 Non-responsibilities:
 
-- Adapters should not branch on routes or app-specific screens.
+- Adapters should not branch on app-specific behavior beyond the semantic screen contracts.
 - Adapters implement rendering for a small, stable set of **framework semantic screen components**.
+  - In practice, this is exposed directly on the adapter `Renderer` interface (not a separate `SemanticRenderer`).
 
 ---
 
@@ -233,6 +234,17 @@ Copy is contextual: the framework action `clipboard.copy` must obtain content fr
 ---
 
 ## 6. Migration plan (semantic-first)
+
+Implementation details live in `planning/semantic-first-implementation.md`.
+
+### 6.0 Implementation status (tracked here)
+
+- [x] Introduce semantic screen contracts (section 6.2)
+- [x] Remove keyboard and legend from core (section 6.3)
+- [x] Replace registry routing driver (section 6.4)
+- [x] Render Results + Error semantically (currently via `RunningScreenProps.kind`)
+- [ ] Remove legacy registry + legacy screens/modals (still present but unused)
+- [ ] Final pass: ensure semantic components never accept layout props
 
 ### 6.1 Phase 0: inventory and mapping
 
