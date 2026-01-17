@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.4 code complete. Refactored semantic renderers to use platform-native components directly, added JSON highlighting to results, fixed logs scrolling, and removed 16 unused mid-level semantic components. Awaiting manual testing. See **Section 9.4: Iteration 2.4**.
+> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.5 code complete. Fixed OpenTUI logs ANSI stripping, created adapter-specific JsonHighlight components for proper syntax-highlighted JSON rendering. Awaiting manual testing. See **Section 9.5: Iteration 2.5**.
 
 This document is a corrective follow-up to:
 
@@ -1114,3 +1114,99 @@ After refactoring both semantic renderers to use platform-native components dire
 **Next steps:**
 - Manual testing of both adapters to verify all fixes work as expected
 - Once manual testing passes, iteration 2.4 is complete
+
+---
+
+## 9.5 Iteration 2.5: Manual testing bugfixes (round 4)
+
+### Problem summary
+
+Manual testing after iteration 2.4 revealed remaining issues:
+
+#### Bug 1: OpenTUI logs display garbled ANSI codes
+- Log messages may contain ANSI escape codes from colorized output
+- These codes display as garbage characters in the logs modal
+- Need to strip ANSI codes before displaying using `Bun.stripAnsi()`
+
+#### Bug 2: Results screen shows [object Object] (both adapters)
+- `JsonHighlight` returns an array of strings, not a joined string
+- When passed to `<Value>`, React tries to render the array which doesn't work
+- Need to join the array into a single string
+
+### Root cause analysis
+
+**Bug 1**: Log messages may come from sources that include ANSI color codes. OpenTUI's logs modal displays these raw, resulting in garbled output. The fix is to call `Bun.stripAnsi()` on log messages before display.
+
+**Bug 2**: The `JsonHighlight` component returns `string[]` (an array of ANSI-colorized string fragments). When this is passed to `<Value>{JsonHighlight({...})}</Value>`, the array is not joined, resulting in React trying to render an array which shows as `[object Object]`. The fix is to join the array: `JsonHighlight({...}).join("")`.
+
+### Checklist
+
+#### Phase 2.5A: Fix OpenTUI logs ANSI stripping
+
+- [x] Update `renderLogsScreen` in `SemanticOpenTuiRenderer` to strip ANSI codes from log messages
+- [x] Use `Bun.stripANSI()` on `item.message`
+
+#### Phase 2.5B: Fix JsonHighlight — create shared tokenizer + adapter-specific rendering
+
+- [x] Create shared tokenization utility (`src/tui/utils/jsonTokenizer.ts`) — pure behavioral helper, no React
+- [x] Create adapter-specific `JsonHighlight` for OpenTUI (`src/tui/adapters/opentui/ui/JsonHighlight.tsx`) — uses shared tokenizer + platform components
+- [x] Create adapter-specific `JsonHighlight` for Ink (`src/tui/adapters/ink/ui/JsonHighlight.tsx`) — uses shared tokenizer + platform components
+- [x] Update `ResultsPanel` in OpenTUI adapter to use adapter-local `JsonHighlight`
+- [x] Update `ResultsPanel` in Ink adapter to use adapter-local `JsonHighlight`
+- [x] Update public API `JsonHighlight` in `src/tui/components/` to use shared tokenizer (returns ANSI string for external consumers)
+
+#### Phase 2.5C: Verification
+
+- [x] `bun run build` passes
+- [x] `bun run test` passes (78 tests)
+- [ ] Manual test: OpenTUI logs display clean text without ANSI garbage — **NEEDS MANUAL TEST**
+- [ ] Manual test: results screen shows syntax-highlighted JSON (both adapters) — **NEEDS MANUAL TEST**
+- [x] Update planning doc with completion status
+
+### Implementation notes (iteration 2.5)
+
+**Changes made:**
+
+1. **OpenTUI logs ANSI stripping**: Added `Bun.stripANSI()` call in `SemanticOpenTuiRenderer.renderLogsScreen()` to strip ANSI escape codes from log messages before display.
+
+2. **Shared JSON tokenizer**: Created `src/tui/utils/jsonTokenizer.ts` — a pure behavioral helper with no React dependencies that tokenizes JavaScript values into lines of syntax-highlighted JSON tokens. This follows the planning doc principle: "shared code across terminal adapters may exist as behavioral helpers (formatters, reducers), not shared UI components".
+
+3. **Adapter-specific JsonHighlight components**: Created proper React components for each adapter that use the shared tokenizer + platform-native components (`Container`, `CodeHighlight`) to render syntax-highlighted JSON:
+   - `src/tui/adapters/opentui/ui/JsonHighlight.tsx`
+   - `src/tui/adapters/ink/ui/JsonHighlight.tsx`
+
+4. **Updated ResultsPanel to use adapter-local JsonHighlight**: Both `ResultsPanel` components now import from their adapter's `ui/JsonHighlight.tsx`.
+
+5. **Updated public API JsonHighlight**: The `src/tui/components/JsonHighlight.tsx` (exported for external consumers) now uses the shared tokenizer and returns ANSI-colored text as a string.
+
+6. **Fixed results screen data flow**: The `OutcomeController` was converting results to string with `String()` which caused `[object Object]`. Now it passes the actual `CommandResult` object through `RunningScreenProps.result` so the semantic renderers can use `JsonHighlight` to render the data properly.
+
+**Architecture:**
+```
+src/tui/utils/jsonTokenizer.ts          # Shared behavioral helper (pure function)
+    ↓
+src/tui/adapters/opentui/ui/JsonHighlight.tsx  # Uses tokenizer + platform components
+src/tui/adapters/ink/ui/JsonHighlight.tsx      # Uses tokenizer + platform components
+    ↓
+src/tui/adapters/*/ui/ResultsPanel.tsx         # Uses adapter-local JsonHighlight
+
+src/tui/components/JsonHighlight.tsx    # Public API (uses tokenizer, returns ANSI string)
+```
+
+**Files created:**
+- `src/tui/utils/jsonTokenizer.ts`
+- `src/tui/adapters/opentui/ui/JsonHighlight.tsx`
+- `src/tui/adapters/ink/ui/JsonHighlight.tsx`
+
+**Files modified:**
+- `src/tui/semantic/RunningScreen.tsx` — added `result?: CommandResult` prop
+- `src/tui/controllers/OutcomeController.tsx` — pass actual `CommandResult` object instead of stringified version
+- `src/tui/adapters/opentui/SemanticOpenTuiRenderer.tsx` — use `props.result`, strip ANSI from log messages
+- `src/tui/adapters/ink/SemanticInkRenderer.tsx` — use `props.result`
+- `src/tui/adapters/opentui/ui/ResultsPanel.tsx` — use adapter-local JsonHighlight
+- `src/tui/adapters/ink/ui/ResultsPanel.tsx` — use adapter-local JsonHighlight
+- `src/tui/components/JsonHighlight.tsx` — use shared tokenizer, return ANSI string
+
+**Next steps:**
+- Manual testing of both adapters to verify fixes work as expected
+- Once manual testing passes, iteration 2.5 is complete

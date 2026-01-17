@@ -122,7 +122,7 @@ export class SemanticOpenTuiRenderer {
         return (
             <Container flexDirection="column" flex={1}>
                 <ResultsPanel 
-                    result={{ success: true, message: props.title, data: props.message }} 
+                    result={props.result ?? { success: true, message: props.message }} 
                     error={null} 
                     focused={true} 
                 />
@@ -137,7 +137,7 @@ export class SemanticOpenTuiRenderer {
                      <Label bold>Logs</Label>
                      <ScrollView axis="vertical" flex={1}>
                          {props.items.slice(-50).map((item) => (
-                             <Value key={item.timestamp}>{`[${item.level}] ${item.message}`}</Value>
+                             <Value key={item.timestamp}>{`[${item.level}] ${Bun.stripANSI(item.message)}`}</Value>
                          ))}
                      </ScrollView>
                      <Label color="mutedText">Enter or Esc to close</Label>

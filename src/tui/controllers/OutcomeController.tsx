@@ -1,3 +1,4 @@
+import type { CommandResult } from "../../core/command.ts";
 import type { CopyPayload, ErrorRouteParams, ResultsRouteParams, TuiRoute } from "../driver/types.ts";
 import type { NavigationAPI } from "../context/NavigationContext.tsx";
 
@@ -18,9 +19,17 @@ export class OutcomeController {
         }
 
         if (route === "results") {
-            const params = this.#navigation.current.params as { result: unknown } | undefined;
+            const params = this.#navigation.current.params as ResultsRouteParams | undefined;
+            const result = params?.result as CommandResult | undefined;
             return {
-                node: <RenderRunningScreen title="Results" kind="results" message={String(params?.result ?? "")} />,
+                node: (
+                    <RenderRunningScreen
+                        title="Results"
+                        kind="results"
+                        message={result?.message}
+                        result={result}
+                    />
+                ),
             };
         }
 
@@ -39,10 +48,21 @@ export class OutcomeController {
     public getCopyPayload(route: OutcomeRoute): CopyPayload | null {
         if (route === "results") {
             const params = this.#navigation.current.params as ResultsRouteParams | undefined;
-            if (params?.result !== undefined) {
+            const result = params?.result as CommandResult | undefined;
+            if (result !== undefined) {
+                // If result has data, stringify it for clipboard
+                if (result.data !== undefined) {
+                    return {
+                        label: "result",
+                        content: typeof result.data === "object" 
+                            ? JSON.stringify(result.data, null, 2) 
+                            : String(result.data),
+                    };
+                }
+                // Otherwise use the message
                 return {
                     label: "result",
-                    content: String(params.result),
+                    content: result.message ?? "",
                 };
             }
         }

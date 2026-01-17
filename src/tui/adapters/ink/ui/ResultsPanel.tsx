@@ -8,8 +8,8 @@ import { ScrollView } from "../components/ScrollView.tsx";
 import { Label } from "../components/Label.tsx";
 import { Value } from "../components/Value.tsx";
 
-// Shared utility for JSON highlighting
-import { JsonHighlight } from "../../../components/JsonHighlight.tsx";
+// Adapter-local JSON highlighting
+import { JsonHighlight } from "./JsonHighlight.tsx";
 
 interface ResultsPanelProps {
     result: CommandResult | null;
@@ -44,7 +44,7 @@ export function ResultsPanel({ result, error, focused, renderResult }: ResultsPa
                     {result.message && <Label color={result.success ? "success" : "error"}>{result.message}</Label>}
                     {result.data !== undefined && result.data !== null && (
                         typeof result.data === "object" 
-                            ? <Value>{JsonHighlight({ value: result.data })}</Value>
+                            ? <JsonHighlight value={result.data} />
                             : <Value>{String(result.data)}</Value>
                     )}
                 </Container>

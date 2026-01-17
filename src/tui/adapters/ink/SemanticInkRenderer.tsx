@@ -126,7 +126,7 @@ export class SemanticInkRenderer {
         return (
             <Container flexDirection="column" flex={1}>
                 <ResultsPanel 
-                    result={{ success: true, message: props.title, data: props.message }} 
+                    result={props.result ?? { success: true, message: props.message }} 
                     error={null} 
                     focused={true} 
                 />
