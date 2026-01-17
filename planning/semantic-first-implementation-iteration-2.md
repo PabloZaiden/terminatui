@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.6 Part 6 complete. Fixed OpenTUI logs screen ScrollView overflow; added `LogsPanel` component with dynamic sizing. Build and tests pass. See **Section 9.6: Iteration 2.6**.
+> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.6 Part 7 in progress. Restored spinner in status bar for both adapters. Build and tests pass. Awaiting manual testing. See **Section 9.6: Iteration 2.6**.
 
 This document is a corrective follow-up to:
 
@@ -1487,3 +1487,20 @@ During manual testing, the OpenTUI logs screen was found to have a layout bug wh
 - [x] Run `bun run build` — passes
 - [x] Run `bun run test` — 78 tests pass
 - [x] Manual testing — logs screen properly constrains content
+
+### Iteration 2.6 Part 7: Restore spinner in status bar
+
+During manual testing, it was noticed that the spinner animation is no longer visible in the status bar while commands are executing. Both adapters have Spinner components but they're not being used - only the text "Executing..." is shown.
+
+**Goal:**
+- Each adapter should show its own spinner animation in the status bar when `isExecuting` is true
+- This follows the renderer-owned UI policy: each adapter implements its own spinner
+
+#### Checklist
+
+- [x] Import and use `Spinner` component in Ink's `SemanticInkAppShell` status bar
+- [x] Import and use `Spinner` component in OpenTUI's `SemanticOpenTuiRenderer.renderAppShell` status bar
+- [x] Spinner should appear alongside "Executing..." text when `props.status.isExecuting` is true
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — passes
+- [ ] Manual testing — spinner visible in both adapters during command execution

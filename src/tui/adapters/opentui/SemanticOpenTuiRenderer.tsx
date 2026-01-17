@@ -14,6 +14,7 @@ import { TextInput } from "./components/TextInput.tsx";
 import { Select } from "./components/Select.tsx";
 import { MenuButton } from "./components/MenuButton.tsx";
 import { MenuItem } from "./components/MenuItem.tsx";
+import { Spinner } from "./components/Spinner.tsx";
 
 // Adapter-local UI components
 import { Header } from "./ui/Header.tsx";
@@ -40,6 +41,7 @@ export class SemanticOpenTuiRenderer {
                     <Panel dense border={true} flexDirection="column" gap={0} height={4}>
                         <box flexDirection="row" justifyContent="space-between" paddingLeft={1} paddingRight={1}>
                             <box flexDirection="row" gap={1}>
+                                <Spinner active={props.status.isExecuting} />
                                 <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
                                 {props.copyToast ? (
                                     <Label color="success" bold>{props.copyToast}</Label>
