@@ -136,13 +136,15 @@ export class SemanticInkRenderer {
     renderLogsScreen(props: LogsScreenProps): ReactNode {
         return (
             <Overlay>
-                <Panel flexDirection="column" padding={1} border={true} width={80} height={20}>
+                <Panel flexDirection="column" padding={0} border={true} width={80} height={20}>
                     <Label bold>Logs</Label>
+                    <Box height={1} />
                     <ScrollView axis="vertical" flex={1}>
                         {props.items.map((item) => (
                             <Label color="value" key={item.timestamp}>{`[${item.level}] ${item.message}`}</Label>
                         ))}
                     </ScrollView>
+                    <Box height={1} />
                     <Label color="mutedText">Enter or Esc to close</Label>
                 </Panel>
             </Overlay>

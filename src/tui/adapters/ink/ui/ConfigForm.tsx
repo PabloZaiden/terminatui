@@ -61,6 +61,8 @@ export function ConfigForm({
 
                         return <Field key={field.key} label={field.label} value={displayValue} selected={isSelected} />;
                     })}
+                    
+                    <Box height={1} />
 
                     {additionalButtons.map((btn, idx) => {
                         const buttonSelectedIndex = fieldConfigs.length + idx;
