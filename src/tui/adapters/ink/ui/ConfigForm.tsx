@@ -1,10 +1,11 @@
 import { useRef, useEffect, type ReactNode } from "react";
-import { Field } from "../../../semantic/Field.tsx";
-import { MenuButton } from "../../../semantic/MenuButton.tsx";
-import { Panel } from "../../../semantic/Panel.tsx";
-import { ScrollView, type ScrollViewRef } from "../../../semantic/ScrollView.tsx";
-import { Container } from "../../../semantic/Container.tsx";
+import { Field } from "../components/Field.tsx";
+import { MenuButton } from "../components/MenuButton.tsx";
+import { Panel } from "../components/Panel.tsx";
+import { ScrollView } from "../components/ScrollView.tsx";
+import { Container } from "../components/Container.tsx";
 import type { FieldConfig } from "../../../semantic/types.ts";
+import type { ScrollViewRef } from "../../../semantic/layoutTypes.ts";
 
 interface ConfigFormProps {
     title: string;

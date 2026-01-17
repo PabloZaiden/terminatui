@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.3 code fixes complete. All bugs fixed, build and tests pass. Awaiting manual testing to verify fixes work as expected. See **Section 9.3: Iteration 2.3 Bugfixes**.
+> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.4 code complete. Refactored semantic renderers to use platform-native components directly, added JSON highlighting to results, fixed logs scrolling, and removed 16 unused mid-level semantic components. Awaiting manual testing. See **Section 9.4: Iteration 2.4**.
 
 This document is a corrective follow-up to:
 
@@ -997,8 +997,120 @@ Manual testing after iteration 2.2 revealed additional bugs:
 
 - [x] `bun run build` passes
 - [x] `bun run test` passes (78 tests)
-- [ ] Manual test: results screen shows content (both adapters) — **NEEDS MANUAL TEST**
-- [ ] Manual test: copy toast appears immediately (both adapters) — **NEEDS MANUAL TEST**
-- [ ] Manual test: Ctrl+Y works on results screen (both adapters) — **NEEDS MANUAL TEST**
-- [ ] Manual test: logs modal has bounded size (opentui) — **NEEDS MANUAL TEST**
-- [ ] Update planning doc with completion status
+- [x] Manual test: results screen shows content (both adapters) — partial, shows [Object object]
+- [x] Manual test: copy toast appears immediately (both adapters) — working
+- [x] Manual test: Ctrl+Y works on results screen (both adapters) — working
+- [ ] Manual test: logs modal has bounded size (opentui) — still grows, needs scrollview fix
+- [x] Update planning doc with completion status
+
+---
+
+## 9.4 Iteration 2.4: Direct platform components + JSON highlighting
+
+### Problem summary
+
+Manual testing after iteration 2.3 revealed remaining issues:
+
+#### Bug 1: OpenTUI logs modal still grows (opentui)
+- `maxHeight` was added but the content is not inside a scrollview
+- Modal should have a fixed height with scrollable content inside
+
+#### Bug 2: Results screen shows [Object object] (both adapters)
+- When result data is an object, it displays as "[Object object]"
+- Should use `JsonHighlight` component for proper syntax-highlighted JSON display
+
+#### Design improvement: Remove semantic component indirection in adapters
+
+Currently `SemanticOpenTuiRenderer` and `SemanticInkRenderer` import semantic components like `Panel`, `Container`, `Label`, etc. from `src/tui/semantic/*`. These semantic components then delegate to platform-specific implementations.
+
+**Problem**: This adds unnecessary indirection. The semantic renderers should use platform-native components directly (from `src/tui/adapters/opentui/components/*` and `src/tui/adapters/ink/components/*`).
+
+**Target**: 
+- Semantic components (`Panel`, `Container`, `Label`, etc.) should only be used by higher-level platform-agnostic code
+- `SemanticOpenTuiRenderer` should import directly from `./components/*`
+- `SemanticInkRenderer` should import directly from `./components/*`
+- Keep truly reusable abstractions like `ResultsPanel` that are used for multiple purposes (result and error display)
+
+**Guardrail alignment**:
+- This aligns with the planning doc principle: "Each adapter implements its own status rendering" and "shared code across terminal adapters may exist as behavioral helpers (formatters, reducers), not shared UI components"
+- The semantic components are contracts; the renderers own the implementation
+
+### Checklist
+
+#### Phase 2.4A: Fix OpenTUI logs modal with scrollview
+
+- [x] Update `renderLogsScreen` in `SemanticOpenTuiRenderer` to use a ScrollView inside the Panel
+- [x] Set fixed height on Panel instead of maxHeight
+- [x] Ensure logs content scrolls within the fixed bounds
+
+#### Phase 2.4B: Fix results screen JSON display
+
+- [x] Update `ResultsPanel` in OpenTUI adapter to use JsonHighlight for object data
+- [x] Update `ResultsPanel` in Ink adapter to use JsonHighlight for object data
+- [x] Create platform-specific JsonHighlight wrappers if needed — not needed, using shared `JsonHighlight` utility
+
+#### Phase 2.4C: Refactor SemanticOpenTuiRenderer to use platform components directly
+
+- [x] Replace imports from `../../semantic/*` with imports from `./components/*`
+- [x] Update component usage to match platform-native APIs
+- [x] Verify all screens render correctly (build passes)
+
+#### Phase 2.4D: Refactor SemanticInkRenderer to use platform components directly
+
+- [x] Replace imports from `../../semantic/*` with imports from `./components/*`
+- [x] Update component usage to match platform-native APIs
+- [x] Verify all screens render correctly (build passes)
+
+#### Phase 2.4E: Remove unused mid-level semantic components
+
+After refactoring both semantic renderers to use platform-native components directly, the following mid-level semantic components under `src/tui/semantic/*` should be removed if no longer referenced:
+
+- [x] Audit `src/tui/semantic/*.tsx` for unused components
+- [x] Remove unused components: `Panel.tsx`, `Container.tsx`, `Label.tsx`, `Value.tsx`, `Overlay.tsx`, `ScrollView.tsx`, `Spacer.tsx`, `Spinner.tsx`, `Field.tsx`, `Button.tsx`, `MenuButton.tsx`, `MenuItem.tsx`, `TextInput.tsx`, `Select.tsx`, `Code.tsx`, `CodeHighlight.tsx`
+- [x] Keep only the screen prop interfaces and `render.tsx` (the semantic contract layer)
+- [x] Update any remaining imports — no updates needed
+
+#### Phase 2.4F: Verification
+
+- [x] `bun run build` passes
+- [x] `bun run test` passes (78 tests)
+- [ ] Manual test: OpenTUI logs modal has fixed height with scroll — **NEEDS MANUAL TEST**
+- [ ] Manual test: results screen shows JSON with syntax highlighting — **NEEDS MANUAL TEST**
+- [ ] Manual test: both adapters render all screens correctly — **NEEDS MANUAL TEST**
+- [x] Update planning doc with completion status and next steps
+
+### Implementation notes (iteration 2.4)
+
+**Key architectural changes:**
+
+1. **Removed semantic component indirection**: `SemanticOpenTuiRenderer` and `SemanticInkRenderer` now import directly from their respective platform-native component folders (`./components/*`) instead of going through the mid-level semantic components (`../../semantic/*`).
+
+2. **Fixed logs modal scrolling**: Both adapters now use a fixed `height={20}` with a `ScrollView` inside for the logs modal, ensuring content scrolls within bounds instead of growing unbounded.
+
+3. **Added JSON syntax highlighting**: `ResultsPanel` in both adapters now uses `JsonHighlight` for object data, providing colorized JSON output instead of `[Object object]`.
+
+4. **Removed unused semantic components**: 16 mid-level semantic component files were removed from `src/tui/semantic/`:
+   - `Panel.tsx`, `Container.tsx`, `Label.tsx`, `Value.tsx`, `Overlay.tsx`, `ScrollView.tsx`
+   - `Spacer.tsx`, `Spinner.tsx`, `Field.tsx`, `Button.tsx`, `MenuButton.tsx`, `MenuItem.tsx`
+   - `TextInput.tsx`, `Select.tsx`, `Code.tsx`, `CodeHighlight.tsx`
+
+5. **Preserved semantic contracts**: The following files remain in `src/tui/semantic/`:
+   - `types.ts`, `layoutTypes.ts` — prop interface definitions used by platform components
+   - `render.tsx` — semantic render functions used by controllers
+   - `AppShell.tsx`, `CommandBrowserScreen.tsx`, `ConfigScreen.tsx`, `EditorScreen.tsx`, `LogsScreen.tsx`, `RunningScreen.tsx` — screen prop interface definitions
+
+**Files modified:**
+- `src/tui/adapters/opentui/SemanticOpenTuiRenderer.tsx` — imports from `./components/*`
+- `src/tui/adapters/ink/SemanticInkRenderer.tsx` — imports from `./components/*`
+- `src/tui/adapters/opentui/ui/ResultsPanel.tsx` — uses `JsonHighlight`, imports from `../components/*`
+- `src/tui/adapters/ink/ui/ResultsPanel.tsx` — uses `JsonHighlight`, imports from `../components/*`
+- `src/tui/adapters/opentui/ui/Header.tsx` — imports from `../components/*`
+- `src/tui/adapters/ink/ui/Header.tsx` — imports from `../components/*`
+- `src/tui/adapters/opentui/ui/CommandSelector.tsx` — imports from `../components/*`
+- `src/tui/adapters/ink/ui/CommandSelector.tsx` — imports from `../components/*`
+- `src/tui/adapters/opentui/ui/ConfigForm.tsx` — imports from `../components/*`
+- `src/tui/adapters/ink/ui/ConfigForm.tsx` — imports from `../components/*`
+
+**Next steps:**
+- Manual testing of both adapters to verify all fixes work as expected
+- Once manual testing passes, iteration 2.4 is complete

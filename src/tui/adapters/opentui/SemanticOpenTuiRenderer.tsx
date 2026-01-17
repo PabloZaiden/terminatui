@@ -5,19 +5,24 @@ import type { ConfigScreenProps } from "../../semantic/ConfigScreen.tsx";
 import type { RunningScreenProps } from "../../semantic/RunningScreen.tsx";
 import type { LogsScreenProps } from "../../semantic/LogsScreen.tsx";
 import type { EditorScreenProps } from "../../semantic/EditorScreen.tsx";
-import { Panel } from "../../semantic/Panel.tsx";
-import { Container } from "../../semantic/Container.tsx";
+
+// Platform-native components (OpenTUI)
+import { Panel } from "./components/Panel.tsx";
+import { Container } from "./components/Container.tsx";
+import { Label } from "./components/Label.tsx";
+import { Value } from "./components/Value.tsx";
+import { Overlay } from "./components/Overlay.tsx";
+import { ScrollView } from "./components/ScrollView.tsx";
+import { TextInput } from "./components/TextInput.tsx";
+import { Select } from "./components/Select.tsx";
+import { MenuButton } from "./components/MenuButton.tsx";
+import { MenuItem } from "./components/MenuItem.tsx";
+
+// Adapter-local UI components
 import { Header } from "./ui/Header.tsx";
 import { CommandSelector } from "./ui/CommandSelector.tsx";
 import { ConfigForm } from "./ui/ConfigForm.tsx";
 import { ResultsPanel } from "./ui/ResultsPanel.tsx";
-import { MenuButton } from "../../semantic/MenuButton.tsx";
-import { Overlay } from "../../semantic/Overlay.tsx";
-import { Label } from "../../semantic/Label.tsx";
-import { Value } from "../../semantic/Value.tsx";
-import { TextInput } from "../../semantic/TextInput.tsx";
-import { MenuItem } from "../../semantic/MenuItem.tsx";
-import { Select } from "../../semantic/Select.tsx";
 
 export class SemanticOpenTuiRenderer {
     renderAppShell(props: AppShellProps): ReactNode {
@@ -128,13 +133,13 @@ export class SemanticOpenTuiRenderer {
      renderLogsScreen(props: LogsScreenProps): ReactNode {
          return (
              <Overlay>
-                 <Panel flexDirection="column" padding={1} border={true} width={80} maxHeight={24} surface="overlay">
+                 <Panel flexDirection="column" padding={1} border={true} width={80} height={20} surface="overlay">
                      <Label bold>Logs</Label>
-                     <Container flexDirection="column" flex={1}>
-                         {props.items.slice(-20).map((item) => (
+                     <ScrollView axis="vertical" flex={1}>
+                         {props.items.slice(-50).map((item) => (
                              <Value key={item.timestamp}>{`[${item.level}] ${item.message}`}</Value>
                          ))}
-                     </Container>
+                     </ScrollView>
                      <Label color="mutedText">Enter or Esc to close</Label>
                  </Panel>
              </Overlay>

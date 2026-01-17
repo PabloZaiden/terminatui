@@ -1,10 +1,15 @@
 import type { ReactNode } from "react";
 import type { CommandResult } from "../../../../core/command.ts";
-import { Container } from "../../../semantic/Container.tsx";
-import { Panel } from "../../../semantic/Panel.tsx";
-import { ScrollView } from "../../../semantic/ScrollView.tsx";
-import { Label } from "../../../semantic/Label.tsx";
-import { Value } from "../../../semantic/Value.tsx";
+
+// Platform-native components (OpenTUI)
+import { Container } from "../components/Container.tsx";
+import { Panel } from "../components/Panel.tsx";
+import { ScrollView } from "../components/ScrollView.tsx";
+import { Label } from "../components/Label.tsx";
+import { Value } from "../components/Value.tsx";
+
+// Shared utility for JSON highlighting
+import { JsonHighlight } from "../../../components/JsonHighlight.tsx";
 
 interface ResultsPanelProps {
     result: CommandResult | null;
@@ -37,7 +42,11 @@ export function ResultsPanel({ result, error, focused, renderResult }: ResultsPa
             content = (
                 <Container flexDirection="column" gap={1}>
                     {result.message && <Label color={result.success ? "success" : "error"}>{result.message}</Label>}
-                    {result.data !== undefined && result.data !== null && <Value>{JSON.stringify(result.data, null, 2)}</Value>}
+                    {result.data !== undefined && result.data !== null && (
+                        typeof result.data === "object" 
+                            ? <Value>{JsonHighlight({ value: result.data })}</Value>
+                            : <Value>{String(result.data)}</Value>
+                    )}
                 </Container>
             );
         }

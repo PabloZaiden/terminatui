@@ -1,7 +1,7 @@
 import type { Command } from "../../../../core/command.ts";
-import { MenuItem } from "../../../semantic/MenuItem.tsx";
-import { Container } from "../../../semantic/Container.tsx";
-import { Panel } from "../../../semantic/Panel.tsx";
+import { MenuItem } from "../components/MenuItem.tsx";
+import { Container } from "../components/Container.tsx";
+import { Panel } from "../components/Panel.tsx";
 
 interface CommandItem {
     command: Command;
@@ -17,7 +17,7 @@ interface CommandSelectorProps {
 }
 
 export function CommandSelector({ commands, selectedIndex, onSelect, breadcrumb }: CommandSelectorProps) {
-    const title = breadcrumb?.length ? `Select Command (${breadcrumb.join(" 3 ")})` : "Select Command";
+    const title = breadcrumb?.length ? `Select Command (${breadcrumb.join(" 3 ")})` : "Select Command";
 
     return (
         <Container flexDirection="column" flex={1} justifyContent="center" alignItems="center" gap={1}>
@@ -49,7 +49,7 @@ export function CommandSelector({ commands, selectedIndex, onSelect, breadcrumb 
 function getModeIndicator(command: Command): string {
     const navigableSubCommands = command.subCommands?.filter((sub) => sub.supportsTui()) ?? [];
     if (navigableSubCommands.length > 0) {
-        return "2";
+        return "2";
     }
 
     return "";

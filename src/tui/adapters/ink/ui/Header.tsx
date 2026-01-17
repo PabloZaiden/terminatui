@@ -1,6 +1,6 @@
-import { Container } from "../../../semantic/Container.tsx";
-import { Label } from "../../../semantic/Label.tsx";
-import { Spacer } from "../../../semantic/Spacer.tsx";
+import { Container } from "../components/Container.tsx";
+import { Label } from "../components/Label.tsx";
+import { Spacer } from "../components/Spacer.tsx";
 
 interface HeaderProps {
     name: string;
@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 export function Header({ name, version, breadcrumb }: HeaderProps) {
-    const breadcrumbStr = breadcrumb?.length ? ` 3 ${breadcrumb.join(" 3 ")}` : "";
+    const breadcrumbStr = breadcrumb?.length ? ` 3 ${breadcrumb.join(" 3 ")}` : "";
 
     return (
         <Container flexDirection="column" noShrink>
