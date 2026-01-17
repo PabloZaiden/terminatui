@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.6 Part 7 in progress. Restored spinner in status bar for both adapters. Build and tests pass. Awaiting manual testing. See **Section 9.6: Iteration 2.6**.
+> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.6 Part 8 in progress. Fixed subcommand indicator (">" instead of "2") and navigation (controller checks for subcommands before going to config). Build and tests pass. Awaiting manual testing. See **Section 9.6: Iteration 2.6**.
 
 This document is a corrective follow-up to:
 
@@ -1503,4 +1503,28 @@ During manual testing, it was noticed that the spinner animation is no longer vi
 - [x] Spinner should appear alongside "Executing..." text when `props.status.isExecuting` is true
 - [x] Run `bun run build` — passes
 - [x] Run `bun run test` — passes
-- [ ] Manual testing — spinner visible in both adapters during command execution
+- [x] Manual testing — spinner visible in both adapters during command execution
+
+### Iteration 2.6 Part 8: Fix subcommand navigation and display
+
+During manual testing, two issues were found with subcommand handling:
+
+1. **Visual indicator**: Commands with subcommands show "2" (the count) instead of an arrow or other indicator that communicates "has subcommands"
+2. **Navigation**: Entering a command with subcommands goes to an empty config screen with a Run button instead of showing the subcommands list. Users should navigate through subcommand hierarchy until reaching a leaf command.
+
+**Goal:**
+- Show a visual indicator (arrow like ">" or "→") for commands that have subcommands instead of showing the count
+- When selecting a command with subcommands, navigate to show those subcommands instead of going to config screen
+- Only show config screen for leaf commands (commands without navigable subcommands)
+
+#### Checklist
+
+- [x] Find where subcommand count "2" is being displayed in CommandSelector/MenuItem
+- [x] Replace count with arrow indicator ">" for commands with subcommands
+- [x] Fix breadcrumb separator from "3" to ">" in both CommandSelector files
+- [x] Investigate navigation logic when selecting a command with subcommands
+- [x] Fix navigation in CommandBrowserController.onRunSelected to check for subcommands
+- [x] Clean up duplicate subcommand logic in SemanticRenderers (now handled by controller)
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — passes
+- [ ] Manual testing — subcommand indicator and navigation work correctly

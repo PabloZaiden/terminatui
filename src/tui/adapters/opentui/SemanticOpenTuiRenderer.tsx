@@ -64,13 +64,8 @@ export class SemanticOpenTuiRenderer {
             <CommandSelector
                 commands={commandItems}
                 selectedIndex={props.selectedCommandIndex}
-                onSelect={(command) => {
-                    const navigableSubCommands = command.subCommands?.filter((sub) => sub.supportsTui()) ?? [];
-                    if (navigableSubCommands.length > 0) {
-                        props.onOpenPath([...props.commandId, command.name]);
-                        return;
-                    }
-
+                onSelect={() => {
+                    // Controller handles subcommand navigation in onRunSelected
                     props.onRunSelected();
                 }}
                 breadcrumb={props.commandId}

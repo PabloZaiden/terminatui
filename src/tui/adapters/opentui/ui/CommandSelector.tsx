@@ -16,7 +16,7 @@ interface CommandSelectorProps {
 }
 
 export function CommandSelector({ commands, selectedIndex, onSelect, breadcrumb }: CommandSelectorProps) {
-    const title = breadcrumb?.length ? `Select Command (${breadcrumb.join(" 3 ")})` : "Select Command";
+    const title = breadcrumb?.length ? `Select Command (${breadcrumb.join(" > ")})` : "Select Command";
 
     return (
         <box flexDirection="column" flexGrow={1} justifyContent="center" alignItems="center" gap={1}>
@@ -48,7 +48,7 @@ export function CommandSelector({ commands, selectedIndex, onSelect, breadcrumb 
 function getModeIndicator(command: Command): string {
     const navigableSubCommands = command.subCommands?.filter((sub) => sub.supportsTui()) ?? [];
     if (navigableSubCommands.length > 0) {
-        return "2";
+        return ">";
     }
 
     return "";

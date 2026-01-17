@@ -58,6 +58,16 @@ export class CommandBrowserController {
                             return;
                         }
 
+                        // If selected command has navigable subcommands, navigate to them instead of config
+                        const navigableSubCommands = selected.subCommands?.filter((sub) => sub.supportsTui()) ?? [];
+                        if (navigableSubCommands.length > 0) {
+                            this.#navigation.replace("commandBrowser" satisfies TuiRoute, { 
+                                commandPath: [...commandPath, selected.name], 
+                                selectedIndex: 0 
+                            });
+                            return;
+                        }
+
                         this.#navigation.push("config" satisfies TuiRoute, {
                             command: selected,
                             commandPath,
