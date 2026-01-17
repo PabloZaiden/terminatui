@@ -243,8 +243,8 @@ Implementation details live in `planning/semantic-first-implementation.md`.
 - [x] Remove keyboard and legend from core (section 6.3)
 - [x] Replace registry routing driver (section 6.4)
 - [x] Render Results + Error semantically (currently via `RunningScreenProps.kind`)
-- [ ] Remove legacy registry + legacy screens/modals (still present but unused)
-- [ ] Final pass: ensure semantic components never accept layout props
+- [x] Remove legacy registry + legacy screens/modals (removed `SemanticRendererContext.tsx`)
+- [x] Final pass: ensure semantic components never accept layout props
 
 ### 6.1 Phase 0: inventory and mapping
 

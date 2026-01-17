@@ -20,7 +20,7 @@ export function CommandSelector({ commands, selectedIndex, onSelect, breadcrumb 
 
     return (
         <box flexDirection="column" flexGrow={1} justifyContent="center" alignItems="center" gap={1}>
-            <Panel flexDirection="column" title={title} padding={undefined} width={60} focused>
+            <Panel flexDirection="column" title={title} padding={undefined} width={"80%"} focused>
                 <box flexDirection="column" gap={1}>
                     {commands.map((item, idx) => {
                         const isSelected = idx === selectedIndex;

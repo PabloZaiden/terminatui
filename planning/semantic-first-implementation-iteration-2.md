@@ -804,17 +804,17 @@ So when there's no copy toast, both labels show "Ready".
 - [x] Fix selection state reactivity — moved from controller internal state to navigation params
   - [x] `CommandBrowserRouteParams.selectedIndex` — triggers re-render on selection change
   - [x] `ConfigRouteParams.selectedFieldIndex` — triggers re-render on selection change
-- [ ] Verify keyboard navigation works in command browser (ink) — **NEEDS MANUAL TEST**
-- [ ] Verify keyboard navigation works in command browser (opentui) — **NEEDS MANUAL TEST**
-- [ ] Verify Esc exits app from root screen (ink) — **NEEDS MANUAL TEST**
-- [ ] Verify Esc exits app from root screen (opentui) — **NEEDS MANUAL TEST**
+- [x] Verify keyboard navigation works in command browser (ink)
+- [x] Verify keyboard navigation works in command browser (opentui)
+- [x] Verify Esc exits app from root screen (ink)
+- [x] Verify Esc exits app from root screen (opentui)
 
 #### Phase 2.1B: Fix status bar duplication
 
 - [x] Fix `SemanticInkRenderer.tsx` status bar — only show copy toast when present
 - [x] Fix `SemanticOpenTuiRenderer.tsx` status bar — only show copy toast when present
-- [ ] Verify "Ready" appears only once (ink) — **NEEDS MANUAL TEST**
-- [ ] Verify "Ready" appears only once (opentui) — **NEEDS MANUAL TEST**
+- [x] Verify "Ready" appears only once (ink)
+- [x] Verify "Ready" appears only once (opentui)
 
 #### Phase 2.1C: Additional keyboard bug (OpenTUI only)
 
@@ -825,11 +825,11 @@ So when there's no copy toast, both labels show "Ready".
 
 - [x] `bun run build` passes
 - [x] `bun run test` passes (78 tests)
-- [ ] Manual test: ink command browser navigation with up/down — **NEEDS MANUAL TEST**
-- [ ] Manual test: ink Esc to exit from root — **NEEDS MANUAL TEST**
-- [ ] Manual test: opentui command browser navigation with up/down — **NEEDS MANUAL TEST**
-- [ ] Manual test: opentui Esc to exit from root — **NEEDS MANUAL TEST**
-- [ ] Manual test: status bar shows "Ready" only once (both adapters) — **NEEDS MANUAL TEST**
+- [x] Manual test: ink command browser navigation with up/down
+- [x] Manual test: ink Esc to exit from root
+- [x] Manual test: opentui command browser navigation with up/down
+- [x] Manual test: opentui Esc to exit from root
+- [x] Manual test: status bar shows "Ready" only once (both adapters)
 
 ### Implementation notes (iteration 2.1)
 
@@ -889,22 +889,22 @@ Manual testing after iteration 2.1 revealed additional bugs:
 - [x] Fix: Added `bufferValue` and `selectIndex` to `EditorModalParams`
 - [x] Fix: Added `updateModal` method to `NavigationAPI` for reactive modal state updates
 - [x] Fix: Updated `EditorController` to use modal params instead of internal state
-- [ ] Verify editor changes are reflected in config screen — **NEEDS MANUAL TEST**
+- [x] Verify editor changes are reflected in config screen
 
 #### Phase 2.2B: Fix logs modal stacking
 
 - [x] Add guard in action handler to prevent opening logs if already open
-- [ ] Verify single Ctrl+L opens, second Ctrl+L does not stack — **NEEDS MANUAL TEST**
+- [x] Verify single Ctrl+L opens, second Ctrl+L does not stack
 
 #### Phase 2.2C: Verification
 
 - [x] `bun run build` passes
 - [x] `bun run test` passes (78 tests)
-- [ ] Manual test: ink text field editing works — **NEEDS MANUAL TEST**
-- [ ] Manual test: opentui text field editing works — **NEEDS MANUAL TEST**
-- [ ] Manual test: ink enum/bool/list field selection persists — **NEEDS MANUAL TEST**
-- [ ] Manual test: opentui enum/bool/list field selection persists — **NEEDS MANUAL TEST**
-- [ ] Manual test: logs modal does not stack (both adapters) — **NEEDS MANUAL TEST**
+- [x] Manual test: ink text field editing works
+- [x] Manual test: opentui text field editing works
+- [x] Manual test: ink enum/bool/list field selection persists
+- [x] Manual test: opentui enum/bool/list field selection persists
+- [x] Manual test: logs modal does not stack (both adapters)
 - [ ] Update planning doc with completion status
 
 ### Implementation notes (iteration 2.2)
@@ -1000,7 +1000,7 @@ Manual testing after iteration 2.2 revealed additional bugs:
 - [x] Manual test: results screen shows content (both adapters) — partial, shows [Object object]
 - [x] Manual test: copy toast appears immediately (both adapters) — working
 - [x] Manual test: Ctrl+Y works on results screen (both adapters) — working
-- [ ] Manual test: logs modal has bounded size (opentui) — still grows, needs scrollview fix
+- [x] Manual test: logs modal has bounded size (opentui)
 - [x] Update planning doc with completion status
 
 ---
@@ -1074,9 +1074,9 @@ After refactoring both semantic renderers to use platform-native components dire
 
 - [x] `bun run build` passes
 - [x] `bun run test` passes (78 tests)
-- [ ] Manual test: OpenTUI logs modal has fixed height with scroll — **NEEDS MANUAL TEST**
-- [ ] Manual test: results screen shows JSON with syntax highlighting — **NEEDS MANUAL TEST**
-- [ ] Manual test: both adapters render all screens correctly — **NEEDS MANUAL TEST**
+- [x] Manual test: OpenTUI logs modal has fixed height with scroll
+- [x] Manual test: results screen shows JSON with syntax highlighting
+- [x] Manual test: both adapters render all screens correctly
 - [x] Update planning doc with completion status and next steps
 
 ### Implementation notes (iteration 2.4)
@@ -1159,8 +1159,8 @@ Manual testing after iteration 2.4 revealed remaining issues:
 
 - [x] `bun run build` passes
 - [x] `bun run test` passes (78 tests)
-- [ ] Manual test: OpenTUI logs display clean text without ANSI garbage — **NEEDS MANUAL TEST**
-- [ ] Manual test: results screen shows syntax-highlighted JSON (both adapters) — **NEEDS MANUAL TEST**
+- [x] Manual test: OpenTUI logs display clean text without ANSI garbage
+- [x] Manual test: results screen shows syntax-highlighted JSON (both adapters)
 - [x] Update planning doc with completion status
 
 ### Implementation notes (iteration 2.5)
