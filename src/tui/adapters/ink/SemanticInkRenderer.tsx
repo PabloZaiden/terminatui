@@ -94,7 +94,7 @@ export class SemanticInkRenderer {
                     additionalButtons={additionalButtons}
                     actionButton={
                         <MenuButton
-                            label={"Run"}
+                            label={"Done"}
                             selected={props.selectedFieldIndex === props.fieldConfigs.length + additionalButtons.length}
                         />
                     }
@@ -143,7 +143,7 @@ export class SemanticInkRenderer {
                     <Box height={1} />
                     <ScrollView axis="vertical" flex={1}>
                         {props.items.map((item) => (
-                            <Label color="value" key={item.timestamp}>{`[${item.level}] ${item.message}`}</Label>
+                            <Label color="value" key={item.timestamp}>{`[${item.level}] ${Bun.stripANSI(item.message)}`}</Label>
                         ))}
                     </ScrollView>
                     <Box height={1} />

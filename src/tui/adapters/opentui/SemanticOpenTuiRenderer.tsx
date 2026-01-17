@@ -86,7 +86,7 @@ export class SemanticOpenTuiRenderer {
                     additionalButtons={additionalButtons}
                     actionButton={
                         <MenuButton
-                            label={"Run"}
+                            label={"Done"}
                             selected={props.selectedFieldIndex === props.fieldConfigs.length + additionalButtons.length}
                         />
                     }

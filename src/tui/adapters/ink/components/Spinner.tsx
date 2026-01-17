@@ -1,13 +1,11 @@
-import { Text } from "ink";
 import type { SpinnerProps } from "../../../semantic/types.ts";
-import { useSpinner } from "../../shared/useSpinner.ts";
 
 export function Spinner({ active }: SpinnerProps) {
-    const { frame } = useSpinner(active);
+    //const { frame } = useSpinner(active);
 
     if (!active) {
         return null;
     }
 
-    return <Text>{frame} </Text>;
+    return <></>;
 }

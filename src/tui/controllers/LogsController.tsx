@@ -1,4 +1,4 @@
-import type { LogEvent } from "../../core/logger.ts";
+import { LogLevel, type LogEvent } from "../../core/logger.ts";
 import type { NavigationAPI } from "../context/NavigationContext.tsx";
 
 import { RenderLogsScreen } from "../semantic/render.tsx";
@@ -13,12 +13,12 @@ export class LogsController {
     }
 
     public getCopyPayload(logs: LogEvent[]): CopyPayload {
-        const text = this.formatLogText(logs, { maxLines: 200 });
+        const text = this.formatLogText(logs);
         return { label: "Logs", content: text };
     }
 
     public render(logs: LogEvent[]): React.ReactNode {
-        const items = this.formatLogItems(logs, { maxItems: 2_000 });
+        const items = this.formatLogItems(logs);
 
         return (
             <RenderLogsScreen
@@ -29,23 +29,19 @@ export class LogsController {
         );
     }
 
-    private formatLogItems(
-        logs: LogEvent[],
-        { maxItems }: { maxItems: number }
-    ): { level: string; message: string; timestamp: number }[] {
-        return logs.slice(-maxItems).map((l) => ({
-            level: String(l.level),
-            message: String(l.message),
+    private formatLogItems(logs: LogEvent[]): { level: string; message: string; timestamp: number }[] {
+        return logs.map((l) => ({
+            level: LogLevel[l.level],
+            message: l.message,
             timestamp: l.timestamp.getTime(),
         }));
     }
 
-    private formatLogText(logs: LogEvent[], { maxLines }: { maxLines: number }): string {
+    private formatLogText(logs: LogEvent[]): string {
         return logs
-            .slice(-maxLines)
             .map((l) => {
                 const timestamp = l.timestamp.toISOString();
-                return `[${timestamp}] ${String(l.level).toUpperCase()}: ${String(l.message)}`;
+                return `[${timestamp}] ${LogLevel[l.level].toUpperCase()}: ${l.message}`;
             })
             .join("\n");
     }
