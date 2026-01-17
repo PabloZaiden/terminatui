@@ -10,7 +10,6 @@ import type { EditorScreenProps } from "../../semantic/EditorScreen.tsx";
 import { Panel } from "./components/Panel.tsx";
 import { Label } from "./components/Label.tsx";
 import { Overlay } from "./components/Overlay.tsx";
-import { ScrollView } from "./components/ScrollView.tsx";
 import { TextInput } from "./components/TextInput.tsx";
 import { Select } from "./components/Select.tsx";
 import { MenuButton } from "./components/MenuButton.tsx";
@@ -21,6 +20,7 @@ import { Header } from "./ui/Header.tsx";
 import { CommandSelector } from "./ui/CommandSelector.tsx";
 import { ConfigForm } from "./ui/ConfigForm.tsx";
 import { ResultsPanel } from "./ui/ResultsPanel.tsx";
+import { LogsPanel } from "./ui/LogsPanel.tsx";
 
 export class SemanticOpenTuiRenderer {
     renderAppShell(props: AppShellProps): ReactNode {
@@ -129,19 +129,7 @@ export class SemanticOpenTuiRenderer {
     }
 
      renderLogsScreen(props: LogsScreenProps): ReactNode {
-         return (
-             <Overlay>
-                 <Panel flexDirection="column" padding={1} border={true} width={80} height={20} surface="overlay">
-                     <Label bold>Logs</Label>
-                     <ScrollView axis="vertical" flex={1}>
-                         {props.items.map((item) => (
-                             <Label color="value" key={item.timestamp}>{`[${item.level}] ${Bun.stripANSI(item.message)}`}</Label>
-                         ))}
-                     </ScrollView>
-                     <Label color="mutedText">Enter or Esc to close</Label>
-                 </Panel>
-             </Overlay>
-         );
+         return <LogsPanel {...props} />;
      }
 
     renderEditorScreen(props: EditorScreenProps): ReactNode {
