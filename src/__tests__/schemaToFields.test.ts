@@ -21,8 +21,6 @@ describe("schemaToFields", () => {
           label: "Repository",
         },
         hidden: { type: "string", description: "Hidden", tuiHidden: true },
-        path: { type: "string", description: "Path", placeholder: "Enter path here" },
-        grouped: { type: "string", description: "Grouped", group: "Basic" },
       };
 
       const fields = schemaToFieldConfigs(schema);
@@ -42,8 +40,6 @@ describe("schemaToFields", () => {
       // Decorations
       expect(fields.find((f) => f.key === "repoPath")?.label).toBe("Repository");
       expect(fields.some((f) => f.key === "hidden")).toBe(false);
-      expect(fields.find((f) => f.key === "path")?.placeholder).toBe("Enter path here");
-      expect(fields.find((f) => f.key === "grouped")?.group).toBe("Basic");
     });
 
     test("sorts by order", () => {

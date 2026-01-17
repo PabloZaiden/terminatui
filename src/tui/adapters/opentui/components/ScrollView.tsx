@@ -1,6 +1,6 @@
 import { useRef, type ReactNode } from "react";
 import type { ScrollBoxRenderable } from "@opentui/core";
-import type { ScrollViewProps, ScrollViewRef, Spacing } from "../../../semantic/types.ts";
+import type { ScrollViewProps, ScrollViewRef, Spacing } from "../../../semantic/layoutTypes.ts";
 
 function normalizePadding(padding: number | Spacing | undefined): any {
     if (padding === undefined) {
@@ -37,13 +37,6 @@ export function ScrollView({
         const scrollRef = useRef<ScrollBoxRenderable>(null);
 
         const imperativeApi: ScrollViewRef = {
-            scrollToTop: () => {
-                scrollRef.current?.scrollTo(0);
-            },
-            scrollToBottom: () => {
-                // No public "bottom" API in ScrollBoxRenderable; use large index.
-                scrollRef.current?.scrollTo(Number.MAX_SAFE_INTEGER);
-            },
             scrollToIndex: (index: number) => {
                 scrollRef.current?.scrollTo(index);
             },

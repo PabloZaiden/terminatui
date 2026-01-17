@@ -1,10 +1,18 @@
 import { Text } from "ink";
 import type { ButtonProps } from "../../../semantic/types.ts";
 
-export function Button({ label, selected }: ButtonProps) {
+export function Button({ label, selected, onActivate }: ButtonProps) {
     const prefix = selected ? "> " : "  ";
     return (
-        <Text>
+        <Text
+            {...(onActivate
+                ? {
+                      onClick: () => {
+                          onActivate();
+                      },
+                  }
+                : {})}
+        >
             {prefix}
             {label}
         </Text>

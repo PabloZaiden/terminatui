@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { PanelProps, Spacing } from "../../../semantic/types.ts";
+import type { PanelProps, Spacing } from "../../../semantic/layoutTypes.ts";
 import { SemanticColors } from "../../../theme.ts";
 
 function normalizePadding(
@@ -38,6 +38,11 @@ export function Panel({
     flex,
     width,
     height,
+    maxHeight,
+    top,
+    left,
+    right,
+    bottom,
     flexDirection,
     alignItems,
     justifyContent,
@@ -66,6 +71,11 @@ export function Panel({
             flexShrink={noShrink ? 0 : flex === undefined ? undefined : 1}
             width={width as any}
             height={height as any}
+            maxHeight={maxHeight as any}
+            top={top as any}
+            left={left as any}
+            right={right as any}
+            bottom={bottom as any}
             flexDirection={flexDirection as any}
             alignItems={alignItems as any}
             justifyContent={justifyContent as any}

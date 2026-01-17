@@ -8,8 +8,8 @@ import {
     type ReactNode,
 } from "react";
 
-export interface ScreenEntry<TParams = unknown> {
-    route: string;
+export interface ScreenEntry<TRoute extends string = string, TParams = unknown> {
+    route: TRoute;
     params?: TParams;
     meta?: { focus?: string; breadcrumb?: string[] };
 }
@@ -38,6 +38,8 @@ export interface NavigationAPI {
     currentModal?: ModalEntry;
     openModal: <TParams>(id: string, params?: TParams) => void;
     closeModal: () => void;
+    /** Update the topmost modal's params (for reactive state updates) */
+    updateModal: <TParams>(params: TParams) => void;
     hasModal: boolean;
 
     /**
@@ -57,7 +59,7 @@ export interface NavigationAPI {
 }
 
 type NavigationProviderProps<TParams = unknown> = {
-    initialScreen: ScreenEntry<TParams>;
+    initialScreen: ScreenEntry<string, TParams>;
     children: ReactNode;
     /** Called when we can't go back anymore (at root with empty stack) */
     onExit?: () => void;
@@ -69,7 +71,8 @@ type NavigationAction =
     | { type: "reset"; screen: ScreenEntry }
     | { type: "pop" }
     | { type: "openModal"; modal: ModalEntry }
-    | { type: "closeModal" };
+    | { type: "closeModal" }
+    | { type: "updateModal"; params: unknown };
 
 type NavigationState = {
     stack: ScreenEntry[];
@@ -100,6 +103,17 @@ function navigationReducer(
         case "closeModal": {
             if (state.modalStack.length === 0) return state;
             return { ...state, modalStack: state.modalStack.slice(0, -1) };
+        }
+        case "updateModal": {
+            if (state.modalStack.length === 0) return state;
+            const updatedModal = {
+                ...state.modalStack[state.modalStack.length - 1]!,
+                params: action.params,
+            };
+            return {
+                ...state,
+                modalStack: [...state.modalStack.slice(0, -1), updatedModal],
+            };
         }
         default:
             return state;
@@ -172,6 +186,8 @@ export function NavigationProvider<TParams = unknown>({
             openModal: <TParams,>(id: string, params?: TParams) =>
                 dispatch({ type: "openModal", modal: { id, params } }),
             closeModal: () => dispatch({ type: "closeModal" }),
+            updateModal: <TParams,>(params: TParams) =>
+                dispatch({ type: "updateModal", params }),
             hasModal: modalStack.length > 0,
             goBack,
             setBackHandler,

@@ -6,6 +6,23 @@
 - Prefer classes over standalone functions when it makes sense.
 - Before doing something, check the patterns used in the rest of the codebase.
 - Never use `import("...")` dynamic imports. Always use static imports (unless absolutely necessary).
+- Always use TypeScript conventions over JavaScript conventions. For example, use the `private` keyword for private class members instead of the `#` prefix (ES private fields).
+
+## Workflow
+
+- Always make sure you have all your goals written down in a document and agreed upon before starting to code.
+- Always use the ToDo functionality to keep track of the work you're doing, and the last ToDo should always be "verify that all goals are met according to the document, and update the ToDo again".
+- Track the status of the work in that document.
+- After checking the document, update what the next steps to work on are, and what's important to know about it to be able to continue working on it later.
+- Make sure that the goals you are trying to achieve are written down, in a way that you can properly verify them later.
+- Don't say something is done until you have verified that all the goals are met.
+- The general loop then is:
+  1. Write down the goals you want to achieve.
+  2. Write the code to achieve those goals.
+  3. Verify that all the goals are met.
+  4. Update the document with the status of the work.
+  5. If all goals are met, you are done.
+  6. If not, go back to step 2.
 
 ## Bun specifics
 This is a Bun-only project. Never check if something might not be supported in another environment. You can assume Bun is always available.

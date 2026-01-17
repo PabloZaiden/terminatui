@@ -26,6 +26,8 @@ export interface ExecutionOutcome {
 export interface ExecutorContextValue {
     /** Whether a command is currently executing */
     isExecuting: boolean;
+    /** Whether a cancellation has been requested */
+    isCancelling: boolean;
     /** Execute a command with the given values */
     execute: (command: AnyCommand, values: Record<string, unknown>) => Promise<ExecutionOutcome>;
     /** Cancel the currently executing command */
@@ -46,6 +48,7 @@ interface ExecutorProviderProps {
  */
 export function ExecutorProvider({ children }: ExecutorProviderProps) {
     const [isExecuting, setIsExecuting] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
     const abortControllerRef = useRef<AbortController | null>(null);
 
     const execute = useCallback(async (
@@ -98,6 +101,7 @@ export function ExecutorProvider({ children }: ExecutorProviderProps) {
             return { success: false, error };
         } finally {
             setIsExecuting(false);
+            setIsCancelling(false);
             if (abortControllerRef.current === abortController) {
                 abortControllerRef.current = null;
             }
@@ -106,6 +110,7 @@ export function ExecutorProvider({ children }: ExecutorProviderProps) {
 
     const cancel = useCallback(() => {
         if (abortControllerRef.current) {
+            setIsCancelling(true);
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
         }
@@ -117,10 +122,11 @@ export function ExecutorProvider({ children }: ExecutorProviderProps) {
             abortControllerRef.current = null;
         }
         setIsExecuting(false);
+        setIsCancelling(false);
     }, []);
 
     return (
-        <ExecutorContext.Provider value={{ isExecuting, execute, cancel, reset }}>
+        <ExecutorContext.Provider value={{ isExecuting, isCancelling, execute, cancel, reset }}>
             {children}
         </ExecutorContext.Provider>
     );

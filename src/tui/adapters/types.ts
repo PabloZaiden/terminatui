@@ -1,29 +1,15 @@
 import type { ReactNode } from "react";
-import type {
-    ButtonProps,
-    CodeHighlightProps,
-    CodeProps,
-    ContainerProps,
-    FieldProps,
-    LabelProps,
-    MenuButtonProps,
-    MenuItemProps,
-    OverlayProps,
-    PanelProps,
-    ScrollViewProps,
-    SelectProps,
-    SpacerProps,
-    SpinnerProps,
-    TextInputProps,
-    ValueProps,
-} from "../semantic/types.ts";
+import type { AppShellProps } from "../semantic/AppShell.tsx";
+import type { CommandBrowserScreenProps } from "../semantic/CommandBrowserScreen.tsx";
+import type { ConfigScreenProps } from "../semantic/ConfigScreen.tsx";
+import type { RunningScreenProps } from "../semantic/RunningScreen.tsx";
+import type { LogsScreenProps } from "../semantic/LogsScreen.tsx";
+import type { EditorScreenProps } from "../semantic/EditorScreen.tsx";
+import type { TuiAction } from "../actions.ts";
 
 export interface KeyboardEvent {
     name: string;
-    sequence?: string;
     ctrl?: boolean;
-    shift?: boolean;
-    meta?: boolean;
 }
 
 export type KeyHandler = (event: KeyboardEvent) => boolean;
@@ -37,35 +23,28 @@ export interface RendererConfig {
     useAlternateScreen?: boolean;
 }
 
-export interface RendererComponents {
-    Field: (props: FieldProps) => ReactNode;
-    Button: (props: ButtonProps) => ReactNode;
-    MenuButton: (props: MenuButtonProps) => ReactNode;
-    MenuItem: (props: MenuItemProps) => ReactNode;
-
-    Container: (props: ContainerProps) => ReactNode;
-    Panel: (props: PanelProps) => ReactNode;
-    ScrollView: (props: ScrollViewProps) => ReactNode;
-
-    Overlay: (props: OverlayProps) => ReactNode;
-    Spacer: (props: SpacerProps) => ReactNode;
-    Spinner: (props: SpinnerProps) => ReactNode;
-
-    Label: (props: LabelProps) => ReactNode;
-    Value: (props: ValueProps) => ReactNode;
-    Code: (props: CodeProps) => ReactNode;
-    CodeHighlight: (props: CodeHighlightProps) => ReactNode;
-
-    TextInput: (props: TextInputProps) => ReactNode;
-    Select: (props: SelectProps) => ReactNode;
-}
-
 export interface Renderer {
     initialize: () => Promise<void>;
     render: (node: ReactNode) => void;
     destroy: () => void;
-    supportCustomRendering: () => boolean;
 
     keyboard: KeyboardAdapter;
-    components: RendererComponents;
+
+    renderSemanticAppShell: (props: AppShellProps) => ReactNode;
+    renderSemanticCommandBrowserScreen: (props: CommandBrowserScreenProps) => ReactNode;
+    renderSemanticConfigScreen: (props: ConfigScreenProps) => ReactNode;
+    renderSemanticRunningScreen: (props: RunningScreenProps) => ReactNode;
+    renderSemanticLogsScreen: (props: LogsScreenProps) => ReactNode;
+    renderSemanticEditorScreen: (props: EditorScreenProps) => ReactNode;
+
+    /** 
+     * Renders an invisible component that handles global keyboard bindings.
+     * This component can use hooks and will dispatch actions via the provided dispatcher.
+     */
+    renderKeyboardHandler?: (props: {
+        dispatchAction: (action: TuiAction) => void;
+        getScreenKeyHandler: () => ((event: KeyboardEvent) => boolean) | null;
+        onCopyToastChange?: (toast: string | null) => void;
+    }) => ReactNode;
+
 }

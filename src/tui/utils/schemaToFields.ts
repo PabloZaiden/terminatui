@@ -1,5 +1,5 @@
 import type { OptionSchema, OptionDef } from "../../types/command.ts";
-import type { FieldConfig, FieldType, FieldOption } from "../components/types.ts";
+import type { FieldConfig, FieldType, FieldOption } from "../semantic/types.ts";
 
 /**
  * Convert an option type to a field type.
@@ -75,8 +75,6 @@ export function schemaToFieldConfigs(schema: OptionSchema): FieldConfig[] {
             label: def.label ?? keyToLabel(key),
             type: optionTypeToFieldType(def),
             options: createFieldOptions(def),
-            placeholder: def.placeholder,
-            group: def.group,
         };
 
         fields.push(fieldConfig);
@@ -90,28 +88,6 @@ export function schemaToFieldConfigs(schema: OptionSchema): FieldConfig[] {
     });
 
     return fields;
-}
-
-/**
- * Group field configs by their group property.
- * 
- * @param fields - Field configs to group
- * @returns Map of group name to field configs
- */
-export function groupFieldConfigs(
-    fields: FieldConfig[]
-): Map<string | undefined, FieldConfig[]> {
-    const groups = new Map<string | undefined, FieldConfig[]>();
-
-    for (const field of fields) {
-        const group = field.group;
-        if (!groups.has(group)) {
-            groups.set(group, []);
-        }
-        groups.get(group)!.push(field);
-    }
-
-    return groups;
 }
 
 /**
