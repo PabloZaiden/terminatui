@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.6 Part 5 complete. Removed Value abstraction; replaced with `<Label color="value">`. Build and tests pass. Awaiting manual testing. See **Section 9.6: Iteration 2.6**.
+> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.6 Part 6 complete. Fixed OpenTUI logs screen ScrollView overflow; added `LogsPanel` component with dynamic sizing. Build and tests pass. See **Section 9.6: Iteration 2.6**.
 
 This document is a corrective follow-up to:
 
@@ -1456,3 +1456,34 @@ During code review, the `Value` component was identified as a thin wrapper that 
 - [x] Remove `ValueProps` interface from `src/tui/semantic/types.ts`
 - [x] Run `bun run build` — passes
 - [x] Run `bun run test` — 78 tests pass
+
+### Iteration 2.6 Part 6: Fix OpenTUI logs screen ScrollView overflow
+
+During manual testing, the OpenTUI logs screen was found to have a layout bug where the ScrollView would grow beyond its container bounds, overwriting the "Logs" title and "Enter or Esc to close" footer when there were many log entries.
+
+**Root cause:**
+- OpenTUI's `<scrollbox>` element doesn't properly respect flex constraints when used with `flexGrow`
+- The previous implementation used `.slice(-50)` to limit log entries, which masked the underlying layout issue
+
+**Solution:**
+- Created a new `LogsPanel` component (`src/tui/adapters/opentui/ui/LogsPanel.tsx`) that:
+  - Uses `useTerminalDimensions()` hook to get terminal size
+  - Calculates explicit `height` and `width` for both the panel and scrollbox
+  - Uses ~85% of terminal dimensions to leave visible margin showing it's a modal
+  - Properly constrains the scrollbox with a calculated height
+
+**Changes:**
+- Added: `src/tui/adapters/opentui/ui/LogsPanel.tsx`
+- Modified: `src/tui/adapters/opentui/SemanticOpenTuiRenderer.tsx` - now delegates to `LogsPanel` component
+
+#### Checklist
+
+- [x] Create `LogsPanel` component with dynamic sizing using `useTerminalDimensions`
+- [x] Update `SemanticOpenTuiRenderer.renderLogsScreen` to use `LogsPanel`
+- [x] Panel adapts to terminal height (~85%, min 10 lines)
+- [x] Panel adapts to terminal width (~85%, min 40 cols)
+- [x] Scrollbox uses explicit height calculation to prevent overflow
+- [x] Visual margin on all sides to show modal context
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — 78 tests pass
+- [x] Manual testing — logs screen properly constrains content
