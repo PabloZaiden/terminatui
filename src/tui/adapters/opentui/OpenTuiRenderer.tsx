@@ -5,18 +5,6 @@ import { SemanticColors } from "../../theme.ts";
 import type { KeyboardEvent, Renderer, RendererConfig } from "../types.ts";
 import { SemanticOpenTuiRenderer } from "./SemanticOpenTuiRenderer.tsx";
 import { useOpenTuiKeyboardAdapter } from "./keyboard.ts";
-import { Button } from "./components/Button.tsx";
-import { CodeHighlight } from "./components/CodeHighlight.tsx";
-import { Field } from "./components/Field.tsx";
-import { Label } from "./components/Label.tsx";
-import { MenuButton } from "./components/MenuButton.tsx";
-import { MenuItem } from "./components/MenuItem.tsx";
-import { Overlay } from "./components/Overlay.tsx";
-import { Spinner } from "./components/Spinner.tsx";
-import { Panel } from "./components/Panel.tsx";
-import { ScrollView as OpenTuiScrollView } from "./components/ScrollView.tsx";
-import { Select } from "./components/Select.tsx";
-import { TextInput } from "./components/TextInput.tsx";
 
 import { copyToTerminalClipboard } from "../shared/TerminalClipboard.ts";
 import { useTuiDriver } from "../../driver/context/TuiDriverContext.tsx";
@@ -197,23 +185,6 @@ export class OpenTuiRenderer implements Renderer {
         setGlobalHandler: (handler) => {
             return this.activeKeyboardAdapter?.setGlobalHandler(handler) ?? (() => {});
         },
-    };
-
-    public components: Renderer["components"] = {
-        Field,
-        Button,
-        MenuButton,
-        MenuItem,
-        Panel,
-        ScrollView: OpenTuiScrollView,
-
-        Overlay,
-        Spinner,
-        Label,
-        CodeHighlight,
-
-        Select,
-        TextInput,
     };
 
     constructor(private readonly config: RendererConfig) {}

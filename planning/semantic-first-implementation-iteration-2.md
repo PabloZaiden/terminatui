@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.6 Part 8 in progress. Fixed subcommand indicator (">" instead of "2") and navigation (controller checks for subcommands before going to config). Build and tests pass. Awaiting manual testing. See **Section 9.6: Iteration 2.6**.
+> **STATUS: ✅ COMPLETE** — Iteration 2.6 Part 9 complete. Removed unused RendererComponents from Renderer interface. See **Section 9.6: Iteration 2.6**.
 
 This document is a corrective follow-up to:
 
@@ -1527,4 +1527,30 @@ During manual testing, two issues were found with subcommand handling:
 - [x] Clean up duplicate subcommand logic in SemanticRenderers (now handled by controller)
 - [x] Run `bun run build` — passes
 - [x] Run `bun run test` — passes
-- [ ] Manual testing — subcommand indicator and navigation work correctly
+- [x] Manual testing — subcommand indicator and navigation work correctly
+
+### Iteration 2.6 Part 9: Remove unused RendererComponents from Renderer interface
+
+The `components` property in the `Renderer` interface may no longer be used since we moved to semantic rendering. If unused, remove it and all related code.
+
+**Goal:**
+- Investigate if `Renderer.components` is used anywhere
+- If not used, remove it from the interface and both adapter implementations
+- Clean up the `RendererComponents` interface if no longer needed
+
+#### Checklist
+
+- [x] Check if `Renderer.components` is used anywhere in the codebase
+- [x] If unused, remove `components` property from `Renderer` interface
+- [x] Remove `RendererComponents` interface if no longer needed
+- [x] Remove component exports from InkRenderer and OpenTuiRenderer
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — passes
+
+#### Completion Notes
+
+Completed in session. The `RendererComponents` interface and `components` property were never used — SemanticRenderers import components directly from their respective component files. Removed:
+
+1. `src/tui/adapters/types.ts`: Removed `RendererComponents` interface and `components` property from `Renderer` interface
+2. `src/tui/adapters/ink/InkRenderer.tsx`: Removed component imports and `components` property
+3. `src/tui/adapters/opentui/OpenTuiRenderer.tsx`: Removed component imports and `components` property

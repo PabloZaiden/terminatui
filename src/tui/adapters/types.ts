@@ -1,16 +1,4 @@
 import type { ReactNode } from "react";
-import type {
-    ButtonProps,
-    CodeHighlightProps,
-    FieldProps,
-    LabelProps,
-    MenuButtonProps,
-    MenuItemProps,
-    SelectProps,
-    SpinnerProps,
-    TextInputProps,
-} from "../semantic/types.ts";
-import type { OverlayProps, PanelProps, ScrollViewProps } from "../semantic/layoutTypes.ts";
 
 export interface KeyboardEvent {
     name: string;
@@ -31,25 +19,6 @@ export interface RendererConfig {
     useAlternateScreen?: boolean;
 }
 
-export interface RendererComponents {
-    Field: (props: FieldProps) => ReactNode;
-    Button: (props: ButtonProps) => ReactNode;
-    MenuButton: (props: MenuButtonProps) => ReactNode;
-    MenuItem: (props: MenuItemProps) => ReactNode;
-
-    Panel: (props: PanelProps) => ReactNode;
-    ScrollView: (props: ScrollViewProps) => ReactNode;
-
-    Overlay: (props: OverlayProps) => ReactNode;
-    Spinner: (props: SpinnerProps) => ReactNode;
-
-    Label: (props: LabelProps) => ReactNode;
-    CodeHighlight: (props: CodeHighlightProps) => ReactNode;
-
-    TextInput: (props: TextInputProps) => ReactNode;
-    Select: (props: SelectProps) => ReactNode;
-}
-
 export interface Renderer {
     initialize: () => Promise<void>;
     render: (node: ReactNode) => void;
@@ -57,7 +26,6 @@ export interface Renderer {
     supportCustomRendering: () => boolean;
 
     keyboard: KeyboardAdapter;
-    components: RendererComponents;
 
     renderSemanticAppShell: (props: import("../semantic/AppShell.tsx").AppShellProps) => ReactNode;
     renderSemanticCommandBrowserScreen: (
