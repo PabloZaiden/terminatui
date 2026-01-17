@@ -14,15 +14,15 @@ import { LogsController } from "../controllers/LogsController.tsx";
 import { OutcomeController } from "../controllers/OutcomeController.tsx";
 
 export class TuiDriver {
-    #navigation: NavigationAPI;
-    #executor: ExecutorContextValue;
-    #logs: LogEvent[];
+    private navigation: NavigationAPI;
+    private executor: ExecutorContextValue;
+    private logs: LogEvent[];
 
-    #commandBrowser: CommandBrowserController;
-    #config: ConfigController;
-    #editor: EditorController;
-    #logsModal: LogsController;
-    #outcome: OutcomeController;
+    private commandBrowser: CommandBrowserController;
+    private config: ConfigController;
+    private editor: EditorController;
+    private logsModal: LogsController;
+    private outcome: OutcomeController;
 
     public constructor({
         appName,
@@ -37,41 +37,41 @@ export class TuiDriver {
         executor: ExecutorContextValue;
         logs: LogEvent[];
     }) {
-        this.#navigation = navigation;
-        this.#executor = executor;
-        this.#logs = logs;
+        this.navigation = navigation;
+        this.executor = executor;
+        this.logs = logs;
 
-        this.#config = new ConfigController({ appName, navigation, executor });
-        this.#commandBrowser = new CommandBrowserController({ commands, navigation, configController: this.#config });
-        this.#editor = new EditorController({ navigation });
-        this.#logsModal = new LogsController({ navigation });
-        this.#outcome = new OutcomeController({ navigation });
+        this.config = new ConfigController({ appName, navigation, executor });
+        this.commandBrowser = new CommandBrowserController({ commands, navigation, configController: this.config });
+        this.editor = new EditorController({ navigation });
+        this.logsModal = new LogsController({ navigation });
+        this.outcome = new OutcomeController({ navigation });
     }
 
     public get statusMessage(): string {
-        return this.#executor.isExecuting ? "Executing..." : "Ready";
+        return this.executor.isExecuting ? "Executing..." : "Ready";
     }
 
     public getActiveCopyPayload(): CopyPayload | null {
-        const currentRoute = this.#navigation.current.route as TuiRoute;
+        const currentRoute = this.navigation.current.route as TuiRoute;
         if (currentRoute === "config") {
-            const params = this.#navigation.current.params as ConfigRouteParams | undefined;
+            const params = this.navigation.current.params as ConfigRouteParams | undefined;
             if (params) {
-                return this.#config.getCopyPayload(params);
+                return this.config.getCopyPayload(params);
             }
         }
 
         if (currentRoute === "results" || currentRoute === "error") {
-            return this.#outcome.getCopyPayload(currentRoute);
+            return this.outcome.getCopyPayload(currentRoute);
         }
 
-        const topModal = this.#navigation.modalStack[this.#navigation.modalStack.length - 1];
+        const topModal = this.navigation.modalStack[this.navigation.modalStack.length - 1];
         if (topModal?.id === "logs") {
-            return this.#logsModal.getCopyPayload(this.#logs);
+            return this.logsModal.getCopyPayload(this.logs);
         }
 
         if (topModal?.id === "editor") {
-            return this.#editor.getCopyPayload();
+            return this.editor.getCopyPayload();
         }
 
         return null;
@@ -84,10 +84,10 @@ export class TuiDriver {
         app: { name: string; displayName?: string; version: string; breadcrumb?: string[] };
         copyToast?: string | null;
     }): React.ReactNode {
-        const currentRoute = this.#navigation.current.route as TuiRoute;
+        const currentRoute = this.navigation.current.route as TuiRoute;
 
-        const { screen, breadcrumb } = this.#renderScreen(currentRoute);
-        const modals = this.#renderModals();
+        const { screen, breadcrumb } = this.renderScreen(currentRoute);
+        const modals = this.renderModals();
 
         return (
             <RenderAppShell
@@ -98,7 +98,7 @@ export class TuiDriver {
                     breadcrumb: breadcrumb ?? app.breadcrumb,
                 }}
                 status={{
-                    isExecuting: this.#executor.isExecuting,
+                    isExecuting: this.executor.isExecuting,
                     message: this.statusMessage,
                 }}
                 screen={screen}
@@ -108,33 +108,33 @@ export class TuiDriver {
         );
     }
 
-    #renderScreen(route: TuiRoute): { screen: React.ReactNode; breadcrumb?: string[] } {
+    private renderScreen(route: TuiRoute): { screen: React.ReactNode; breadcrumb?: string[] } {
         if (route === "commandBrowser") {
-            const { node, breadcrumb } = this.#commandBrowser.render();
+            const { node, breadcrumb } = this.commandBrowser.render();
             return { screen: node, breadcrumb };
         }
 
         if (route === "config") {
-            const { node, breadcrumb } = this.#config.render();
+            const { node, breadcrumb } = this.config.render();
             return { screen: node, breadcrumb };
         }
 
         if (route === "running" || route === "results" || route === "error") {
-            const { node } = this.#outcome.render(route);
+            const { node } = this.outcome.render(route);
             return { screen: node };
         }
 
         return { screen: null };
     }
 
-    #renderModals(): AppShellProps["modals"] {
-        const modals: React.ReactNode[] = this.#navigation.modalStack.map((modal) => {
+    private renderModals(): AppShellProps["modals"] {
+        const modals: React.ReactNode[] = this.navigation.modalStack.map((modal) => {
             if (modal.id === "logs") {
-                return this.#logsModal.render(this.#logs);
+                return this.logsModal.render(this.logs);
             }
 
             if (modal.id === "editor") {
-                return this.#editor.render(modal.params as EditorModalParams | undefined);
+                return this.editor.render(modal.params as EditorModalParams | undefined);
             }
 
             return null;

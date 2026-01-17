@@ -8,13 +8,13 @@ import type { CommandBrowserRouteParams, TuiRoute } from "../driver/types.ts";
 import type { ConfigController } from "./ConfigController.tsx";
 
 export class CommandBrowserController {
-    #commands: AnyCommand[];
+    private commands: AnyCommand[];
+    private configController: ConfigController;
+    private navigation: NavigationAPI;
 
     private clampSelectedIndex(index: number, commands: AnyCommand[]): number {
         return Math.max(0, Math.min(index, Math.max(0, commands.length - 1)));
     }
-    #configController: ConfigController;
-    #navigation: NavigationAPI;
 
     public constructor({
         commands,
@@ -25,13 +25,13 @@ export class CommandBrowserController {
         navigation: NavigationAPI;
         configController: ConfigController;
     }) {
-        this.#commands = commands;
-        this.#navigation = navigation;
-        this.#configController = configController;
+        this.commands = commands;
+        this.navigation = navigation;
+        this.configController = configController;
     }
 
     public render(): { node: React.ReactNode; breadcrumb: string[] } {
-        const params = (this.#navigation.current.params ?? { commandPath: [] }) as CommandBrowserRouteParams;
+        const params = (this.navigation.current.params ?? { commandPath: [] }) as CommandBrowserRouteParams;
         const commandPath = params.commandPath ?? [];
         const selectedIndex = params.selectedIndex ?? 0;
 
@@ -45,11 +45,11 @@ export class CommandBrowserController {
                     commands={currentCommands}
                     selectedCommandIndex={this.clampSelectedIndex(selectedIndex, currentCommands)}
                     onOpenPath={(nextPath) => {
-                        this.#navigation.replace("commandBrowser" satisfies TuiRoute, { commandPath: nextPath, selectedIndex: 0 });
+                        this.navigation.replace("commandBrowser" satisfies TuiRoute, { commandPath: nextPath, selectedIndex: 0 });
                     }}
                     onSelectCommand={(index) => {
                         const clampedIndex = this.clampSelectedIndex(index, currentCommands);
-                        this.#navigation.replace("commandBrowser" satisfies TuiRoute, { commandPath, selectedIndex: clampedIndex });
+                        this.navigation.replace("commandBrowser" satisfies TuiRoute, { commandPath, selectedIndex: clampedIndex });
                     }}
                     onRunSelected={() => {
                         const clampedIndex = this.clampSelectedIndex(selectedIndex, currentCommands);
@@ -61,17 +61,17 @@ export class CommandBrowserController {
                         // If selected command has navigable subcommands, navigate to them instead of config
                         const navigableSubCommands = selected.subCommands?.filter((sub) => sub.supportsTui()) ?? [];
                         if (navigableSubCommands.length > 0) {
-                            this.#navigation.replace("commandBrowser" satisfies TuiRoute, { 
+                            this.navigation.replace("commandBrowser" satisfies TuiRoute, { 
                                 commandPath: [...commandPath, selected.name], 
                                 selectedIndex: 0 
                             });
                             return;
                         }
 
-                        this.#navigation.push("config" satisfies TuiRoute, {
+                        this.navigation.push("config" satisfies TuiRoute, {
                             command: selected,
                             commandPath,
-                            values: this.#configController.initializeValues(selected),
+                            values: this.configController.initializeValues(selected),
                             fieldConfigs: schemaToFieldConfigs(selected.options),
                         });
                     }}
@@ -82,10 +82,10 @@ export class CommandBrowserController {
 
     private getCommandsAtPath(commandPath: string[]): AnyCommand[] {
         if (commandPath.length === 0) {
-            return this.#commands.filter((cmd) => cmd.supportsTui());
+            return this.commands.filter((cmd) => cmd.supportsTui());
         }
 
-        let current: AnyCommand[] = this.#commands;
+        let current: AnyCommand[] = this.commands;
         for (const pathPart of commandPath) {
             const found = current.find((c) => c.name === pathPart);
             if (found?.subCommands) {

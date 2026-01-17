@@ -6,10 +6,10 @@ import { RenderLogsScreen } from "../semantic/render.tsx";
 import type { CopyPayload } from "../driver/types.ts";
 
 export class LogsController {
-    #navigation: NavigationAPI;
+    private navigation: NavigationAPI;
 
     public constructor({ navigation }: { navigation: NavigationAPI }) {
-        this.#navigation = navigation;
+        this.navigation = navigation;
     }
 
     public getCopyPayload(logs: LogEvent[]): CopyPayload {
@@ -24,7 +24,7 @@ export class LogsController {
             <RenderLogsScreen
                 key="modal-logs"
                 items={items}
-                onClose={() => this.#navigation.closeModal()}
+                onClose={() => this.navigation.closeModal()}
             />
         );
     }

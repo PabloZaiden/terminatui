@@ -7,10 +7,10 @@ import { RenderRunningScreen } from "../semantic/render.tsx";
 export type OutcomeRoute = Extract<TuiRoute, "running" | "results" | "error">;
 
 export class OutcomeController {
-    #navigation: NavigationAPI;
+    private navigation: NavigationAPI;
 
     public constructor({ navigation }: { navigation: NavigationAPI }) {
-        this.#navigation = navigation;
+        this.navigation = navigation;
     }
 
     public render(route: OutcomeRoute): { node: React.ReactNode } {
@@ -19,7 +19,7 @@ export class OutcomeController {
         }
 
         if (route === "results") {
-            const params = this.#navigation.current.params as ResultsRouteParams | undefined;
+            const params = this.navigation.current.params as ResultsRouteParams | undefined;
             const result = params?.result as CommandResult | undefined;
             return {
                 node: (
@@ -33,7 +33,7 @@ export class OutcomeController {
             };
         }
 
-        const params = this.#navigation.current.params as { error: Error } | undefined;
+        const params = this.navigation.current.params as { error: Error } | undefined;
         return {
             node: (
                 <RenderRunningScreen
@@ -47,7 +47,7 @@ export class OutcomeController {
 
     public getCopyPayload(route: OutcomeRoute): CopyPayload | null {
         if (route === "results") {
-            const params = this.#navigation.current.params as ResultsRouteParams | undefined;
+            const params = this.navigation.current.params as ResultsRouteParams | undefined;
             const result = params?.result as CommandResult | undefined;
             if (result !== undefined) {
                 // If result has data, stringify it for clipboard
@@ -68,7 +68,7 @@ export class OutcomeController {
         }
 
         if (route === "error") {
-            const params = this.#navigation.current.params as ErrorRouteParams | undefined;
+            const params = this.navigation.current.params as ErrorRouteParams | undefined;
             if (params?.error) {
                 return {
                     label: "error",

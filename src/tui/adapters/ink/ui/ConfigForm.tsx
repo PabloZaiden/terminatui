@@ -46,7 +46,7 @@ export function ConfigForm({
     }, [selectedIndex]);
 
     return (
-        <Panel title={title} focused={focused} flex={1} padding={1} flexDirection="column">
+        <Panel title={title} focused={focused} flex={1} padding={0} flexDirection="column">
             <ScrollView
                 axis="vertical"
                 flex={1}

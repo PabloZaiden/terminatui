@@ -15,23 +15,41 @@ import type {
 } from "../driver/types.ts";
 
 export class ConfigController {
-    public async run(params: ConfigRouteParams): Promise<void> {
-        savePersistedParameters(this.#appName, params.command.name, params.values);
+    private appName: string;
+    private navigation: NavigationAPI;
+    private executor: ExecutorContextValue;
 
-        this.#navigation.push("running" satisfies TuiRoute, {
+    public constructor({
+        appName,
+        navigation,
+        executor,
+    }: {
+        appName: string;
+        navigation: NavigationAPI;
+        executor: ExecutorContextValue;
+    }) {
+        this.appName = appName;
+        this.navigation = navigation;
+        this.executor = executor;
+    }
+
+    public async run(params: ConfigRouteParams): Promise<void> {
+        savePersistedParameters(this.appName, params.command.name, params.values);
+
+        this.navigation.push("running" satisfies TuiRoute, {
             command: params.command,
             commandPath: params.commandPath,
             values: params.values,
         });
 
-        const outcome = await this.#executor.execute(params.command, params.values);
+        const outcome = await this.executor.execute(params.command, params.values);
         if (outcome.cancelled) {
-            this.#navigation.pop();
+            this.navigation.pop();
             return;
         }
 
         if (outcome.success) {
-            this.#navigation.replace("results" satisfies TuiRoute, {
+            this.navigation.replace("results" satisfies TuiRoute, {
                 command: params.command,
                 commandPath: params.commandPath,
                 values: params.values,
@@ -40,7 +58,7 @@ export class ConfigController {
             return;
         }
 
-        this.#navigation.replace("error" satisfies TuiRoute, {
+        this.navigation.replace("error" satisfies TuiRoute, {
             command: params.command,
             commandPath: params.commandPath,
             values: params.values,
@@ -54,30 +72,12 @@ export class ConfigController {
         values: Record<string, unknown>;
     }): { label: string; content: string } {
         const schema = params.command.options as OptionSchema;
-        const cli = buildCliCommand(this.#appName, params.commandPath, schema, params.values as any);
+        const cli = buildCliCommand(this.appName, params.commandPath, schema, params.values as any);
         return { label: "CLI", content: cli };
     }
 
-    #appName: string;
-    #navigation: NavigationAPI;
-    #executor: ExecutorContextValue;
-
-    public constructor({
-        appName,
-        navigation,
-        executor,
-    }: {
-        appName: string;
-        navigation: NavigationAPI;
-        executor: ExecutorContextValue;
-    }) {
-        this.#appName = appName;
-        this.#navigation = navigation;
-        this.#executor = executor;
-    }
-
     public render(): { node: React.ReactNode; breadcrumb?: string[] } {
-        const params = this.#navigation.current.params as ConfigRouteParams | undefined;
+        const params = this.navigation.current.params as ConfigRouteParams | undefined;
 
         if (!params) {
             return { node: null };
@@ -99,7 +99,7 @@ export class ConfigController {
                     onSelectionChange={(index) => {
                         const maxIndex = params.fieldConfigs.length;
                         const nextIndex = Math.max(0, Math.min(index, maxIndex));
-                        this.#navigation.replace("config" satisfies TuiRoute, {
+                        this.navigation.replace("config" satisfies TuiRoute, {
                             ...params,
                             selectedFieldIndex: nextIndex,
                         });
@@ -108,23 +108,23 @@ export class ConfigController {
                         const fieldValue = params.values[fieldId];
 
                         const schema = params.command.options as OptionSchema;
-                        const cli = buildCliCommand(this.#appName, params.commandPath, schema, params.values as any);
+                        const cli = buildCliCommand(this.appName, params.commandPath, schema, params.values as any);
 
-                        this.#navigation.openModal<EditorModalParams>("editor", {
+                        this.navigation.openModal<EditorModalParams>("editor", {
                             fieldKey: fieldId,
                             currentValue: fieldValue,
                             fieldConfigs: params.fieldConfigs,
                              cliCommand: cli,
 
                             onSubmit: (value: unknown) => {
-                                this.#navigation.replace("config" satisfies TuiRoute, {
+                                this.navigation.replace("config" satisfies TuiRoute, {
                                     ...params,
                                     values: { ...params.values, [fieldId]: value },
                                 });
-                                this.#navigation.closeModal();
+                                this.navigation.closeModal();
                             },
                             onCancel: () => {
-                                this.#navigation.closeModal();
+                                this.navigation.closeModal();
                             },
                         });
                     }}
@@ -162,7 +162,7 @@ export class ConfigController {
             }
         }
 
-        const persisted = loadPersistedParameters(this.#appName, cmd.name);
+        const persisted = loadPersistedParameters(this.appName, cmd.name);
         return { ...defaults, ...persisted };
     }
 }

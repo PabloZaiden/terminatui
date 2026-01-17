@@ -26,7 +26,7 @@ import { ResultsPanel } from "./ui/ResultsPanel.tsx";
 
 function SemanticInkAppShell(props: AppShellProps) {
     return (
-        <Panel flexDirection="column" flex={1} padding={1} border={false}>
+        <Panel flexDirection="column" flex={1} padding={0} border={false}>
             <Box flexDirection="column" flexGrow={1}>
                 <Header
                     name={props.app.displayName ?? props.app.name}
@@ -38,19 +38,19 @@ function SemanticInkAppShell(props: AppShellProps) {
                     {props.screen}
                 </Box>
 
-                    <Panel dense border={true} flexDirection="column" gap={0} height={4}>
-                        <Box height={1} />
-                        <Box flexDirection="row" justifyContent="space-between" >
-                            <Box flexDirection="row" gap={1}>
-                                <Spinner active={props.status.isExecuting} />
-                                <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
-                                {props.copyToast ? (
-                                    <Label color="success" bold>{props.copyToast}</Label>
-                                ) : null}
-                            </Box>
-                            <Label color="mutedText">Esc Back  Ctrl+L Logs  Ctrl+Y Copy</Label>
+                <Panel dense border={true} flexDirection="column" gap={0} height={4}>
+                    <Box height={1} />
+                    <Box flexDirection="row" justifyContent="space-between" >
+                        <Box flexDirection="row" gap={1}>
+                            <Spinner active={props.status.isExecuting} />
+                            <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
+                            {props.copyToast ? (
+                                <Label color="success" bold>{props.copyToast}</Label>
+                            ) : null}
                         </Box>
-                    </Panel>
+                        <Label color="mutedText">Esc Back  Ctrl+L Logs  Ctrl+Y Copy</Label>
+                    </Box>
+                </Panel>
 
                 {props.modals}
             </Box>
@@ -122,36 +122,36 @@ export class SemanticInkRenderer {
         // kind === "results"
         return (
             <Box flexDirection="column" flexGrow={1}>
-                <ResultsPanel 
-                    result={props.result ?? { success: true, message: props.message }} 
-                    error={null} 
-                    focused={true} 
+                <ResultsPanel
+                    result={props.result ?? { success: true, message: props.message }}
+                    error={null}
+                    focused={true}
                 />
             </Box>
         );
     }
 
-     renderLogsScreen(props: LogsScreenProps): ReactNode {
-         return (
-             <Overlay>
-                 <Panel flexDirection="column" padding={1} border={true} width={80} height={20}>
-                     <Label bold>Logs</Label>
-                     <ScrollView axis="vertical" flex={1}>
-                         {props.items.map((item) => (
-                             <Label color="value" key={item.timestamp}>{`[${item.level}] ${item.message}`}</Label>
-                         ))}
-                     </ScrollView>
-                     <Label color="mutedText">Enter or Esc to close</Label>
-                 </Panel>
-             </Overlay>
-         );
-     }
+    renderLogsScreen(props: LogsScreenProps): ReactNode {
+        return (
+            <Overlay>
+                <Panel flexDirection="column" padding={1} border={true} width={80} height={20}>
+                    <Label bold>Logs</Label>
+                    <ScrollView axis="vertical" flex={1}>
+                        {props.items.map((item) => (
+                            <Label color="value" key={item.timestamp}>{`[${item.level}] ${item.message}`}</Label>
+                        ))}
+                    </ScrollView>
+                    <Label color="mutedText">Enter or Esc to close</Label>
+                </Panel>
+            </Overlay>
+        );
+    }
 
     renderEditorScreen(props: EditorScreenProps): ReactNode {
         return (
             <Overlay>
-                 <Panel flexDirection="column" padding={1} border={true} width={80}>
-                     <Label bold>{props.label ?? props.fieldId}</Label>
+                <Panel flexDirection="column" padding={0} border={true}>
+                    <Label bold>{props.label ?? props.fieldId}: </Label>
 
                     <Box flexDirection="column" gap={1}>
                         {props.editorType === "select" ? (

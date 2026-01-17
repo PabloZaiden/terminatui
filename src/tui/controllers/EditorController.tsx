@@ -5,7 +5,11 @@ import { RenderEditorScreen } from "../semantic/render.tsx";
 import type { CopyPayload, EditorModalParams } from "../driver/types.ts";
 
 export class EditorController {
-    #navigation: NavigationAPI;
+    private navigation: NavigationAPI;
+
+    public constructor({ navigation }: { navigation: NavigationAPI }) {
+        this.navigation = navigation;
+    }
 
     private getSelectIndexForValue(options: { value: string }[], value: string): number {
         const index = options.findIndex((o) => o.value === value);
@@ -13,7 +17,7 @@ export class EditorController {
     }
 
     private updateModalBuffer(params: EditorModalParams, bufferValue: string, selectIndex?: number): void {
-        this.#navigation.updateModal<EditorModalParams>({
+        this.navigation.updateModal<EditorModalParams>({
             ...params,
             bufferValue,
             selectIndex,
@@ -36,19 +40,15 @@ export class EditorController {
         return valueString;
     }
 
-    public constructor({ navigation }: { navigation: NavigationAPI }) {
-        this.#navigation = navigation;
-    }
-
     public getCopyPayload(): CopyPayload | null {
-        const params = this.#navigation.modalStack[this.#navigation.modalStack.length - 1]?.params as
+        const params = this.navigation.modalStack[this.navigation.modalStack.length - 1]?.params as
             | EditorModalParams
             | undefined;
         if (!params) {
             return null;
         }
 
-        const activeModalId = this.#navigation.modalStack[this.#navigation.modalStack.length - 1]?.id;
+        const activeModalId = this.navigation.modalStack[this.navigation.modalStack.length - 1]?.id;
         if (activeModalId !== "editor") {
             return null;
         }
@@ -101,7 +101,7 @@ export class EditorController {
                         modalParams.onSubmit(match?.value ?? valueString);
                     }}
                     onCancel={() => {
-                        this.#navigation.closeModal();
+                        this.navigation.closeModal();
                     }}
                 />
             );
@@ -136,7 +136,7 @@ export class EditorController {
                         modalParams.onSubmit(normalized === "true");
                     }}
                     onCancel={() => {
-                        this.#navigation.closeModal();
+                        this.navigation.closeModal();
                     }}
                 />
             );
@@ -167,7 +167,7 @@ export class EditorController {
                     modalParams.onSubmit(parsed);
                 }}
                 onCancel={() => {
-                    this.#navigation.closeModal();
+                    this.navigation.closeModal();
                 }}
             />
         );

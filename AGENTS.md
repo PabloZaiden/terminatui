@@ -6,6 +6,7 @@
 - Prefer classes over standalone functions when it makes sense.
 - Before doing something, check the patterns used in the rest of the codebase.
 - Never use `import("...")` dynamic imports. Always use static imports (unless absolutely necessary).
+- Always use TypeScript conventions over JavaScript conventions. For example, use the `private` keyword for private class members instead of the `#` prefix (ES private fields).
 
 ## Workflow
 
