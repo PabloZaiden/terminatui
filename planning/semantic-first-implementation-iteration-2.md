@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ✅ COMPLETE** — Iteration 2.6 Part 9 complete. Removed unused RendererComponents from Renderer interface. See **Section 9.6: Iteration 2.6**.
+> **STATUS: ✅ COMPLETE** — Iteration 2.6 Part 10 complete. Replaced dynamic imports with static imports in types.ts. See **Section 9.6: Iteration 2.6**.
 
 This document is a corrective follow-up to:
 
@@ -1554,3 +1554,44 @@ Completed in session. The `RendererComponents` interface and `components` proper
 1. `src/tui/adapters/types.ts`: Removed `RendererComponents` interface and `components` property from `Renderer` interface
 2. `src/tui/adapters/ink/InkRenderer.tsx`: Removed component imports and `components` property
 3. `src/tui/adapters/opentui/OpenTuiRenderer.tsx`: Removed component imports and `components` property
+
+### Iteration 2.6 Part 10: Replace dynamic imports with static imports in types.ts
+
+Per `AGENTS.md` guidelines: "Never use `import("...")` dynamic imports. Always use static imports (unless absolutely necessary)."
+
+**Problem:**
+The `src/tui/adapters/types.ts` file uses inline `import("...")` syntax for type annotations in 7 places:
+
+```typescript
+renderSemanticAppShell: (props: import("../semantic/AppShell.tsx").AppShellProps) => ReactNode;
+renderSemanticCommandBrowserScreen: (props: import("../semantic/CommandBrowserScreen.tsx").CommandBrowserScreenProps) => ReactNode;
+renderSemanticConfigScreen: (props: import("../semantic/ConfigScreen.tsx").ConfigScreenProps) => ReactNode;
+renderSemanticRunningScreen: (props: import("../semantic/RunningScreen.tsx").RunningScreenProps) => ReactNode;
+renderSemanticLogsScreen: (props: import("../semantic/LogsScreen.tsx").LogsScreenProps) => ReactNode;
+renderSemanticEditorScreen: (props: import("../semantic/EditorScreen.tsx").EditorScreenProps) => ReactNode;
+dispatchAction: (action: import("../actions.ts").TuiAction) => void;
+```
+
+**Goal:**
+- Convert all dynamic `import("...")` type annotations to static `import type {...} from "..."` statements
+
+#### Checklist
+
+- [x] Add static imports at top of `src/tui/adapters/types.ts` for:
+  - `AppShellProps` from `../semantic/AppShell.tsx`
+  - `CommandBrowserScreenProps` from `../semantic/CommandBrowserScreen.tsx`
+  - `ConfigScreenProps` from `../semantic/ConfigScreen.tsx`
+  - `RunningScreenProps` from `../semantic/RunningScreen.tsx`
+  - `LogsScreenProps` from `../semantic/LogsScreen.tsx`
+  - `EditorScreenProps` from `../semantic/EditorScreen.tsx`
+  - `TuiAction` from `../actions.ts`
+- [x] Update `Renderer` interface to use the statically imported types
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — passes
+
+#### Completion Notes
+
+Replaced 7 inline `import("...")` type annotations with static `import type` statements at the top of the file. This follows the `AGENTS.md` guideline: "Never use `import("...")` dynamic imports. Always use static imports (unless absolutely necessary)."
+
+**File modified:**
+- `src/tui/adapters/types.ts`
