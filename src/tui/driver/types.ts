@@ -8,6 +8,7 @@ export type TuiModalId = "logs" | "editor";
 
 export type EditorModalParams = {
     fieldKey: string;
+    fieldDisplayName: string;
     currentValue: unknown;
     fieldConfigs: ReturnType<typeof schemaToFieldConfigs>;
     cliCommand?: string;

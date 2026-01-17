@@ -106,12 +106,15 @@ export class ConfigController {
                     }}
                     onEditField={(fieldId) => {
                         const fieldValue = params.values[fieldId];
+                        const fieldConfig = params.fieldConfigs.find((f) => f.key === fieldId);
+                        const fieldDisplayName = fieldConfig?.label ?? fieldId;
 
                         const schema = params.command.options as OptionSchema;
                         const cli = buildCliCommand(this.appName, params.commandPath, schema, params.values as any);
 
                         this.navigation.openModal<EditorModalParams>("editor", {
                             fieldKey: fieldId,
+                            fieldDisplayName,
                             currentValue: fieldValue,
                             fieldConfigs: params.fieldConfigs,
                              cliCommand: cli,

@@ -40,7 +40,7 @@ function SemanticInkAppShell(props: AppShellProps) {
 
                 <Panel dense border={true} flexDirection="column" gap={0} height={4}>
                     <Box height={1} />
-                    <Box flexDirection="row" justifyContent="space-between" >
+                    <Box flexDirection="column">
                         <Box flexDirection="row" gap={1}>
                             <Spinner active={props.status.isExecuting} />
                             <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
@@ -48,7 +48,9 @@ function SemanticInkAppShell(props: AppShellProps) {
                                 <Label color="success" bold>{props.copyToast}</Label>
                             ) : null}
                         </Box>
-                        <Label color="mutedText">Esc Back  Ctrl+L Logs  Ctrl+Y Copy</Label>
+                        <Box>
+                            <Label color="mutedText">Esc Back  Ctrl+L Logs  Ctrl+Y Copy</Label>
+                        </Box>
                     </Box>
                 </Panel>
 

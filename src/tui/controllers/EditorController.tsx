@@ -56,7 +56,7 @@ export class EditorController {
         const valueString = params.bufferValue ?? String(params.currentValue ?? "");
 
         return {
-            label: `Field: ${params.fieldKey}`,
+            label: `Field: ${params.fieldDisplayName}`,
             content: valueString,
         };
     }
@@ -84,7 +84,7 @@ export class EditorController {
                 <RenderEditorScreen
                     key="modal-editor"
                     fieldId={modalParams.fieldKey}
-                    label={modalParams.fieldKey}
+                    label={modalParams.fieldDisplayName}
                     valueString={options[index]?.value ?? currentValueString}
                     editorType="select"
                     selectOptions={options}
@@ -121,7 +121,7 @@ export class EditorController {
                 <RenderEditorScreen
                     key="modal-editor"
                     fieldId={modalParams.fieldKey}
-                    label={modalParams.fieldKey}
+                    label={modalParams.fieldDisplayName}
                     valueString={options[index]!.value}
                     editorType="select"
                     selectOptions={options}
@@ -147,7 +147,7 @@ export class EditorController {
             <RenderEditorScreen
                 key="modal-editor"
                 fieldId={modalParams.fieldKey}
-                label={modalParams.fieldKey}
+                label={modalParams.fieldDisplayName}
                 valueString={bufferString ?? String(modalParams.currentValue ?? "")}
                 editorType={fieldConfig?.type === "number" ? "number" : "text"}
                      cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
