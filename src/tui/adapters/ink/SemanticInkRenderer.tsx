@@ -15,7 +15,6 @@ import { ScrollView } from "./components/ScrollView.tsx";
 import { TextInput } from "./components/TextInput.tsx";
 import { Select } from "./components/Select.tsx";
 import { MenuButton } from "./components/MenuButton.tsx";
-import { MenuItem } from "./components/MenuItem.tsx";
 import { Spinner } from "./components/Spinner.tsx";
 
 // Adapter-local UI components
@@ -100,6 +99,9 @@ export class SemanticInkRenderer {
                         />
                     }
                 />
+                <Box flexDirection="column" paddingTop={1}>
+                    <Label color="mutedText">CLI: {props.cliCommand}</Label>
+                </Box>
             </Box>
         );
     }
@@ -178,13 +180,6 @@ export class SemanticInkRenderer {
                                 onSubmit={() => props.onSubmit?.()}
                             />
                         )}
-
-                        {props.cliArguments ? (
-                            <MenuItem
-                                label="CLI Arguments"
-                                description={props.cliArguments.command}
-                            />
-                        ) : null}
                     </Box>
 
                     <Label color="mutedText">Enter to submit  Esc to cancel</Label>

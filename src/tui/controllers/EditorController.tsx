@@ -69,8 +69,6 @@ export class EditorController {
         const fieldConfig = modalParams.fieldConfigs.find((f) => f.key === modalParams.fieldKey);
         const bufferString = modalParams.bufferValue;
 
-        const canShowCli = Boolean(modalParams.cliCommand);
-
         if (fieldConfig?.type === "enum") {
             const options = (fieldConfig.options ?? []).map((o) => ({
                 label: String(o.name),
@@ -89,7 +87,6 @@ export class EditorController {
                     editorType="select"
                     selectOptions={options}
                     selectIndex={index}
-                    cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
                     onChangeSelectIndex={(nextIndex) => {
                         const clamped = Math.max(0, Math.min(nextIndex, Math.max(0, options.length - 1)));
                         const next = options[clamped];
@@ -126,7 +123,6 @@ export class EditorController {
                     editorType="select"
                     selectOptions={options}
                     selectIndex={index}
-                    cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
                     onChangeSelectIndex={(nextIndex) => {
                         const clamped = Math.max(0, Math.min(nextIndex, 1));
                         this.updateModalBuffer(modalParams, options[clamped]!.value, clamped);
@@ -150,8 +146,6 @@ export class EditorController {
                 label={modalParams.fieldDisplayName}
                 valueString={bufferString ?? String(modalParams.currentValue ?? "")}
                 editorType={fieldConfig?.type === "number" ? "number" : "text"}
-                     cliArguments={canShowCli ? { command: modalParams.cliCommand! } : undefined}
-
                 onChangeText={(text) => {
                     this.updateModalBuffer(modalParams, text);
                 }}

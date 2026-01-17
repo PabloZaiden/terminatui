@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ✅ COMPLETE** — Iteration 2.6 Part 11 complete. Removed unused properties and methods from interfaces and classes. See **Section 9.6: Iteration 2.6**.
+> **STATUS: ✅ COMPLETE** — Iteration 2.6 Part 13 complete. Moved CLI args display from editor to config form. See **Section 9.6: Iteration 2.6**.
 
 This document is a corrective follow-up to:
 
@@ -1670,3 +1670,61 @@ Removed 12 unused properties/methods from the codebase. Kept `SemanticColors.pri
 - `src/tui/adapters/opentui/components/ScrollView.tsx` — Removed unused scroll methods
 - `src/tui/utils/schemaToFields.ts` — Removed `groupFieldConfigs` export and stopped setting removed properties
 - `src/__tests__/schemaToFields.test.ts` — Removed assertions for removed properties
+
+### Iteration 2.6 Part 12: Add fieldDisplayName to EditorModalParams
+
+Added `fieldDisplayName` property to `EditorModalParams` to pass the display name of the field to the editor instead of using the raw field key.
+
+**Changes:**
+- `src/tui/driver/types.ts` — Added `fieldDisplayName: string` property to `EditorModalParams`
+- `src/tui/controllers/ConfigController.tsx` — Pass `fieldDisplayName` from field config's `label` when opening editor modal
+- `src/tui/controllers/EditorController.tsx` — Use `fieldDisplayName` for label prop in all `RenderEditorScreen` calls; use it in `getCopyPayload()` label
+
+### Iteration 2.6 Part 13: Move CLI args display from editor to config form
+
+During manual testing, it was noted that CLI args should be displayed in the config form (where the copy action already copies them), not in the editor modal.
+
+**Problem:**
+- Currently, CLI args are shown in the editor modal via `EditorScreenProps.cliArguments`
+- The copy action in the config screen already copies CLI args correctly
+- The CLI args should be visible in the config form, not hidden in the editor
+
+**Goal:**
+- Remove `cliArguments` from `EditorScreenProps` and editor rendering
+- Add `cliCommand` to `ConfigScreenProps` so the config form can display the CLI args
+- Update both semantic renderers to show CLI args in the config screen
+
+#### Checklist
+
+- [x] Remove `cliArguments` from `EditorScreenProps` interface
+- [x] Remove CLI args display from editor rendering in both semantic renderers
+- [x] Remove `cliCommand` from `EditorModalParams` type
+- [x] Stop passing `cliCommand` when opening editor modal in `ConfigController`
+- [x] Remove CLI args handling in `EditorController.render()`
+- [x] Add `cliCommand` to `ConfigScreenProps` interface
+- [x] Update `ConfigController.render()` to compute and pass `cliCommand`
+- [x] Update Ink `SemanticInkRenderer.renderConfigScreen` to display CLI args
+- [x] Update OpenTUI `SemanticOpenTuiRenderer.renderConfigScreen` to display CLI args
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — passes (78 tests)
+- [x] Update planning doc with completion status
+
+#### Implementation notes
+
+**Changes made:**
+
+1. **Removed CLI args from EditorScreen**: The editor modal no longer shows CLI arguments. This was incorrect — the editor is for editing a single field value, not for showing the full CLI command.
+
+2. **Added CLI args to ConfigScreen**: The config form now displays the CLI command at the bottom, where it makes sense contextually and where the copy action (Ctrl+Y) already copies it from.
+
+**Files modified:**
+- `src/tui/semantic/EditorScreen.tsx` — Removed `cliArguments` from `EditorScreenProps`
+- `src/tui/semantic/ConfigScreen.tsx` — Added `cliCommand: string` to `ConfigScreenProps`
+- `src/tui/driver/types.ts` — Removed `cliCommand` from `EditorModalParams`
+- `src/tui/controllers/ConfigController.tsx` — Stopped passing `cliCommand` to editor modal; now computes and passes `cliCommand` to `RenderConfigScreen`
+- `src/tui/controllers/EditorController.tsx` — Removed CLI args handling from `render()` method
+- `src/tui/adapters/ink/SemanticInkRenderer.tsx` — Removed `MenuItem` import; added CLI display in `renderConfigScreen`
+- `src/tui/adapters/opentui/SemanticOpenTuiRenderer.tsx` — Removed `MenuItem` import; added CLI display in `renderConfigScreen`
+
+**Design note:**
+This change aligns with the principle that the config form is the right place to show the CLI command, as it represents the full command with all configured parameters. The editor modal is a focused view for a single field and shouldn't show unrelated information.

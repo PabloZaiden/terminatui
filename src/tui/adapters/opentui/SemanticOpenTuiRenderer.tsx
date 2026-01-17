@@ -13,7 +13,6 @@ import { Overlay } from "./components/Overlay.tsx";
 import { TextInput } from "./components/TextInput.tsx";
 import { Select } from "./components/Select.tsx";
 import { MenuButton } from "./components/MenuButton.tsx";
-import { MenuItem } from "./components/MenuItem.tsx";
 import { Spinner } from "./components/Spinner.tsx";
 
 // Adapter-local UI components
@@ -92,6 +91,9 @@ export class SemanticOpenTuiRenderer {
                         />
                     }
                 />
+                <box flexDirection="column" paddingTop={1}>
+                    <Label color="mutedText">CLI: {props.cliCommand}</Label>
+                </box>
             </box>
         );
     }
@@ -156,13 +158,6 @@ export class SemanticOpenTuiRenderer {
                                 onSubmit={() => props.onSubmit?.()}
                             />
                         )}
-
-                        {props.cliArguments ? (
-                            <MenuItem
-                                label="CLI Arguments"
-                                description={props.cliArguments.command}
-                            />
-                        ) : null}
                     </box>
 
                     <Label color="mutedText">Enter to submit  Esc to cancel</Label>

@@ -7,6 +7,9 @@ export interface ConfigScreenProps {
     fieldConfigs: FieldConfig[];
     values: Record<string, unknown>;
 
+    /** CLI command string for display and copy */
+    cliCommand: string;
+
     selectedFieldIndex: number;
     onSelectionChange: (index: number) => void;
 

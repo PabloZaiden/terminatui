@@ -87,6 +87,9 @@ export class ConfigController {
         const selectedFieldIndex = params.selectedFieldIndex ?? 0;
         const clampedIndex = Math.min(selectedFieldIndex, Math.max(0, params.fieldConfigs.length));
 
+        const schema = params.command.options as OptionSchema;
+        const cliCommand = buildCliCommand(this.appName, params.commandPath, schema, params.values as any);
+
         return {
             breadcrumb: params.commandPath,
             node: (
@@ -95,6 +98,7 @@ export class ConfigController {
                     commandId={params.commandPath}
                     fieldConfigs={params.fieldConfigs}
                     values={params.values}
+                    cliCommand={cliCommand}
                     selectedFieldIndex={clampedIndex}
                     onSelectionChange={(index) => {
                         const maxIndex = params.fieldConfigs.length;
@@ -109,15 +113,11 @@ export class ConfigController {
                         const fieldConfig = params.fieldConfigs.find((f) => f.key === fieldId);
                         const fieldDisplayName = fieldConfig?.label ?? fieldId;
 
-                        const schema = params.command.options as OptionSchema;
-                        const cli = buildCliCommand(this.appName, params.commandPath, schema, params.values as any);
-
                         this.navigation.openModal<EditorModalParams>("editor", {
                             fieldKey: fieldId,
                             fieldDisplayName,
                             currentValue: fieldValue,
                             fieldConfigs: params.fieldConfigs,
-                             cliCommand: cli,
 
                             onSubmit: (value: unknown) => {
                                 this.navigation.replace("config" satisfies TuiRoute, {

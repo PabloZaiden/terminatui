@@ -8,10 +8,6 @@ export interface EditorScreenProps {
     selectOptions?: { label: string; value: string }[];
     selectIndex?: number;
 
-    cliArguments?: {
-        command: string;
-    };
-
     onChangeText?: (text: string) => void;
     onChangeSelectIndex?: (index: number) => void;
     onSubmit?: () => void;
