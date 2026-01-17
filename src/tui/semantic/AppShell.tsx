@@ -9,6 +9,7 @@ export interface AppIdentity {
 
 export interface AppStatus {
     isExecuting: boolean;
+    isCancelling: boolean;
     message: string;
 }
 

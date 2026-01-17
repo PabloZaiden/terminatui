@@ -9,7 +9,7 @@ export function LogsPanel({ items }: LogsScreenProps) {
     
     // Panel takes most of terminal size, leaving some margin to show it's a modal
     // ~90% width/height with minimum sizes
-    const panelHeight = Math.max(10, Math.floor(terminalHeight * 0.85));
+    const panelHeight = Math.max(10, Math.floor(terminalHeight * 0.75));
     const panelWidth = Math.max(40, Math.floor(terminalWidth * 0.85));
     
     // Scrollbox height = panel height - border (2) - padding (2) - title (1) - footer (1)

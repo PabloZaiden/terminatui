@@ -42,7 +42,13 @@ function SemanticInkAppShell(props: AppShellProps) {
                     <Box flexDirection="column">
                         <Box flexDirection="row" gap={1}>
                             <Spinner active={props.status.isExecuting} />
-                            <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
+                            <Label color="mutedText">
+                                {props.status.isCancelling
+                                    ? "Cancelling..."
+                                    : props.status.isExecuting
+                                      ? "Executing..."
+                                      : "Ready"}
+                            </Label>
                             {props.copyToast ? (
                                 <Label color="success" bold>{props.copyToast}</Label>
                             ) : null}

@@ -31,9 +31,11 @@ export function ResultsPanel({ result, error, focused, renderResult }: ResultsPa
     } else if (result) {
         if (renderResult) {
             const customContent = renderResult(result);
-            content = (
-                <box>{customContent}</box>
-            );
+            if (typeof customContent === "string" || typeof customContent === "number" || typeof customContent === "boolean") {
+                content = <Label color="value">{String(customContent)}</Label>;
+            } else {
+                content = customContent as ReactNode;
+            }
         } else {
             content = (
                 <box flexDirection="column" gap={1}>

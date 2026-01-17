@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ✅ COMPLETE** — Iteration 2.7 complete (pending manual testing). Fixed: clipboard in modals, terminal clipboard compatibility, editor height, custom result renderers, cancellation flow. See **Section 9.7: Iteration 2.7**.
+> **STATUS: ✅ COMPLETE** — Iteration 2.8 complete (pending manual testing). Fixed: copy toast timing for immediate feedback, cancellation state feedback in status bar. See **Section 9.8: Iteration 2.8**.
 
 This document is a corrective follow-up to:
 
@@ -1848,3 +1848,67 @@ Manual testing revealed several critical bugs:
 - `src/tui/adapters/ink/SemanticInkRenderer.tsx` — Pass customContent to ResultsPanel
 - `src/tui/adapters/opentui/SemanticOpenTuiRenderer.tsx` — Pass customContent to ResultsPanel
 - `src/tui/controllers/ConfigController.tsx` — Added back handler for cancellation during execution
+
+---
+
+## 9.8 Iteration 2.8: Toast and cancellation feedback fixes
+
+### Problem summary
+
+Manual testing revealed two UI feedback issues:
+
+#### Bug 1: OpenTUI Ctrl+Y in logs modal copies but doesn't show toast
+- When pressing Ctrl+Y in the logs modal (OpenTUI), the content is copied successfully
+- However, the toast confirmation ("Copied Logs") doesn't appear in the status bar
+- The issue is that the toast was only set AFTER the async clipboard operation completed
+- OpenTUI's reactivity may not properly trigger re-renders for state changes inside async callbacks
+
+#### Bug 2: No cancellation feedback during execution
+- When pressing Esc during command execution, the cancellation is triggered
+- However, the status bar continues showing "Executing..." instead of "Cancelling..."
+- Users have no visual feedback that their cancellation request was received
+
+### Checklist
+
+#### Phase 2.8A: Fix copy toast timing (Bug 1)
+
+- [x] Update `InkKeyboardHandler` to show toast immediately before async copy
+- [x] Update `OpenTuiKeyboardHandler` to show toast immediately before async copy
+- [x] Only change toast to "Copy failed" if clipboard operation fails
+- [x] Toast auto-clears after 1.5 seconds regardless of success/failure
+
+#### Phase 2.8B: Add cancellation state feedback (Bug 2)
+
+- [x] Add `isCancelling: boolean` to `ExecutorContextValue` interface
+- [x] Add `isCancelling` state to `ExecutorProvider`
+- [x] Set `isCancelling` to `true` in `cancel()` method
+- [x] Reset `isCancelling` to `false` in `finally` block and `reset()` method
+- [x] Add `isCancelling: boolean` to `AppStatus` interface
+- [x] Pass `isCancelling` from `TuiDriver.renderAppShell()` to status props
+- [x] Update Ink status bar to show "Cancelling..." when `isCancelling` is true
+- [x] Update OpenTUI status bar to show "Cancelling..." when `isCancelling` is true
+
+#### Phase 2.8C: Verification
+
+- [x] `bun run build` passes
+- [x] `bun run test` passes (78 tests)
+- [ ] Manual test: Ink copy toast appears immediately on Ctrl+Y
+- [ ] Manual test: OpenTUI copy toast appears immediately on Ctrl+Y
+- [ ] Manual test: Status bar shows "Cancelling..." when Esc pressed during execution (both adapters)
+
+### Implementation notes (iteration 2.8)
+
+**Changes made:**
+
+1. **Immediate copy toast feedback**: Changed both keyboard handlers to show the toast immediately when Ctrl+Y is pressed, rather than waiting for the async clipboard operation to complete. The toast now shows "Copied {label}" right away, and only changes to "Copy failed" if the operation fails. This provides instant visual feedback to users.
+
+2. **Cancellation state tracking**: Added `isCancelling` state to the executor context. When `cancel()` is called, it immediately sets `isCancelling` to `true`. The status bar now shows "Cancelling..." instead of "Executing..." when this state is true. This gives users visual confirmation that their cancellation request was received and is being processed.
+
+**Files modified:**
+- `src/tui/adapters/ink/InkRenderer.tsx` — Show toast immediately on Ctrl+Y
+- `src/tui/adapters/opentui/OpenTuiRenderer.tsx` — Show toast immediately on Ctrl+Y
+- `src/tui/context/ExecutorContext.tsx` — Added `isCancelling` state
+- `src/tui/semantic/AppShell.tsx` — Added `isCancelling` to `AppStatus` interface
+- `src/tui/driver/TuiDriver.tsx` — Pass `isCancelling` to status props
+- `src/tui/adapters/ink/SemanticInkRenderer.tsx` — Show "Cancelling..." in status bar
+- `src/tui/adapters/opentui/SemanticOpenTuiRenderer.tsx` — Show "Cancelling..." in status bar

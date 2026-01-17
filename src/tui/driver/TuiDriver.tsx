@@ -101,6 +101,7 @@ export class TuiDriver {
                 }}
                 status={{
                     isExecuting: this.executor.isExecuting,
+                    isCancelling: this.executor.isCancelling,
                     message: this.statusMessage,
                 }}
                 screen={screen}

@@ -36,8 +36,12 @@ function InkKeyboardHandler({
             if (event.ctrl && event.name === "y") {
                 const payload = driver.getActiveCopyPayload();
                 if (payload) {
-                    void copyToTerminalClipboard(payload.content).then(() => {
-                        onCopyToastChange?.(`Copied ${payload.label}`);
+                    // Show toast immediately for instant feedback
+                    onCopyToastChange?.(`Copied ${payload.label}`);
+                    void copyToTerminalClipboard(payload.content).then((success) => {
+                        if (!success) {
+                            onCopyToastChange?.("Copy failed");
+                        }
                         setTimeout(() => onCopyToastChange?.(null), 1500);
                     });
                 }

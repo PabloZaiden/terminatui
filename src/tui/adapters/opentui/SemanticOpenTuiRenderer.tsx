@@ -41,7 +41,13 @@ export class SemanticOpenTuiRenderer {
                         <box flexDirection="row" justifyContent="space-between" paddingLeft={1} paddingRight={1}>
                             <box flexDirection="row" gap={1}>
                                 <Spinner active={props.status.isExecuting} />
-                                <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
+                                <Label color="mutedText">
+                                    {props.status.isCancelling
+                                        ? "Cancelling..."
+                                        : props.status.isExecuting
+                                          ? "Executing..."
+                                          : "Ready"}
+                                </Label>
                                 {props.copyToast ? (
                                     <Label color="success" bold>{props.copyToast}</Label>
                                 ) : null}
