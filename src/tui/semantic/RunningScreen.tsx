@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { CommandResult } from "../../core/command.ts";
 
 export interface RunningScreenProps {
@@ -6,6 +7,8 @@ export interface RunningScreenProps {
     message?: string;
     /** The actual result object when kind is "results" */
     result?: CommandResult;
+    /** Custom content rendered by the command's renderResult method */
+    customContent?: ReactNode;
 }
 
 export function RunningScreen(_props: RunningScreenProps) {

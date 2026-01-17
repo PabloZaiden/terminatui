@@ -15,12 +15,25 @@ export class OutcomeController {
 
     public render(route: OutcomeRoute): { node: React.ReactNode } {
         if (route === "running") {
-            return { node: <RenderRunningScreen title="Running" kind="running" /> };
+            return { node: <RenderRunningScreen title="Waiting for results..." kind="running" /> };
         }
 
         if (route === "results") {
             const params = this.navigation.current.params as ResultsRouteParams | undefined;
             const result = params?.result as CommandResult | undefined;
+            const command = params?.command;
+            
+            // Check if command has a custom result renderer
+            let customContent: React.ReactNode = undefined;
+            if (result && command?.renderResult) {
+                try {
+                    customContent = command.renderResult(result);
+                } catch {
+                    // If custom renderer fails, fall back to default display
+                    customContent = undefined;
+                }
+            }
+
             return {
                 node: (
                     <RenderRunningScreen
@@ -28,6 +41,7 @@ export class OutcomeController {
                         kind="results"
                         message={result?.message}
                         result={result}
+                        customContent={customContent}
                     />
                 ),
             };
@@ -49,6 +63,20 @@ export class OutcomeController {
         if (route === "results") {
             const params = this.navigation.current.params as ResultsRouteParams | undefined;
             const result = params?.result as CommandResult | undefined;
+            const command = params?.command;
+            
+            // Check if command has a custom clipboard content provider
+            if (result && command?.getClipboardContent) {
+                try {
+                    const content = command.getClipboardContent(result);
+                    if (content !== undefined) {
+                        return { label: "result", content };
+                    }
+                } catch {
+                    // Fall through to default behavior
+                }
+            }
+
             if (result !== undefined) {
                 // If result has data, stringify it for clipboard
                 if (result.data !== undefined) {

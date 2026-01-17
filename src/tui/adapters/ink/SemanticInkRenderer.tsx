@@ -124,6 +124,20 @@ export class SemanticInkRenderer {
         }
 
         // kind === "results"
+        // If customContent is provided, render it directly instead of using ResultsPanel's default rendering
+        if (props.customContent !== undefined) {
+            return (
+                <Box flexDirection="column" flexGrow={1}>
+                    <ResultsPanel
+                        result={props.result ?? { success: true, message: props.message }}
+                        error={null}
+                        focused={true}
+                        renderResult={() => props.customContent}
+                    />
+                </Box>
+            );
+        }
+
         return (
             <Box flexDirection="column" flexGrow={1}>
                 <ResultsPanel

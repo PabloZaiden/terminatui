@@ -42,28 +42,40 @@ export class ConfigController {
             values: params.values,
         });
 
-        const outcome = await this.executor.execute(params.command, params.values);
-        if (outcome.cancelled) {
-            this.navigation.pop();
-            return;
-        }
+        // Set a back handler that cancels the execution when Esc is pressed
+        this.navigation.setBackHandler(() => {
+            this.executor.cancel();
+            return true; // We handle the back action - don't pop the stack yet
+        });
 
-        if (outcome.success) {
-            this.navigation.replace("results" satisfies TuiRoute, {
+        try {
+            const outcome = await this.executor.execute(params.command, params.values);
+            
+            if (outcome.cancelled) {
+                this.navigation.pop();
+                return;
+            }
+
+            if (outcome.success) {
+                this.navigation.replace("results" satisfies TuiRoute, {
+                    command: params.command,
+                    commandPath: params.commandPath,
+                    values: params.values,
+                    result: outcome.result ?? null,
+                });
+                return;
+            }
+
+            this.navigation.replace("error" satisfies TuiRoute, {
                 command: params.command,
                 commandPath: params.commandPath,
                 values: params.values,
-                result: outcome.result ?? null,
+                error: outcome.error ?? new Error("Unknown error"),
             });
-            return;
+        } finally {
+            // Clear the back handler when execution completes
+            this.navigation.setBackHandler(null);
         }
-
-        this.navigation.replace("error" satisfies TuiRoute, {
-            command: params.command,
-            commandPath: params.commandPath,
-            values: params.values,
-            error: outcome.error ?? new Error("Unknown error"),
-        });
     }
 
     public getCopyPayload(params: {

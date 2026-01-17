@@ -116,6 +116,20 @@ export class SemanticOpenTuiRenderer {
         }
 
         // kind === "results"
+        // If customContent is provided, render it directly instead of using ResultsPanel's default rendering
+        if (props.customContent !== undefined) {
+            return (
+                <box flexDirection="column" flexGrow={1}>
+                    <ResultsPanel
+                        result={props.result ?? { success: true, message: props.message }}
+                        error={null}
+                        focused={true}
+                        renderResult={() => props.customContent}
+                    />
+                </box>
+            );
+        }
+
         return (
             <box flexDirection="column" flexGrow={1}>
                 <ResultsPanel 
@@ -132,12 +146,16 @@ export class SemanticOpenTuiRenderer {
      }
 
     renderEditorScreen(props: EditorScreenProps): ReactNode {
+        // For text input, use more height to give a proper editing area
+        const isTextEditor = props.editorType !== "select";
+        const panelHeight = isTextEditor ? 8 : undefined;
+
         return (
             <Overlay>
-                 <Panel flexDirection="column" padding={1} border={true} width={80} surface="overlay">
+                 <Panel flexDirection="column" padding={1} border={true} width={80} height={panelHeight} surface="overlay">
                      <Label bold>{props.label ?? props.fieldId}</Label>
 
-                    <box flexDirection="column" gap={1}>
+                    <box flexDirection="column" gap={1} flexGrow={1}>
                         {props.editorType === "select" ? (
                             <Select
                                 options={props.selectOptions ?? []}

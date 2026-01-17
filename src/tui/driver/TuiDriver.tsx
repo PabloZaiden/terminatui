@@ -53,6 +53,17 @@ export class TuiDriver {
     }
 
     public getActiveCopyPayload(): CopyPayload | null {
+        // Modal takes priority over screen - if a modal is open, use its copy payload
+        const topModal = this.navigation.modalStack[this.navigation.modalStack.length - 1];
+        if (topModal?.id === "logs") {
+            return this.logsModal.getCopyPayload(this.logs);
+        }
+
+        if (topModal?.id === "editor") {
+            return this.editor.getCopyPayload();
+        }
+
+        // No modal open, check current screen
         const currentRoute = this.navigation.current.route as TuiRoute;
         if (currentRoute === "config") {
             const params = this.navigation.current.params as ConfigRouteParams | undefined;
@@ -63,15 +74,6 @@ export class TuiDriver {
 
         if (currentRoute === "results" || currentRoute === "error") {
             return this.outcome.getCopyPayload(currentRoute);
-        }
-
-        const topModal = this.navigation.modalStack[this.navigation.modalStack.length - 1];
-        if (topModal?.id === "logs") {
-            return this.logsModal.getCopyPayload(this.logs);
-        }
-
-        if (topModal?.id === "editor") {
-            return this.editor.getCopyPayload();
         }
 
         return null;

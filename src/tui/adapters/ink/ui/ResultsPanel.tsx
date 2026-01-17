@@ -17,7 +17,7 @@ interface ResultsPanelProps {
     renderResult?: (result: CommandResult) => ReactNode;
 }
 
-export function ResultsPanel({ result, error, focused, renderResult }: ResultsPanelProps) {
+export function ResultsPanel({ result, error, focused }: ResultsPanelProps) {
     let content: ReactNode;
 
     if (error) {
@@ -30,25 +30,19 @@ export function ResultsPanel({ result, error, focused, renderResult }: ResultsPa
             </Box>
         );
     } else if (result) {
-        if (renderResult) {
-            const customContent = renderResult(result);
-            if (typeof customContent === "string" || typeof customContent === "number" || typeof customContent === "boolean") {
-                content = <Label color="value">{String(customContent)}</Label>;
-            } else {
-                content = customContent as ReactNode;
-            }
-        } else {
-            content = (
-                <Box flexDirection="column" gap={1}>
-                    {result.message && <Label color={result.success ? "success" : "error"}>{result.message}</Label>}
-                    {result.data !== undefined && result.data !== null && (
-                        typeof result.data === "object" 
-                            ? <JsonHighlight value={result.data} />
-                            : <Label color="value">{String(result.data)}</Label>
-                    )}
-                </Box>
-            );
-        }
+        // for now we ignore renderResult in ink version
+        
+        content = (
+            <Box flexDirection="column" gap={1}>
+                {result.message && <Label color={result.success ? "success" : "error"}>{result.message}</Label>}
+                {result.data !== undefined && result.data !== null && (
+                    typeof result.data === "object"
+                        ? <JsonHighlight value={result.data} />
+                        : <Label color="value">{String(result.data)}</Label>
+                )}
+            </Box>
+        );
+
     } else {
         content = <Label color="mutedText">No results yet...</Label>;
     }

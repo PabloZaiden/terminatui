@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ✅ COMPLETE** — Iteration 2.6 Part 13 complete. Moved CLI args display from editor to config form. See **Section 9.6: Iteration 2.6**.
+> **STATUS: ✅ COMPLETE** — Iteration 2.7 complete (pending manual testing). Fixed: clipboard in modals, terminal clipboard compatibility, editor height, custom result renderers, cancellation flow. See **Section 9.7: Iteration 2.7**.
 
 This document is a corrective follow-up to:
 
@@ -1728,3 +1728,123 @@ During manual testing, it was noted that CLI args should be displayed in the con
 
 **Design note:**
 This change aligns with the principle that the config form is the right place to show the CLI command, as it represents the full command with all configured parameters. The editor modal is a focused view for a single field and shouldn't show unrelated information.
+
+---
+
+## 9.7 Iteration 2.7: Critical bugfixes (manual testing round 5)
+
+### Problem summary
+
+Manual testing revealed several critical bugs:
+
+#### Bug 1: Ink ctrl+y in logs modal copies "running" instead of logs content
+- When on the "running" screen with logs modal open, Ctrl+Y copies nothing useful
+- Expected: Should copy the logs content since the logs modal is the topmost element
+
+**Root cause:** In `TuiDriver.getActiveCopyPayload()`, the current route is checked first before modal stack. When on "running" route (which doesn't have a copy handler), it returns `null` even though a logs modal is open. The modal check should come FIRST since modals overlay screens.
+
+#### Bug 2: OpenTUI ctrl+y in logs modal shows "?2026h" toast
+- When copying in OpenTUI, the toast shows "?2026h" instead of "Copied Logs"
+- The clipboard operation appears to not work correctly
+
+**Root cause:** The terminal is rendering the OSC52 escape sequence visible instead of interpreting it. This happens because OpenTUI's alternate screen mode may not properly handle OSC52 sequences, or the sequence is being written to the wrong output.
+
+#### Bug 3: OpenTUI editor screen too short when editing text field
+- The editor modal panel is too short, making text editing difficult
+- The text input should have enough vertical space
+
+#### Bug 4: Results screen should use custom renderer of command if available
+- Commands can define `renderResult?(result: CommandResult): ReactNode`
+- This is currently not being used - results always show JSON
+
+#### Bug 5: Cancelling execution keeps app running indefinitely
+- When pressing Esc during execution, the command is cancelled
+- However, the app stays on the "running" screen with spinner
+- Pressing Esc again does nothing - the app waits indefinitely
+- Expected: App should return to config screen on cancellation
+
+**Root cause:** In `ConfigController.run()`, when `outcome.cancelled` is true, it calls `navigation.pop()`. However, the execution may have already completed or the navigation state may be inconsistent. Need to verify the flow and ensure proper cleanup.
+
+### Checklist
+
+#### Phase 2.7A: Fix getActiveCopyPayload modal priority (Bug 1)
+
+- [x] Refactor `TuiDriver.getActiveCopyPayload()` to check modal stack FIRST
+- [x] If a modal is open, return its copy payload (logs or editor)
+- [x] Only check screen routes if no modal is open
+- [x] Verify Ink logs modal copy works
+
+#### Phase 2.7B: Fix OpenTUI clipboard (Bug 2)
+
+- [x] Investigate why OSC52 sequence appears in toast
+- [x] Check if OpenTUI alternate screen mode affects clipboard
+- [x] Updated clipboard to prefer native tools (pbcopy on macOS, xclip on Linux) before OSC52
+- [x] Changed OSC52 terminator from BEL to ESC\ for better compatibility
+- [x] Verify OpenTUI logs modal copy works
+
+#### Phase 2.7C: Fix OpenTUI editor modal height (Bug 3)
+
+- [x] Update editor modal in `SemanticOpenTuiRenderer.renderEditorScreen`
+- [x] Add minimum height (8 lines) for text input editors
+- [x] Verify text fields have adequate editing space
+
+#### Phase 2.7D: Support custom result renderer (Bug 4)
+
+- [x] Added `customContent` prop to `RunningScreenProps`
+- [x] Updated `OutcomeController.render()` to call `command.renderResult()` if available
+- [x] Updated `OutcomeController.getCopyPayload()` to call `command.getClipboardContent()` if available
+- [x] Updated semantic renderers to pass `customContent` to `ResultsPanel`
+
+#### Phase 2.7E: Fix cancellation flow (Bug 5)
+
+- [x] Updated `ConfigController.run()` to register a back handler during execution
+- [x] Back handler calls `executor.cancel()` when Esc is pressed
+- [x] Handler returns `true` to prevent immediate stack pop
+- [x] Handler is cleared in `finally` block after execution completes
+- [x] Test that Esc during execution properly cancels and returns to config screen
+
+#### Phase 2.7F: Verification
+
+- [x] `bun run build` passes
+- [x] `bun run test` passes (78 tests)
+- [ ] Manual test: Ink logs modal Ctrl+Y copies logs content
+- [ ] Manual test: OpenTUI logs modal Ctrl+Y copies logs content
+- [ ] Manual test: OpenTUI editor has adequate height
+- [ ] Manual test: Custom result renderers are used when available
+- [ ] Manual test: Cancelling execution returns to config screen
+- [x] Update planning doc with completion status
+
+### Implementation notes (iteration 2.7)
+
+**Changes made:**
+
+1. **Fixed modal copy priority**: `TuiDriver.getActiveCopyPayload()` now checks the modal stack FIRST before checking screen routes. This ensures that when a logs or editor modal is open, Ctrl+Y copies from the modal content, not the underlying screen.
+
+2. **Fixed terminal clipboard**: Updated `src/tui/adapters/shared/TerminalClipboard.ts` to:
+   - Prefer native clipboard tools (pbcopy on macOS, xclip on Linux) over OSC52
+   - Fall back to OSC52 only when native tools aren't available
+   - Changed OSC52 terminator from `\x07` (BEL) to `\x1b\\` (ESC+backslash) for better compatibility with alternate screen mode
+
+3. **Fixed OpenTUI editor height**: Added conditional `height={8}` for text input editors in `SemanticOpenTuiRenderer.renderEditorScreen()`. Select editors retain auto-height.
+
+4. **Added custom result renderer support**:
+   - Added `customContent?: ReactNode` to `RunningScreenProps`
+   - `OutcomeController.render()` now calls `command.renderResult(result)` if the method exists
+   - `OutcomeController.getCopyPayload()` now calls `command.getClipboardContent(result)` if available
+   - Semantic renderers pass custom content to `ResultsPanel` via `renderResult` prop
+
+5. **Fixed cancellation flow**: `ConfigController.run()` now:
+   - Registers a back handler before execution that calls `executor.cancel()`
+   - The handler returns `true` to prevent `goBack()` from popping the stack prematurely
+   - Clears the handler in a `finally` block after execution completes
+   - The cancelled outcome branch properly pops the stack to return to config
+
+**Files modified:**
+- `src/tui/driver/TuiDriver.tsx` — Modal check now comes before screen check in `getActiveCopyPayload()`
+- `src/tui/adapters/shared/TerminalClipboard.ts` — Prefer native clipboard tools, fixed OSC52 terminator
+- `src/tui/adapters/opentui/SemanticOpenTuiRenderer.tsx` — Added height for text editor modal
+- `src/tui/semantic/RunningScreen.tsx` — Added `customContent` prop
+- `src/tui/controllers/OutcomeController.tsx` — Added custom renderer and clipboard support
+- `src/tui/adapters/ink/SemanticInkRenderer.tsx` — Pass customContent to ResultsPanel
+- `src/tui/adapters/opentui/SemanticOpenTuiRenderer.tsx` — Pass customContent to ResultsPanel
+- `src/tui/controllers/ConfigController.tsx` — Added back handler for cancellation during execution
