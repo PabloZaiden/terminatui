@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ✅ COMPLETE** — Iteration 2.6 Part 10 complete. Replaced dynamic imports with static imports in types.ts. See **Section 9.6: Iteration 2.6**.
+> **STATUS: ✅ COMPLETE** — Iteration 2.6 Part 11 complete. Removed unused properties and methods from interfaces and classes. See **Section 9.6: Iteration 2.6**.
 
 This document is a corrective follow-up to:
 
@@ -1595,3 +1595,78 @@ Replaced 7 inline `import("...")` type annotations with static `import type` sta
 
 **File modified:**
 - `src/tui/adapters/types.ts`
+
+### Iteration 2.6 Part 11: Remove unused properties and methods from interfaces and classes
+
+Analysis of the codebase revealed several properties and methods that are defined but never used. This cleanup follows the principle of keeping the codebase lean and avoiding dead code.
+
+#### Completely Unused Items (to be removed)
+
+| File | Item | Type | Notes |
+|------|------|------|-------|
+| `adapters/types.ts` | `KeyboardEvent.sequence` | Property | Set but never read |
+| `adapters/types.ts` | `KeyboardEvent.shift` | Property | Set but never read |
+| `adapters/types.ts` | `KeyboardEvent.meta` | Property | Set but never read |
+| `adapters/types.ts` | `Renderer.supportCustomRendering()` | Method | Defined in interface and both implementations but never called |
+| `semantic/types.ts` | `LabelProps.wrap` | Property | Never passed by any caller |
+| `semantic/types.ts` | `FieldConfig.description` | Property | Set in schemaToFields but never consumed |
+| `semantic/types.ts` | `FieldConfig.required` | Property | Set in schemaToFields but never consumed |
+| `semantic/types.ts` | `FieldConfig.placeholder` | Property | Set in schemaToFields but never consumed |
+| `semantic/types.ts` | `FieldConfig.group` | Property | Only consumed by unused `groupFieldConfigs` |
+| `semantic/layoutTypes.ts` | `ScrollViewRef.scrollToTop()` | Method | Never called |
+| `semantic/layoutTypes.ts` | `ScrollViewRef.scrollToBottom()` | Method | Never called |
+| `utils/schemaToFields.ts` | `groupFieldConfigs()` | Function | Exported but never imported |
+| `utils/schemaToFields.ts` | `getFieldDisplayValue()` | Function | Only used in tests, not production |
+| `theme.ts` | `SemanticColors.primaryText` | Constant | Never referenced |
+| `theme.ts` | `SemanticColors.code` | Constant | Never referenced |
+| `theme.ts` | `SemanticColors.error` | Constant | Never referenced |
+
+#### Partially Unused Items (kept for API consistency)
+
+These are used by one adapter but not the other. Keeping them for now as they may be needed for future features:
+
+| File | Item | Used By | Not Used By |
+|------|------|---------|-------------|
+| `semantic/types.ts` | `FieldProps.onActivate` | OpenTUI | Ink |
+| `semantic/types.ts` | `MenuButtonProps.onActivate` | OpenTUI | Ink |
+| `semantic/types.ts` | `MenuItemProps.onActivate` | OpenTUI | Ink |
+| `semantic/layoutTypes.ts` | `ScrollViewProps.axis` | OpenTUI | Ink |
+| `semantic/layoutTypes.ts` | `ScrollViewProps.stickyToEnd` | OpenTUI | Ink |
+| `semantic/layoutTypes.ts` | `ScrollViewProps.focused` | OpenTUI | Ink |
+
+#### Checklist
+
+- [x] Remove unused `KeyboardEvent` properties: `sequence`, `shift`, `meta`
+- [x] Update keyboard adapters to stop setting removed properties
+- [x] Remove `Renderer.supportCustomRendering()` from interface
+- [x] Remove `supportCustomRendering()` from `InkRenderer` and `OpenTuiRenderer`
+- [x] Remove unused `LabelProps.wrap` property
+- [x] Update OpenTUI Label component to remove `wrap` prop handling
+- [x] Remove unused `FieldConfig` properties: `description`, `required`, `placeholder`, `group`
+- [x] Update `schemaToFields.ts` to stop setting removed properties
+- [x] Remove unused `ScrollViewRef` methods: `scrollToTop`, `scrollToBottom`
+- [x] Update ScrollView implementations to remove dummy methods
+- [x] Remove unused export from `schemaToFields.ts`: `groupFieldConfigs`
+- [x] Update tests for removed assertions
+- [x] Keep `SemanticColors` (part of public theme API for consumers)
+- [x] Keep `getFieldDisplayValue` (tested utility that may be useful for consumers)
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — passes (78 tests)
+
+#### Completion Notes
+
+Removed 12 unused properties/methods from the codebase. Kept `SemanticColors.primaryText`, `code`, `error` as they're part of the public theme API (`ThemeConfig` interface and `SemanticColor` type) which allows consumers to use semantic color names. Kept `getFieldDisplayValue` as it's a tested utility that may be useful for external consumers.
+
+**Files modified:**
+- `src/tui/adapters/types.ts` — Removed `sequence`, `shift`, `meta` from `KeyboardEvent`; removed `supportCustomRendering` from `Renderer` interface
+- `src/tui/adapters/ink/keyboard.ts` — Stopped setting removed properties
+- `src/tui/adapters/opentui/keyboard.ts` — Stopped setting removed properties
+- `src/tui/adapters/ink/InkRenderer.tsx` — Removed `supportCustomRendering` method
+- `src/tui/adapters/opentui/OpenTuiRenderer.tsx` — Removed `supportCustomRendering` method
+- `src/tui/semantic/types.ts` — Removed `wrap` from `LabelProps`; removed `description`, `required`, `placeholder`, `group` from `FieldConfig`
+- `src/tui/semantic/layoutTypes.ts` — Removed `scrollToTop`, `scrollToBottom` from `ScrollViewRef`
+- `src/tui/adapters/opentui/components/Label.tsx` — Removed `wrap` prop handling
+- `src/tui/adapters/ink/components/ScrollView.tsx` — Removed dummy scroll methods
+- `src/tui/adapters/opentui/components/ScrollView.tsx` — Removed unused scroll methods
+- `src/tui/utils/schemaToFields.ts` — Removed `groupFieldConfigs` export and stopped setting removed properties
+- `src/__tests__/schemaToFields.test.ts` — Removed assertions for removed properties

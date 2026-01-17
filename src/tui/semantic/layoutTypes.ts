@@ -49,8 +49,6 @@ export interface PanelProps extends LayoutProps {
 }
 
 export interface ScrollViewRef {
-    scrollToTop: () => void;
-    scrollToBottom: () => void;
     scrollToIndex: (index: number) => void;
 }
 

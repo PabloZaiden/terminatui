@@ -54,7 +54,6 @@ export interface LabelProps {
     color?: SemanticColor;
     bold?: boolean;
     italic?: boolean;
-    wrap?: boolean;
     children: ReactNode;
 }
 
@@ -125,9 +124,5 @@ export interface FieldConfig {
     key: string;
     label: string;
     type: FieldType;
-    description?: string;
-    required?: boolean;
     options?: FieldOption[];
-    placeholder?: string;
-    group?: string;
 }

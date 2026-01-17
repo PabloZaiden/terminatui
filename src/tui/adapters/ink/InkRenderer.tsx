@@ -174,10 +174,6 @@ export class InkRenderer implements Renderer {
     private instance: ReturnType<typeof render> | null = null;
     private activeKeyboardAdapter: Renderer["keyboard"] | null = null;
 
-    public supportCustomRendering(): boolean {
-        return false;
-    }
-
     public keyboard: Renderer["keyboard"] = {
         setActiveHandler: (id, handler) => {
             return this.activeKeyboardAdapter?.setActiveHandler(id, handler) ?? (() => {});

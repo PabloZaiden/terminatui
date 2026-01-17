@@ -9,10 +9,7 @@ import type { TuiAction } from "../actions.ts";
 
 export interface KeyboardEvent {
     name: string;
-    sequence?: string;
     ctrl?: boolean;
-    shift?: boolean;
-    meta?: boolean;
 }
 
 export type KeyHandler = (event: KeyboardEvent) => boolean;
@@ -30,7 +27,6 @@ export interface Renderer {
     initialize: () => Promise<void>;
     render: (node: ReactNode) => void;
     destroy: () => void;
-    supportCustomRendering: () => boolean;
 
     keyboard: KeyboardAdapter;
 

@@ -174,10 +174,6 @@ export class OpenTuiRenderer implements Renderer {
 
     private activeKeyboardAdapter: Renderer["keyboard"] | null = null;
 
-    public supportCustomRendering(): boolean {
-        return true;
-    }
-
     public keyboard: Renderer["keyboard"] = {
         setActiveHandler: (id, handler) => {
             return this.activeKeyboardAdapter?.setActiveHandler(id, handler) ?? (() => {});

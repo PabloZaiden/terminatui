@@ -24,8 +24,6 @@ export function ScrollView({
     useEffect(() => {
         if (scrollRef) {
             const noOpRef: ScrollViewRef = {
-                scrollToTop: () => {},
-                scrollToBottom: () => {},
                 scrollToIndex: () => {},
             };
             scrollRef(noOpRef);

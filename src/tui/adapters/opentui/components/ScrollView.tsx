@@ -37,13 +37,6 @@ export function ScrollView({
         const scrollRef = useRef<ScrollBoxRenderable>(null);
 
         const imperativeApi: ScrollViewRef = {
-            scrollToTop: () => {
-                scrollRef.current?.scrollTo(0);
-            },
-            scrollToBottom: () => {
-                // No public "bottom" API in ScrollBoxRenderable; use large index.
-                scrollRef.current?.scrollTo(Number.MAX_SAFE_INTEGER);
-            },
             scrollToIndex: (index: number) => {
                 scrollRef.current?.scrollTo(index);
             },
