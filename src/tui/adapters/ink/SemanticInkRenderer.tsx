@@ -34,12 +34,13 @@ function SemanticInkAppShell(props: AppShellProps) {
                     breadcrumb={props.app.breadcrumb}
                 />
 
-                <Box flexDirection="column" flexGrow={1}>
+                <Box flexDirection="column" flexGrow={1} padding={0}>
                     {props.screen}
                 </Box>
 
                     <Panel dense border={true} flexDirection="column" gap={0} height={4}>
-                        <Box flexDirection="row" justifyContent="space-between" paddingLeft={1} paddingRight={1}>
+                        <Box height={1} />
+                        <Box flexDirection="row" justifyContent="space-between" >
                             <Box flexDirection="row" gap={1}>
                                 <Spinner active={props.status.isExecuting} />
                                 <Label color="mutedText">{props.status.isExecuting ? "Executing..." : "Ready"}</Label>
