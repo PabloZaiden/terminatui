@@ -38,6 +38,7 @@ export function Panel({
     flex,
     width,
     height,
+    maxHeight,
     flexDirection,
     alignItems,
     justifyContent,
@@ -66,6 +67,7 @@ export function Panel({
             flexShrink={noShrink ? 0 : flex === undefined ? undefined : 1}
             width={width as any}
             height={height as any}
+            maxHeight={maxHeight as any}
             flexDirection={flexDirection as any}
             alignItems={alignItems as any}
             justifyContent={justifyContent as any}

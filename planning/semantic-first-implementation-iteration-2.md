@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ⏳ PENDING MANUAL TESTING** — Iteration 2.2 code fixes complete. Awaiting manual verification of editor functionality and logs modal. See **Section 9.2: Iteration 2.2 Bugfixes**.
+> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.3 code fixes complete. All bugs fixed, build and tests pass. Awaiting manual testing to verify fixes work as expected. See **Section 9.3: Iteration 2.3 Bugfixes**.
 
 This document is a corrective follow-up to:
 
@@ -922,3 +922,83 @@ Manual testing after iteration 2.1 revealed additional bugs:
 - `src/tui/context/NavigationContext.tsx` — Added `updateModal` action and method
 - `src/tui/controllers/EditorController.tsx` — Removed internal buffer state, use modal params instead
 - `src/tui/context/ActionContext.tsx` — Added guard to prevent logs modal stacking
+
+---
+
+## 9.3 Iteration 2.3 Bugfixes (manual testing round 3)
+
+### Problem summary
+
+Manual testing after iteration 2.2 revealed additional bugs:
+
+#### Bug 1: Results screen shows empty content (both adapters)
+- Title shows "Results" but content area is empty
+- Should display the actual result from command execution
+
+#### Bug 2: Copy toast delay (both adapters)
+- Ctrl+Y copies CLI args successfully
+- Status bar only updates when cursor moves
+- Should update immediately after copying
+
+#### Bug 3: Ctrl+Y does nothing on results screen (both adapters)
+- Copy action not working on results screen
+- Should copy the result content
+
+#### Bug 4: Logs modal grows too large (opentui only)
+- Modal expands beyond terminal bounds
+- Should have max height relative to terminal size
+- Content should scroll inside
+
+### Root cause analysis
+
+**Bug 1**: Need to investigate `OutcomeController` and `ResultsPanel` rendering.
+
+**Bug 2**: The `setCopyToast` updates renderer state but doesn't trigger a React re-render. The `forceRerenderFn` mechanism may not be working correctly.
+
+**Bug 3**: `TuiDriver.getActiveCopyPayload()` may not have a handler for the results route.
+
+**Bug 4**: OpenTUI logs modal needs size constraints.
+
+### Checklist
+
+#### Phase 2.3A: Fix results screen empty content
+
+- [x] Investigate `OutcomeController.render()` for results route
+- [x] Check if result data is being passed to `ResultsPanel`
+- [x] Verify `ResultsRouteParams.result` contains data
+- [x] Fix results rendering
+  - Fixed: `SemanticInkRenderer.renderRunningScreen` and `SemanticOpenTuiRenderer.renderRunningScreen` now properly handle `kind` and `message` props
+
+#### Phase 2.3B: Fix copy toast immediate update
+
+- [x] Trace `setCopyToast` → `forceRerenderFn` flow
+- [x] Ensure re-render is triggered immediately after copy
+- [x] Fix in both Ink and OpenTUI adapters
+  - Fixed: Moved toast state from renderer class state to React state in `TuiRootContent`
+  - Added `copyToast` to `AppShellProps`
+  - Added `onCopyToastChange` callback to `renderKeyboardHandler` interface
+  - Updated `InkKeyboardHandlerWrapper` and `OpenTuiKeyboardHandlerWrapper` to use callback
+
+#### Phase 2.3C: Fix Ctrl+Y on results screen
+
+- [x] Add results route handler in `TuiDriver.getActiveCopyPayload()`
+- [x] Implement `getCopyPayload()` in `OutcomeController`
+  - Returns result content for results route, error message for error route
+
+#### Phase 2.3D: Fix OpenTUI logs modal sizing
+
+- [x] Add max height constraint to logs modal in OpenTUI
+- [x] Ensure content scrolls within bounds
+  - Added `maxHeight` to `LayoutProps` interface
+  - Updated `Panel` component to support `maxHeight` prop
+  - Set `maxHeight={24}` on logs modal in `SemanticOpenTuiRenderer`
+
+#### Phase 2.3E: Verification
+
+- [x] `bun run build` passes
+- [x] `bun run test` passes (78 tests)
+- [ ] Manual test: results screen shows content (both adapters) — **NEEDS MANUAL TEST**
+- [ ] Manual test: copy toast appears immediately (both adapters) — **NEEDS MANUAL TEST**
+- [ ] Manual test: Ctrl+Y works on results screen (both adapters) — **NEEDS MANUAL TEST**
+- [ ] Manual test: logs modal has bounded size (opentui) — **NEEDS MANUAL TEST**
+- [ ] Update planning doc with completion status

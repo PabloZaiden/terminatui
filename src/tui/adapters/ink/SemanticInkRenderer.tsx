@@ -19,7 +19,7 @@ import { TextInput } from "../../semantic/TextInput.tsx";
 import { MenuItem } from "../../semantic/MenuItem.tsx";
 import { Select } from "../../semantic/Select.tsx";
 
-function SemanticInkAppShell(props: AppShellProps & { copyToast: string | null }) {
+function SemanticInkAppShell(props: AppShellProps) {
     return (
         <Panel flexDirection="column" flex={1} padding={1} border={false}>
             <Container flexDirection="column" flex={1}>
@@ -52,7 +52,7 @@ function SemanticInkAppShell(props: AppShellProps & { copyToast: string | null }
 }
 
 export class SemanticInkRenderer {
-    renderAppShell(props: AppShellProps & { copyToast: string | null }): ReactNode {
+    renderAppShell(props: AppShellProps): ReactNode {
         return <SemanticInkAppShell {...props} />;
     }
 
@@ -101,9 +101,30 @@ export class SemanticInkRenderer {
     }
 
     renderRunningScreen(props: RunningScreenProps): ReactNode {
+        if (props.kind === "running") {
+            return (
+                <Container flexDirection="column" flex={1}>
+                    <ResultsPanel result={{ success: true, message: props.title }} error={null} focused={true} />
+                </Container>
+            );
+        }
+
+        if (props.kind === "error") {
+            return (
+                <Container flexDirection="column" flex={1}>
+                    <ResultsPanel result={null} error={new Error(props.message ?? "Unknown error")} focused={true} />
+                </Container>
+            );
+        }
+
+        // kind === "results"
         return (
             <Container flexDirection="column" flex={1}>
-                <ResultsPanel result={{ success: true, message: props.title }} error={null} focused={true} />
+                <ResultsPanel 
+                    result={{ success: true, message: props.title, data: props.message }} 
+                    error={null} 
+                    focused={true} 
+                />
             </Container>
         );
     }

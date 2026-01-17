@@ -18,6 +18,9 @@ export interface AppShellProps {
 
     screen: ReactNode;
     modals: ReactNode[];
+
+    /** Optional copy toast message (adapter-owned display) */
+    copyToast?: string | null;
 }
 
 export function AppShell(_props: AppShellProps) {

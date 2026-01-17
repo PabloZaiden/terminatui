@@ -15,6 +15,7 @@ export interface LayoutProps {
     flex?: number;
     width?: number | string;
     height?: number | string;
+    maxHeight?: number | string;
 
     flexDirection?: FlexDirection;
     alignItems?: Align;

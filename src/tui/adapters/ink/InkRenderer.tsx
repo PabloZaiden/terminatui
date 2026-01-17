@@ -1,6 +1,6 @@
 import { render } from "ink";
 import type { ReactNode } from "react";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect } from "react";
 
 import type { KeyboardEvent, Renderer, RendererConfig } from "../types.ts";
 import { SemanticInkRenderer } from "./SemanticInkRenderer.tsx";
@@ -30,12 +30,12 @@ function InkKeyboardHandler({
     dispatchAction,
     getScreenKeyHandler,
     keyboard,
-    setCopyToast,
+    onCopyToastChange,
 }: {
     dispatchAction: (action: TuiAction) => void;
     getScreenKeyHandler: () => ((event: KeyboardEvent) => boolean) | null;
     keyboard: Renderer["keyboard"];
-    setCopyToast: (message: string | null) => void;
+    onCopyToastChange?: (toast: string | null) => void;
 }) {
     const driver = useTuiDriver();
 
@@ -53,8 +53,8 @@ function InkKeyboardHandler({
                 const payload = driver.getActiveCopyPayload();
                 if (payload) {
                     void copyToTerminalClipboard(payload.content).then(() => {
-                        setCopyToast(`Copied ${payload.label}`);
-                        setTimeout(() => setCopyToast(null), 1500);
+                        onCopyToastChange?.(`Copied ${payload.label}`);
+                        setTimeout(() => onCopyToastChange?.(null), 1500);
                     });
                 }
                 return true;
@@ -74,7 +74,7 @@ function InkKeyboardHandler({
         });
 
         return cleanup;
-    }, [dispatchAction, getScreenKeyHandler, keyboard, driver, setCopyToast]);
+    }, [dispatchAction, getScreenKeyHandler, keyboard, driver, onCopyToastChange]);
 
     return null;
 }
@@ -83,19 +83,10 @@ export class InkRenderer implements Renderer {
 
     private readonly semanticRenderer = new SemanticInkRenderer();
 
-    private copyToast: string | null = null;
-    private forceRerenderFn: (() => void) | null = null;
-
     private semanticScreenKeyHandler: ((event: KeyboardEvent) => boolean) | null = null;
 
-    private setCopyToast = (message: string | null) => {
-        this.copyToast = message;
-        this.forceRerenderFn?.();
-    };
-
     public renderSemanticAppShell: Renderer["renderSemanticAppShell"] = (props) => {
-        // UI policy: transient copy feedback is adapter-owned.
-        return this.semanticRenderer.renderAppShell({ ...props, copyToast: this.copyToast });
+        return this.semanticRenderer.renderAppShell(props);
     };
     public renderSemanticCommandBrowserScreen: Renderer["renderSemanticCommandBrowserScreen"] = (props) => {
         this.semanticScreenKeyHandler = (event) => {
@@ -185,14 +176,13 @@ export class InkRenderer implements Renderer {
         return this.semanticRenderer.renderEditorScreen(props);
     };
 
-    public renderKeyboardHandler: Renderer["renderKeyboardHandler"] = ({ dispatchAction }) => {
+    public renderKeyboardHandler: Renderer["renderKeyboardHandler"] = ({ dispatchAction, onCopyToastChange }) => {
         return (
             <InkKeyboardHandlerWrapper
                 dispatchAction={dispatchAction}
                 getScreenKeyHandler={() => this.semanticScreenKeyHandler}
                 keyboard={this.keyboard}
-                setCopyToast={this.setCopyToast}
-                setForceRerender={(fn) => { this.forceRerenderFn = fn; }}
+                onCopyToastChange={onCopyToastChange}
             />
         );
     };
@@ -316,27 +306,19 @@ function InkKeyboardHandlerWrapper({
     dispatchAction,
     getScreenKeyHandler,
     keyboard,
-    setCopyToast,
-    setForceRerender,
+    onCopyToastChange,
 }: {
     dispatchAction: (action: TuiAction) => void;
     getScreenKeyHandler: () => ((event: KeyboardEvent) => boolean) | null;
     keyboard: Renderer["keyboard"];
-    setCopyToast: (message: string | null) => void;
-    setForceRerender: (fn: () => void) => void;
+    onCopyToastChange?: (toast: string | null) => void;
 }) {
-    const [, setTick] = useState(0);
-
-    useLayoutEffect(() => {
-        setForceRerender(() => setTick((x) => x + 1));
-    }, [setForceRerender]);
-
     return (
         <InkKeyboardHandler
             dispatchAction={dispatchAction}
             getScreenKeyHandler={getScreenKeyHandler}
             keyboard={keyboard}
-            setCopyToast={setCopyToast}
+            onCopyToastChange={onCopyToastChange}
         />
     );
 }

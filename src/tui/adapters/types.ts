@@ -82,6 +82,7 @@ export interface Renderer {
     renderKeyboardHandler?: (props: {
         dispatchAction: (action: import("../actions.ts").TuiAction) => void;
         getScreenKeyHandler: () => ((event: KeyboardEvent) => boolean) | null;
+        onCopyToastChange?: (toast: string | null) => void;
     }) => ReactNode;
 
 }

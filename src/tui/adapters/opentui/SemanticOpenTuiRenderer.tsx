@@ -20,7 +20,7 @@ import { MenuItem } from "../../semantic/MenuItem.tsx";
 import { Select } from "../../semantic/Select.tsx";
 
 export class SemanticOpenTuiRenderer {
-    renderAppShell(props: AppShellProps & { copyToast: string | null }): ReactNode {
+    renderAppShell(props: AppShellProps): ReactNode {
         return (
             <Panel flexDirection="column" flex={1} padding={1} border={false}>
                 <Container flexDirection="column" flex={1}>
@@ -97,9 +97,30 @@ export class SemanticOpenTuiRenderer {
     }
 
     renderRunningScreen(props: RunningScreenProps): ReactNode {
+        if (props.kind === "running") {
+            return (
+                <Container flexDirection="column" flex={1}>
+                    <ResultsPanel result={{ success: true, message: props.title }} error={null} focused={true} />
+                </Container>
+            );
+        }
+
+        if (props.kind === "error") {
+            return (
+                <Container flexDirection="column" flex={1}>
+                    <ResultsPanel result={null} error={new Error(props.message ?? "Unknown error")} focused={true} />
+                </Container>
+            );
+        }
+
+        // kind === "results"
         return (
             <Container flexDirection="column" flex={1}>
-                <ResultsPanel result={{ success: true, message: props.title }} error={null} focused={true} />
+                <ResultsPanel 
+                    result={{ success: true, message: props.title, data: props.message }} 
+                    error={null} 
+                    focused={true} 
+                />
             </Container>
         );
     }
@@ -107,7 +128,7 @@ export class SemanticOpenTuiRenderer {
      renderLogsScreen(props: LogsScreenProps): ReactNode {
          return (
              <Overlay>
-                 <Panel flexDirection="column" padding={1} border={true} width={80} surface="overlay">
+                 <Panel flexDirection="column" padding={1} border={true} width={80} maxHeight={24} surface="overlay">
                      <Label bold>Logs</Label>
                      <Container flexDirection="column" flex={1}>
                          {props.items.slice(-20).map((item) => (

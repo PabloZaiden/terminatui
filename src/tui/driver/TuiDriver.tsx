@@ -61,6 +61,10 @@ export class TuiDriver {
             }
         }
 
+        if (currentRoute === "results" || currentRoute === "error") {
+            return this.#outcome.getCopyPayload(currentRoute);
+        }
+
         const topModal = this.#navigation.modalStack[this.#navigation.modalStack.length - 1];
         if (topModal?.id === "logs") {
             return this.#logsModal.getCopyPayload(this.#logs);
@@ -75,8 +79,10 @@ export class TuiDriver {
 
     public renderAppShell({
         app,
+        copyToast,
     }: {
         app: { name: string; displayName?: string; version: string; breadcrumb?: string[] };
+        copyToast?: string | null;
     }): React.ReactNode {
         const currentRoute = this.#navigation.current.route as TuiRoute;
 
@@ -97,6 +103,7 @@ export class TuiDriver {
                 }}
                 screen={screen}
                 modals={modals}
+                copyToast={copyToast}
             />
         );
     }

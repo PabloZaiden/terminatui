@@ -1,4 +1,4 @@
-import type { TuiRoute } from "../driver/types.ts";
+import type { CopyPayload, ErrorRouteParams, ResultsRouteParams, TuiRoute } from "../driver/types.ts";
 import type { NavigationAPI } from "../context/NavigationContext.tsx";
 
 import { RenderRunningScreen } from "../semantic/render.tsx";
@@ -34,5 +34,29 @@ export class OutcomeController {
                 />
             ),
         };
+    }
+
+    public getCopyPayload(route: OutcomeRoute): CopyPayload | null {
+        if (route === "results") {
+            const params = this.#navigation.current.params as ResultsRouteParams | undefined;
+            if (params?.result !== undefined) {
+                return {
+                    label: "result",
+                    content: String(params.result),
+                };
+            }
+        }
+
+        if (route === "error") {
+            const params = this.#navigation.current.params as ErrorRouteParams | undefined;
+            if (params?.error) {
+                return {
+                    label: "error",
+                    content: params.error.message ?? String(params.error),
+                };
+            }
+        }
+
+        return null;
     }
 }

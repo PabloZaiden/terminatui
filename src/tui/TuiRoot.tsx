@@ -1,4 +1,5 @@
 import type { AnyCommand } from "../core/command.ts";
+import { useState } from "react";
 import { LogsProvider } from "./context/LogsContext.tsx";
 import { NavigationProvider, useNavigation } from "./context/NavigationContext.tsx";
 import { TuiAppContextProvider, useTuiApp } from "./context/TuiAppContext.tsx";
@@ -50,16 +51,18 @@ function TuiRootContent() {
     const { displayName, name, version } = useTuiApp();
     const driver = useTuiDriver();
     const navigation = useNavigation();
+    const [copyToast, setCopyToast] = useState<string | null>(null);
 
     return (
         <ActionProvider navigation={navigation}>
-            <TuiRootKeyboardHandler />
+            <TuiRootKeyboardHandler onCopyToastChange={setCopyToast} />
             {driver.renderAppShell({
                 app: {
                     name,
                     displayName,
                     version,
                 },
+                copyToast,
             })}
         </ActionProvider>
     );
@@ -69,7 +72,7 @@ function TuiRootContent() {
  * Renders the adapter-specific keyboard handler component.
  * This component uses hooks properly since it's rendered as a React component.
  */
-function TuiRootKeyboardHandler() {
+function TuiRootKeyboardHandler({ onCopyToastChange }: { onCopyToastChange: (toast: string | null) => void }) {
     const renderer = useRenderer();
     const { dispatchAction } = useAction();
 
@@ -77,7 +80,11 @@ function TuiRootKeyboardHandler() {
         return null;
     }
 
-    return renderer.renderKeyboardHandler({ dispatchAction, getScreenKeyHandler: () => null });
+    return renderer.renderKeyboardHandler({ 
+        dispatchAction, 
+        getScreenKeyHandler: () => null,
+        onCopyToastChange,
+    });
 }
 
 
