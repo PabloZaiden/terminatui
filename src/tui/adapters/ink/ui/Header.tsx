@@ -1,6 +1,5 @@
-import { Container } from "../components/Container.tsx";
+import { Box } from "ink";
 import { Label } from "../components/Label.tsx";
-import { Spacer } from "../components/Spacer.tsx";
 
 interface HeaderProps {
     name: string;
@@ -12,15 +11,15 @@ export function Header({ name, version, breadcrumb }: HeaderProps) {
     const breadcrumbStr = breadcrumb?.length ? ` 3 ${breadcrumb.join(" 3 ")}` : "";
 
     return (
-        <Container flexDirection="column" noShrink>
-            <Container flexDirection="row" justifyContent="space-between">
+        <Box flexDirection="column" flexShrink={0}>
+            <Box flexDirection="row" justifyContent="space-between">
                 <Label color="mutedText" bold>
                     {name}
                     {breadcrumbStr}
                 </Label>
                 <Label color="mutedText">v{version}</Label>
-            </Container>
-            <Spacer size={1} />
-        </Container>
+            </Box>
+            <Box height={1} />
+        </Box>
     );
 }

@@ -39,6 +39,10 @@ export function Panel({
     width,
     height,
     maxHeight,
+    top,
+    left,
+    right,
+    bottom,
     flexDirection,
     alignItems,
     justifyContent,
@@ -68,6 +72,10 @@ export function Panel({
             width={width as any}
             height={height as any}
             maxHeight={maxHeight as any}
+            top={top as any}
+            left={left as any}
+            right={right as any}
+            bottom={bottom as any}
             flexDirection={flexDirection as any}
             alignItems={alignItems as any}
             justifyContent={justifyContent as any}

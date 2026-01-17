@@ -2,11 +2,9 @@ import type { ReactNode } from "react";
 import type { CommandResult } from "../../../../core/command.ts";
 
 // Platform-native components (OpenTUI)
-import { Container } from "../components/Container.tsx";
 import { Panel } from "../components/Panel.tsx";
 import { ScrollView } from "../components/ScrollView.tsx";
 import { Label } from "../components/Label.tsx";
-import { Value } from "../components/Value.tsx";
 
 // Adapter-local JSON highlighting
 import { JsonHighlight } from "./JsonHighlight.tsx";
@@ -23,31 +21,31 @@ export function ResultsPanel({ result, error, focused, renderResult }: ResultsPa
 
     if (error) {
         content = (
-            <Container flexDirection="column" gap={1}>
+            <box flexDirection="column" gap={1}>
                 <Label color="error" bold>
                     Error
                 </Label>
                 <Label color="error">{error.message}</Label>
-            </Container>
+            </box>
         );
     } else if (result) {
         if (renderResult) {
             const customContent = renderResult(result);
             if (typeof customContent === "string" || typeof customContent === "number" || typeof customContent === "boolean") {
-                content = <Value>{String(customContent)}</Value>;
+                content = <Label color="value">{String(customContent)}</Label>;
             } else {
                 content = customContent as ReactNode;
             }
         } else {
             content = (
-                <Container flexDirection="column" gap={1}>
+                <box flexDirection="column" gap={1}>
                     {result.message && <Label color={result.success ? "success" : "error"}>{result.message}</Label>}
                     {result.data !== undefined && result.data !== null && (
                         typeof result.data === "object" 
                             ? <JsonHighlight value={result.data} />
-                            : <Value>{String(result.data)}</Value>
+                            : <Label color="value">{String(result.data)}</Label>
                     )}
-                </Container>
+                </box>
             );
         }
     } else {
@@ -57,7 +55,7 @@ export function ResultsPanel({ result, error, focused, renderResult }: ResultsPa
     return (
         <Panel title="Results" focused={focused} flex={1} padding={1} flexDirection="column">
             <ScrollView axis="vertical" flex={1} focused={focused}>
-                <Container flexDirection="column">{content}</Container>
+                <box flexDirection="column">{content}</box>
             </ScrollView>
         </Panel>
     );

@@ -2,18 +2,15 @@ import type { ReactNode } from "react";
 import type {
     ButtonProps,
     CodeHighlightProps,
-    CodeProps,
     FieldProps,
     LabelProps,
     MenuButtonProps,
     MenuItemProps,
     SelectProps,
-    SpacerProps,
     SpinnerProps,
     TextInputProps,
-    ValueProps,
 } from "../semantic/types.ts";
-import type { ContainerProps, OverlayProps, PanelProps, ScrollViewProps } from "../semantic/layoutTypes.ts";
+import type { OverlayProps, PanelProps, ScrollViewProps } from "../semantic/layoutTypes.ts";
 
 export interface KeyboardEvent {
     name: string;
@@ -40,17 +37,13 @@ export interface RendererComponents {
     MenuButton: (props: MenuButtonProps) => ReactNode;
     MenuItem: (props: MenuItemProps) => ReactNode;
 
-    Container: (props: ContainerProps) => ReactNode;
     Panel: (props: PanelProps) => ReactNode;
     ScrollView: (props: ScrollViewProps) => ReactNode;
 
     Overlay: (props: OverlayProps) => ReactNode;
-    Spacer: (props: SpacerProps) => ReactNode;
     Spinner: (props: SpinnerProps) => ReactNode;
 
     Label: (props: LabelProps) => ReactNode;
-    Value: (props: ValueProps) => ReactNode;
-    Code: (props: CodeProps) => ReactNode;
     CodeHighlight: (props: CodeHighlightProps) => ReactNode;
 
     TextInput: (props: TextInputProps) => ReactNode;

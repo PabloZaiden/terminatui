@@ -3,7 +3,6 @@ import { Field } from "../components/Field.tsx";
 import { MenuButton } from "../components/MenuButton.tsx";
 import { Panel } from "../components/Panel.tsx";
 import { ScrollView } from "../components/ScrollView.tsx";
-import { Container } from "../components/Container.tsx";
 import type { FieldConfig } from "../../../semantic/types.ts";
 import type { ScrollViewRef } from "../../../semantic/layoutTypes.ts";
 
@@ -54,7 +53,7 @@ export function ConfigForm({
                     scrollViewRef.current = ref;
                 }}
             >
-                <Container flexDirection="column" gap={0}>
+                <box flexDirection="column" gap={0}>
                     {fieldConfigs.map((field, idx) => {
                         const isSelected = idx === selectedIndex;
                         const displayValue = getDisplayValue(field.key, values[field.key], field.type);
@@ -68,7 +67,7 @@ export function ConfigForm({
                     })}
 
                     {actionButton}
-                </Container>
+                </box>
             </ScrollView>
         </Panel>
     );

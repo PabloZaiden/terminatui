@@ -9,7 +9,6 @@ import { copyToTerminalClipboard } from "../shared/TerminalClipboard.ts";
 import { useTuiDriver } from "../../driver/context/TuiDriverContext.tsx";
 
 import { Button } from "./components/Button.tsx";
-import { Container } from "./components/Container.tsx";
 import { Field } from "./components/Field.tsx";
 import { Label } from "./components/Label.tsx";
 import { MenuButton } from "./components/MenuButton.tsx";
@@ -18,11 +17,8 @@ import { Overlay } from "./components/Overlay.tsx";
 import { Panel } from "./components/Panel.tsx";
 import { ScrollView } from "./components/ScrollView.tsx";
 import { Select } from "./components/Select.tsx";
-import { Spacer } from "./components/Spacer.tsx";
 import { Spinner } from "./components/Spinner.tsx";
 import { TextInput } from "./components/TextInput.tsx";
-import { Value } from "./components/Value.tsx";
-import { Code } from "./components/Code.tsx";
 import { CodeHighlight } from "./components/CodeHighlight.tsx";
 import type { TuiAction } from "../../actions.ts";
 
@@ -209,17 +205,13 @@ export class InkRenderer implements Renderer {
         MenuButton,
         MenuItem,
 
-        Container,
         Panel,
         ScrollView,
 
         Overlay,
-        Spacer,
         Spinner,
 
         Label,
-        Value,
-        Code,
         CodeHighlight,
 
         Select,

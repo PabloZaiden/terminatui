@@ -1,6 +1,6 @@
 # Semantic-first implementation: iteration 2 (decoupling + action-driven UI)
 
-> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.5 code complete. Fixed OpenTUI logs ANSI stripping, created adapter-specific JsonHighlight components for proper syntax-highlighted JSON rendering. Awaiting manual testing. See **Section 9.5: Iteration 2.5**.
+> **STATUS: ⚠️ IN PROGRESS** — Iteration 2.6 Part 5 complete. Removed Value abstraction; replaced with `<Label color="value">`. Build and tests pass. Awaiting manual testing. See **Section 9.6: Iteration 2.6**.
 
 This document is a corrective follow-up to:
 
@@ -1210,3 +1210,249 @@ src/tui/components/JsonHighlight.tsx    # Public API (uses tokenizer, returns AN
 **Next steps:**
 - Manual testing of both adapters to verify fixes work as expected
 - Once manual testing passes, iteration 2.5 is complete
+
+---
+
+## 9.6 Iteration 2.6: Remove thin wrapper components from Ink adapter
+
+### Problem summary
+
+Each adapter has ~16 platform-native components in `src/tui/adapters/*/components/`. Analysis revealed that the **Ink adapter** has several thin wrapper components that add no meaningful abstraction:
+
+#### Ink adapter thin wrappers identified:
+
+| Component | Implementation | Verdict |
+|-----------|---------------|---------|
+| `Container.tsx` | `<>{children}</>` | **FIX** - should use `<Box>` with layout props (currently broken, props are ignored) |
+| `ScrollView.tsx` | `<>{children}</>` | **REMOVE** - completely useless, Ink doesn't support scroll like OpenTUI |
+| `Spinner.tsx` | `return null` | **REMOVE** - no-op placeholder |
+
+#### Ink adapter components with minimal logic:
+
+| Component | Implementation | Verdict |
+|-----------|---------------|---------|
+| `Value.tsx` | `<Text color="magenta">{toPlainText(children)}</Text>` | **KEEP** - used frequently, provides semantic meaning |
+| `Code.tsx` | `<Text color="gray">{children}</Text>` | **KEEP** - provides semantic meaning |
+| `Spacer.tsx` | Simple spacing logic | **KEEP** - adds value over raw elements |
+| `Label.tsx` | Color mapping (text→white, etc.) | **KEEP** - provides color abstraction |
+| `CodeHighlight.tsx` | Token joining | **KEEP** - provides semantic meaning |
+
+#### Ink adapter high-value components (KEEP):
+
+- `Panel.tsx` — padding normalization, title rendering
+- `Select.tsx` — wraps `ink-select-input` with complex logic
+- `TextInput.tsx` — wraps `ink-text-input` with placeholder handling
+- `Overlay.tsx` — centering layout for modals
+- `Field.tsx`, `Button.tsx`, `MenuButton.tsx`, `MenuItem.tsx` — selection logic
+
+### OpenTUI adapter analysis
+
+The OpenTUI adapter components generally have more logic and are worth keeping:
+- `Container.tsx` — has flex/padding normalization (NOT a thin wrapper)
+- `ScrollView.tsx` — has scroll behavior with refs and imperative API
+- `Spinner.tsx` — has actual spinner animation with `useSpinner` hook
+- All other components have meaningful logic
+
+**Decision:** Only remove thin wrappers from the Ink adapter. OpenTUI components are all high-value.
+
+### Checklist
+
+#### Phase 2.6A: Fix Ink Container (broken, should use Box)
+
+- [x] Update `src/tui/adapters/ink/components/Container.tsx` to use `<Box>` with layout props
+- [x] Verify it properly handles `flex`, `flexDirection`, `gap`, `padding`, etc.
+
+#### Phase 2.6B: Fix Ink ScrollView (thin wrapper, should be proper container)
+
+- [x] Update `src/tui/adapters/ink/components/ScrollView.tsx` to use `<Box>` with layout props
+- [x] Provide dummy `ScrollViewRef` imperative API for compatibility with callers
+
+#### Phase 2.6C: Fix Ink Spinner (no-op, should animate)
+
+- [x] Create shared `useSpinner` hook at `src/tui/adapters/shared/useSpinner.ts`
+- [x] Update Ink Spinner to use shared hook and render animated frame
+- [x] Update OpenTUI Spinner to use shared hook (consolidate code)
+- [x] Delete old `src/tui/adapters/opentui/hooks/useSpinner.ts`
+
+#### Phase 2.6D: Verification
+
+- [x] `bun run build` passes
+- [x] `bun run test` passes (78 tests)
+- [ ] Update planning doc with completion status
+
+### Implementation notes (iteration 2.6)
+
+**Changes made:**
+
+1. **Fixed Ink Container**: Changed from `<>{children}</>` (which ignored all layout props) to proper `<Box>` usage with support for `flex`, `flexDirection`, `gap`, `padding`, `width`, `height`, `alignItems`, `justifyContent`, `noShrink`.
+
+2. **Fixed Ink ScrollView**: Changed from `<>{children}</>` to proper `<Box>` usage with layout props. Added dummy `ScrollViewRef` imperative API for compatibility (Ink doesn't support native scrolling like OpenTUI).
+
+3. **Fixed Ink Spinner**: Changed from `return null` to proper animated spinner using the shared `useSpinner` hook.
+
+4. **Created shared useSpinner hook**: Moved spinner animation logic to `src/tui/adapters/shared/useSpinner.ts` to be shared by both Ink and OpenTUI adapters. This follows the planning doc principle: "shared code across terminal adapters may exist as behavioral helpers".
+
+5. **Consolidated OpenTUI Spinner**: Updated to use the shared hook and deleted the adapter-specific hook at `src/tui/adapters/opentui/hooks/useSpinner.ts`.
+
+**Files created:**
+- `src/tui/adapters/shared/useSpinner.ts` - Shared spinner animation hook
+
+**Files modified:**
+- `src/tui/adapters/ink/components/Container.tsx` - Now uses `<Box>` with layout props
+- `src/tui/adapters/ink/components/ScrollView.tsx` - Now uses `<Box>` with layout props and provides ScrollViewRef
+- `src/tui/adapters/ink/components/Spinner.tsx` - Now uses shared hook and renders animated frame
+- `src/tui/adapters/opentui/components/Spinner.tsx` - Now uses shared hook
+
+**Files deleted:**
+- `src/tui/adapters/opentui/hooks/useSpinner.ts` - Replaced by shared hook
+- `src/tui/adapters/opentui/hooks/` - Empty directory removed
+
+**Architecture note:**
+The original goal was to "remove thin wrapper components". After analysis, the better approach was to **fix** them instead of removing, because:
+- The callers (SemanticInkRenderer, ui/* components) were passing layout props expecting them to work
+- Simply removing the wrappers would require updating all callers to use native Ink components directly
+- Fixing them maintains the abstraction while making them actually functional
+
+**Next steps:**
+- Manual testing of Ink adapter to verify layout improvements
+- Once manual testing passes, iteration 2.6 is complete
+
+### Iteration 2.6 Part 2: Remove Container abstraction
+
+During code review, the question was raised: "Why does Container exist when it just wraps Box/box?" 
+
+**Decision:** Remove Container entirely from both adapters. Use native box elements directly (`<Box>` for Ink, `<box>` for OpenTUI).
+
+**Rationale:**
+- Container was a thin wrapper that added no semantic value over the native box elements
+- Both adapters already have direct access to `<Box>` (Ink) and `<box>` (OpenTUI) intrinsic elements
+- Removing the abstraction simplifies the codebase and makes the layout code more transparent
+
+#### Checklist
+
+- [x] Remove `Container` from `RendererComponents` interface in `src/tui/adapters/types.ts`
+- [x] Update Ink adapter files to use `<Box>` directly:
+  - [x] `src/tui/adapters/ink/SemanticInkRenderer.tsx`
+  - [x] `src/tui/adapters/ink/ui/Header.tsx`
+  - [x] `src/tui/adapters/ink/ui/CommandSelector.tsx`
+  - [x] `src/tui/adapters/ink/ui/ConfigForm.tsx`
+  - [x] `src/tui/adapters/ink/ui/ResultsPanel.tsx`
+  - [x] `src/tui/adapters/ink/ui/JsonHighlight.tsx`
+  - [x] `src/tui/adapters/ink/InkRenderer.tsx` - remove Container import and from components export
+- [x] Update OpenTUI adapter files to use `<box>` directly:
+  - [x] `src/tui/adapters/opentui/SemanticOpenTuiRenderer.tsx`
+  - [x] `src/tui/adapters/opentui/ui/Header.tsx`
+  - [x] `src/tui/adapters/opentui/ui/CommandSelector.tsx`
+  - [x] `src/tui/adapters/opentui/ui/ConfigForm.tsx`
+  - [x] `src/tui/adapters/opentui/ui/ResultsPanel.tsx`
+  - [x] `src/tui/adapters/opentui/ui/JsonHighlight.tsx`
+  - [x] `src/tui/adapters/opentui/OpenTuiRenderer.tsx` - remove Container import and from components export
+- [x] Delete Container component files:
+  - [x] `src/tui/adapters/ink/components/Container.tsx`
+  - [x] `src/tui/adapters/opentui/components/Container.tsx`
+- [x] Remove `ContainerProps` from `src/tui/semantic/layoutTypes.ts`
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — 78 tests pass
+
+#### Prop mapping notes
+
+When replacing `Container` with native elements:
+
+**For Ink (`<Box>`):**
+- `flex={1}` → `flexGrow={1}`
+- `noShrink` → `flexShrink={0}`
+- `padding={{ left: 1, right: 1 }}` → `paddingLeft={1} paddingRight={1}`
+- Other props map directly: `flexDirection`, `justifyContent`, `alignItems`, `gap`
+
+**For OpenTUI (`<box>`):**
+- `flex={1}` → `flexGrow={1}`
+- `noShrink` → `flexShrink={0}`
+- `padding={{ left: 1, right: 1 }}` → `paddingLeft={1} paddingRight={1}`
+- Other props map directly: `flexDirection`, `justifyContent`, `alignItems`, `gap`
+
+#### Implementation notes
+
+The Container abstraction was a remnant from when we had shared UI components across adapters. Now that each adapter owns its UI implementation, the native box elements (`<Box>` for Ink, `<box>` for OpenTUI) are sufficient and more transparent.
+
+This aligns with the planning doc principle: adapters should use platform-native components directly.
+
+### Iteration 2.6 Part 3: Remove Code abstraction
+
+During code review, the `Code` component was identified as unused and removed.
+
+**Analysis:**
+- `Code` was defined in `RendererComponents` interface and implemented in both adapters
+- However, it was never actually used in any JSX - only `CodeHighlight` was used for syntax highlighting
+- `Code` was a thin wrapper: Ink version just rendered `<Text color="gray">{children}</Text>`, OpenTUI version rendered `<text fg={fg}>{children}</text>`
+
+**Decision:** Remove Code entirely from both adapters.
+
+#### Checklist
+
+- [x] Remove `Code` from `RendererComponents` interface in `src/tui/adapters/types.ts`
+- [x] Remove `CodeProps` import from types.ts
+- [x] Remove Code import/export from `InkRenderer.tsx`
+- [x] Remove Code import/export from `OpenTuiRenderer.tsx`
+- [x] Delete Code component files:
+  - [x] `src/tui/adapters/ink/components/Code.tsx`
+  - [x] `src/tui/adapters/opentui/components/Code.tsx`
+- [x] Remove `CodeProps` interface from `src/tui/semantic/types.ts`
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — 78 tests pass
+
+### Iteration 2.6 Part 4: Remove Spacer abstraction
+
+During code review, the `Spacer` component was identified as barely used (only 2 places) and easily replaceable with native box elements.
+
+**Analysis:**
+- `Spacer` was only used in `Header.tsx` in both adapters with `<Spacer size={1} />`
+- Ink version created empty Text elements or repeated spaces
+- OpenTUI version created a box with fixed width/height
+- Both can be trivially replaced with `<Box height={1} />` (Ink) or `<box height={1} />` (OpenTUI)
+
+**Decision:** Remove Spacer entirely from both adapters.
+
+#### Checklist
+
+- [x] Update Ink `Header.tsx` to use `<Box height={1} />` instead of `<Spacer size={1} />`
+- [x] Update OpenTUI `Header.tsx` to use `<box height={1} />` instead of `<Spacer size={1} />`
+- [x] Remove `Spacer` from `RendererComponents` interface in `src/tui/adapters/types.ts`
+- [x] Remove `SpacerProps` import from types.ts
+- [x] Remove Spacer import/export from `InkRenderer.tsx`
+- [x] Remove Spacer import/export from `OpenTuiRenderer.tsx`
+- [x] Delete Spacer component files:
+  - [x] `src/tui/adapters/ink/components/Spacer.tsx`
+  - [x] `src/tui/adapters/opentui/components/Spacer.tsx`
+- [x] Remove `SpacerProps` interface from `src/tui/semantic/types.ts`
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — 78 tests pass
+
+### Iteration 2.6 Part 5: Remove Value abstraction
+
+During code review, the `Value` component was identified as a thin wrapper that could be replaced with `<Label color="value">`.
+
+**Analysis:**
+- `Value` was used in 6 places (ResultsPanel, SemanticRenderers for logs)
+- Ink version: `<Text color="magenta">{toPlainText(children)}</Text>`
+- OpenTUI version: `<text fg={fg}>{children}</text>` with color lookup
+- Both just apply the "value" color (magenta) to text - same as `<Label color="value">`
+
+**Decision:** Remove Value entirely; replace usages with `<Label color="value">`.
+
+#### Checklist
+
+- [x] Update Ink `ResultsPanel.tsx` to use `<Label color="value">` instead of `<Value>`
+- [x] Update OpenTUI `ResultsPanel.tsx` to use `<Label color="value">` instead of `<Value>`
+- [x] Update Ink `SemanticInkRenderer.tsx` to use `<Label color="value">` for logs
+- [x] Update OpenTUI `SemanticOpenTuiRenderer.tsx` to use `<Label color="value">` for logs
+- [x] Remove Value import from both SemanticRenderers
+- [x] Remove `Value` from `RendererComponents` interface in `src/tui/adapters/types.ts`
+- [x] Remove `ValueProps` import from types.ts
+- [x] Remove Value import/export from `InkRenderer.tsx`
+- [x] Remove Value import/export from `OpenTuiRenderer.tsx`
+- [x] Delete Value component files:
+  - [x] `src/tui/adapters/ink/components/Value.tsx`
+  - [x] `src/tui/adapters/opentui/components/Value.tsx`
+- [x] Remove `ValueProps` interface from `src/tui/semantic/types.ts`
+- [x] Run `bun run build` — passes
+- [x] Run `bun run test` — 78 tests pass

@@ -1,6 +1,6 @@
+import { Box } from "ink";
 import type { Command } from "../../../../core/command.ts";
 import { MenuItem } from "../components/MenuItem.tsx";
-import { Container } from "../components/Container.tsx";
 import { Panel } from "../components/Panel.tsx";
 
 interface CommandItem {
@@ -20,9 +20,9 @@ export function CommandSelector({ commands, selectedIndex, onSelect, breadcrumb 
     const title = breadcrumb?.length ? `Select Command (${breadcrumb.join(" 3 ")})` : "Select Command";
 
     return (
-        <Container flexDirection="column" flex={1} justifyContent="center" alignItems="center" gap={1}>
+        <Box flexDirection="column" flexGrow={1} justifyContent="center" alignItems="center" gap={1}>
             <Panel flexDirection="column" title={title} padding={undefined} width={60} focused>
-                <Container flexDirection="column" gap={1}>
+                <Box flexDirection="column" gap={1}>
                     {commands.map((item, idx) => {
                         const isSelected = idx === selectedIndex;
                         const label = item.label ?? item.command.displayName ?? item.command.name;
@@ -40,9 +40,9 @@ export function CommandSelector({ commands, selectedIndex, onSelect, breadcrumb 
                             />
                         );
                     })}
-                </Container>
+                </Box>
             </Panel>
-        </Container>
+        </Box>
     );
 }
 

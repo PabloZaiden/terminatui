@@ -17,6 +17,12 @@ export interface LayoutProps {
     height?: number | string;
     maxHeight?: number | string;
 
+    /** Positioning props for absolute/relative layouts */
+    top?: number | string;
+    left?: number | string;
+    right?: number | string;
+    bottom?: number | string;
+
     flexDirection?: FlexDirection;
     alignItems?: Align;
     justifyContent?: Justify;
@@ -39,10 +45,6 @@ export interface PanelProps extends LayoutProps {
     /** Renderer-level compact styling (e.g. no default padding). */
     dense?: boolean;
 
-    children?: ReactNode;
-}
-
-export interface ContainerProps extends LayoutProps {
     children?: ReactNode;
 }
 

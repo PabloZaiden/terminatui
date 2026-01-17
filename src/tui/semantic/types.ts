@@ -50,22 +50,11 @@ export interface CodeHighlightProps {
     tokens: CodeToken[];
 }
 
-export interface CodeProps {
-    color?: SemanticColor;
-    children: string;
-}
-
 export interface LabelProps {
     color?: SemanticColor;
     bold?: boolean;
     italic?: boolean;
     wrap?: boolean;
-    children: ReactNode;
-}
-
-export interface ValueProps {
-    color?: SemanticColor;
-    truncate?: boolean;
     children: ReactNode;
 }
 
@@ -119,11 +108,6 @@ export interface MenuItemProps {
 
 export interface SpinnerProps {
     active: boolean;
-}
-
-export interface SpacerProps {
-    size: number;
-    axis?: "horizontal" | "vertical";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
