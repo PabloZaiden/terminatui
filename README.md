@@ -1,6 +1,6 @@
 # @pablozaiden/terminatui
 
-A type-safe, class-based framework for building CLI and TUI applications in TypeScript.
+A type-safe, class-based framework for building CLI and TUI applications in TypeScript with Bun.
 
 ## Features
 
@@ -15,6 +15,10 @@ A type-safe, class-based framework for building CLI and TUI applications in Type
 - **Integrated logging** - Logger with TUI-aware output handling (live log modal with global copy shortcut)
 - **Cancellation support** - AbortSignal-based cancellation for long-running commands
 - **Config validation** - `buildConfig()` hook for transforming and validating options
+
+## Prerequisites
+
+- [Bun](https://bun.com)
 
 ## Installation
 
@@ -482,7 +486,7 @@ The built-in TUI provides:
 - **Command Selector** - Navigate and select commands with arrow keys
 - **Config Form** - Auto-generated forms from option schemas with field groups
 - **Field Editor** - Edit field values (text, number, boolean, enum)
-- **CLI Args Button** - View equivalent CLI command from the config form
+- **CLI Args** - View equivalent CLI command from the config form
 - **Results Panel** - Display command results with custom rendering
 - **Logs Panel** - View application logs in real-time
 - **Clipboard Support** - Centralized copy with Ctrl+Y
