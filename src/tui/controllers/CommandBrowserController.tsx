@@ -70,7 +70,7 @@ export class CommandBrowserController {
 
                         this.navigation.push("config" satisfies TuiRoute, {
                             command: selected,
-                            commandPath,
+                            commandPath: [...commandPath, selected.name],
                             values: this.configController.initializeValues(selected),
                             fieldConfigs: schemaToFieldConfigs(selected.options),
                         });
