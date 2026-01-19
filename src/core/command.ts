@@ -165,7 +165,13 @@ export abstract class Command<
    * @param execCtx - Execution context with abort signal for cancellation support
    * @returns Optional result for display in TUI results panel
    */
-  abstract execute(config: TConfig, execCtx?: CommandExecutionContext): Promise<CommandResult | void> | CommandResult | void;
+  execute(config: TConfig, execCtx?: CommandExecutionContext): Promise<CommandResult | void> | CommandResult | void {
+    if (execCtx?.signal.aborted) {
+      return;
+    }
+
+    throw new Error(`Command '${this.name}' with config type '${typeof config}' must implement execute method.`);
+  }
 
   /**
    * Called before buildConfig. Use for early validation, resource acquisition, etc.
