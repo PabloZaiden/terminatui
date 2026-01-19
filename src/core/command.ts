@@ -163,7 +163,7 @@ export abstract class Command<
    * 
    * @param config - The configuration object (from buildConfig, or raw options if buildConfig is not implemented)
    * @param execCtx - Execution context with abort signal for cancellation support
-   * @returns Optional result for display in TUI results panel
+   * @returns Result for display in TUI results panel
    */
   execute(config: TConfig, execCtx?: CommandExecutionContext): Promise<CommandResult> {
     if (execCtx?.signal.aborted) {
