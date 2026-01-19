@@ -126,14 +126,13 @@ abstract class Command<TOptions extends OptionSchema = OptionSchema, TConfig = u
   // Optional properties
   displayName?: string;           // Human-readable name for TUI
   subCommands?: Command[];        // Nested subcommands
-  aliases?: string[];             // Command aliases
-  hidden?: boolean;               // Hide from help
   examples?: CommandExample[];    // Usage examples
   longDescription?: string;       // Extended description
   
   // TUI customization
   actionLabel?: string;           // Button text (default: "Run")
   immediateExecution?: boolean;   // Execute on selection without config
+  tuiHidden?: boolean;            // Hide from TUI command list
   
   // Required: Main execution method
   abstract execute(
@@ -142,7 +141,7 @@ abstract class Command<TOptions extends OptionSchema = OptionSchema, TConfig = u
   ): Promise<CommandResult | void> | CommandResult | void;
   
   // Optional: Transform/validate options before execute
-  buildConfig?(ctx: AppContext, opts: OptionValues<TOptions>): TConfig | Promise<TConfig>;
+  buildConfig?(opts: OptionValues<TOptions>): TConfig | Promise<TConfig>;
   
   // Optional: Custom result rendering for TUI
   renderResult?(result: CommandResult): ReactNode;
@@ -192,17 +191,23 @@ class Application {
   // Useful for tests or programmatic invocation
   runFromArgs(argv: string[]): Promise<void>;
 
-  getContext(): AppContext;
+  // Set lifecycle hooks
+  setHooks(hooks: ApplicationHooks): void;
+}
 
-  // Lifecycle hooks (override in subclass)
-  onBeforeRun?(command: Command, options: Record<string, unknown>): void;
-  onAfterRun?(command: Command, result: unknown): void;
-  onError?(error: Error): void;
+interface ApplicationHooks {
+  /** Called before running any command */
+  onBeforeRun?: (commandName: string) => Promise<void> | void;
+  /** Called after command completes (success or failure) */
+  onAfterRun?: (commandName: string, error?: Error) => Promise<void> | void;
+  /** Called when an error occurs */
+  onError?: (error: Error) => Promise<void> | void;
 }
 
 interface ApplicationConfig {
   name: string;
   version: string;
+  displayName?: string;   // Human-readable name for TUI header
   commitHash?: string;    // Git commit for version display
   description?: string;
   commands: Command[];
@@ -247,6 +252,9 @@ interface OptionDef {
   default?: unknown;
   alias?: string;
   enum?: readonly string[];  // For string type, restrict to values
+  env?: string;              // Environment variable to read from
+  min?: number;              // Minimum value (for number type)
+  max?: number;              // Maximum value (for number type)
   
   // TUI metadata
   label?: string;            // Custom label in form
@@ -534,26 +542,12 @@ The package exports utilities for building custom TUI components:
 
 ```typescript
 import { 
-  // Form utilities
-  schemaToFieldConfigs,  // Convert OptionSchema to form fields
-  getFieldDisplayValue,  // Format field values for display
-  buildCliCommand,       // Build CLI command from config
-  
-  // Hooks
-  useKeyboardHandler,    // Register keyboard handlers with priority
-  useClipboard,          // Clipboard operations with OSC 52
-  useLogStream,          // Stream logs from logger
-  // (renderer-specific) Spinner UI lives in adapters
-  useCommandExecutor,    // Execute commands with cancellation
-  
-  // Context
-  KeyboardProvider,      // Keyboard context provider
-  KeyboardPriority,      // Global < Focused < Modal
-  
   // Components
   JsonHighlight,         // Syntax-highlighted JSON display
 } from "@pablozaiden/terminatui";
 ```
+
+Note: Internal TUI hooks like `useCommandExecutor`, `useClipboard`, and form utilities are used internally by the framework but are not part of the public API.
 
 ## Output Formatting
 

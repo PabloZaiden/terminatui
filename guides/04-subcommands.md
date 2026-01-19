@@ -17,7 +17,7 @@ dbctl db status
 Create `src/commands/db/migrate.ts`:
 
 ```typescript
-import { Command, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import { Command, AppContext, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
 
 const options = {
   target: {
@@ -38,7 +38,7 @@ export class MigrateCommand extends Command<typeof options> {
   readonly options = options;
 
   execute(config: { target: string; dry: boolean }): CommandResult {
-    ctx.logger.info(`Migrating to: ${config.target}`);
+    AppContext.current.logger.info(`Migrating to: ${config.target}`);
     
     if (config.dry) {
       console.log("DRY RUN: Would migrate to", config.target);
@@ -55,7 +55,7 @@ export class MigrateCommand extends Command<typeof options> {
 Create `src/commands/db/seed.ts`:
 
 ```typescript
-import { Command, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
+import { Command, AppContext, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
 
 const options = {
   file: {
@@ -72,7 +72,7 @@ export class SeedCommand extends Command<typeof options> {
   readonly options = options;
 
   execute(config: { file: string }): CommandResult {
-    ctx.logger.info(`Seeding from: ${config.file}`);
+    AppContext.current.logger.info(`Seeding from: ${config.file}`);
     console.log(`Loading seed data from ${config.file}...`);
     console.log("Database seeded successfully!");
     return { success: true };

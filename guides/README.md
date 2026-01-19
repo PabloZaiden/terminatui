@@ -36,7 +36,7 @@ bun add @pablozaiden/terminatui
 
 # Create your first command
 cat > src/index.ts << 'EOF'
-import { Command, Application, type OptionSchema } from "@pablozaiden/terminatui";
+import { Command, Application, type OptionSchema, type CommandResult } from "@pablozaiden/terminatui";
 
 const options = {
   name: { type: "string", description: "Your name" },
@@ -47,8 +47,8 @@ class HelloCommand extends Command<typeof options> {
   readonly description = "Say hello";
   readonly options = options;
 
-  async execute(config: Record<string, unknown>) {
-    const name = config["name"] ?? "World";
+  execute(config: { name?: string }): CommandResult {
+    const name = config.name ?? "World";
     console.log(`Hello, ${name}!`);
     return { success: true };
   }
