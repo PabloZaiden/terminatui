@@ -21,13 +21,12 @@ import { KNOWN_COMMANDS, RESERVED_TOP_LEVEL_COMMAND_NAMES } from "./knownCommand
  */
 
 export type TuiModeOptions = "opentui" | "ink";
-export type ModeOptions = TuiModeOptions | "cli" | "default";
 
 /**
  * Actual execution modes (excludes "default" which is a placeholder).
  * Used for the supportedModes getter.
  */
-export type SupportedMode = "cli" | "opentui" | "ink";
+export type SupportedMode = TuiModeOptions | "cli";
 
 export interface GlobalOptions {
   "log-level"?: string;
@@ -112,7 +111,7 @@ export class Application {
    * Default mode used when `--mode=default` is specified.
    * Base Application defaults to `cli`.
    */
-  protected defaultMode: ModeOptions = "cli";
+  protected defaultMode: SupportedMode = "cli";
 
   /**
    * Modes supported by this application.
@@ -261,7 +260,7 @@ export class Application {
       const { globalOptions, remainingArgs } = this.parseGlobalOptions(argv);
       this.applyGlobalOptions(globalOptions);
 
-      const mode = globalOptions["mode"] as ModeOptions ?? "default";
+      const mode = globalOptions["mode"] as SupportedMode ?? "default";
       const resolvedMode = this.validateMode(mode);
 
       // Base Application only knows how to run CLI mode.
@@ -551,10 +550,10 @@ export class Application {
    * Returns the resolved mode (never "default").
    * Throws if mode is not supported.
    */
-  protected validateMode(mode: ModeOptions): SupportedMode {
+  protected validateMode(mode: SupportedMode | "default"): SupportedMode {
     const resolvedMode: SupportedMode = mode === "default"
-      ? (this.defaultMode as SupportedMode)
-      : (mode as SupportedMode);
+      ? this.defaultMode
+      : mode;
 
     if (!this.supportedModes.includes(resolvedMode)) {
       const supported = this.supportedModes.join(", ");

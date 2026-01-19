@@ -1,6 +1,6 @@
 import { createRenderer } from "./adapters/factory.ts";
 import { RendererProvider } from "./context/RendererContext.tsx";
-import { Application, type ModeOptions, type ApplicationConfig, type TuiModeOptions, type SupportedMode } from "../core/application.ts";
+import { Application, type ApplicationConfig, type TuiModeOptions, type SupportedMode } from "../core/application.ts";
 import type { AnyCommand } from "../core/command.ts";
 import { TuiRoot } from "./TuiRoot.tsx";
 import { LogLevel } from "../core/logger.ts";
@@ -72,7 +72,7 @@ export class TuiApplication extends Application {
     override async runFromArgs(argv: string[]): Promise<void> {
         const { globalOptions } = this.parseGlobalOptions(argv);
 
-        const mode = globalOptions["mode"] as ModeOptions ?? "default";
+        const mode = globalOptions["mode"] as SupportedMode ?? "default";
         const resolvedMode = this.validateMode(mode);
 
         if (resolvedMode === "cli") {
