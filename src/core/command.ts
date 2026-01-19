@@ -170,7 +170,7 @@ export abstract class Command<
       return Promise.resolve({
         success: false,
         error: "Command was cancelled",
-      })
+      });
     }
 
     throw new Error(`Command '${this.name}' with config type '${typeof config}' must implement execute method.`);
