@@ -49,7 +49,7 @@ export function CommandSelector({ commands, selectedIndex, onSelect, breadcrumb 
 function getModeIndicator(command: Command): string {
     const navigableSubCommands = command.subCommands?.filter((sub) => sub.supportsTui()) ?? [];
     if (navigableSubCommands.length > 0) {
-        return ">";
+        return "→";
     }
 
     return "";

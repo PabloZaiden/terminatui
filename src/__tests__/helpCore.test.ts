@@ -8,7 +8,7 @@ import {
   generateAppHelp,
   generateCommandHelp,
 } from "../core/help.ts";
-import { Command } from "../core/command.ts";
+import { Command, type CommandResult } from "../core/command.ts";
 import type { OptionSchema } from "../types/command.ts";
 
 class SimpleCommand extends Command<OptionSchema> {
@@ -23,7 +23,9 @@ class SimpleCommand extends Command<OptionSchema> {
     this.options = config.options ?? {};
   }
 
-  override async execute(): Promise<void> {}
+  override async execute(): Promise<CommandResult> {
+    return { success: true };
+  }
 }
 
 describe("Help Generation (core)", () => {

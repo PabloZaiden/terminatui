@@ -112,7 +112,7 @@ import { TuiApplication } from "@pablozaiden/terminatui";
 import { RunCommand } from "./commands/run";
 
 class TaskRunnerApp extends TuiApplication {
-  // Default is CLI; each app decides.
+  // Each app decides what "default" means.
   protected override defaultMode = "opentui" as const;
 
   constructor() {
@@ -121,12 +121,26 @@ class TaskRunnerApp extends TuiApplication {
       displayName: "🚀 Task Runner", // Shown in TUI header
       version: "1.0.0",
       commands: [new RunCommand()],
-      enableTui: true, // Default: true
     });
   }
 }
 
 await new TaskRunnerApp().run();
+```
+
+### Execution Modes
+
+`TuiApplication` supports three execution modes: `cli`, `opentui`, and `ink`.
+
+You can restrict which modes are supported by overriding `supportedModes`:
+
+```typescript
+class InkOnlyApp extends TuiApplication {
+  protected override get supportedModes() {
+    return ["ink"] as const;  // Only ink mode allowed
+  }
+  protected override defaultMode = "ink" as const;
+}
 ```
 
 ## Step 3: Test Both Modes
@@ -199,10 +213,11 @@ class MyCommand extends Command {
 ## What You Learned
 
 - Use `TuiApplication` instead of `Application`
-- Use `--mode` (or app default mode) to control CLI vs TUI
+- Use `--mode` (or app `defaultMode`) to control CLI vs TUI
 - Add TUI metadata to options (label, order, group)
 - Customize with `displayName` and `actionLabel`
 - Both CLI and TUI work with the same command
+- Restrict supported modes by overriding `supportedModes`
 
 ## Next Steps
 

@@ -16,7 +16,7 @@ tasks add "Write documentation" --priority high
 tasks list --filter pending
 tasks complete abc123
 tasks stats
-tasks --tui  # Interactive mode
+tasks --mode opentui  # Interactive mode
 ```
 
 ## Project Structure
@@ -397,7 +397,7 @@ export class StatsCommand extends Command<typeof options> {
 Create `src/index.ts`:
 
 ```typescript
-import { TuiApplication } from "@pablozaiden/terminatui";
+import { TuiApplication, AppContext } from "@pablozaiden/terminatui";
 import { AddCommand } from "./commands/add";
 import { ListCommand } from "./commands/list";
 import { CompleteCommand } from "./commands/complete";
@@ -416,18 +416,22 @@ class TasksCLI extends TuiApplication {
         new StatsCommand(),
       ],
     });
-  }
 
-  // Optional: Override onBeforeRun for setup
-  protected override async onBeforeRun(): Promise<void> {
-    this.logger.debug("Tasks CLI starting...");
-    // Initialize database connections, load config, etc.
-  }
-
-  // Optional: Override onAfterRun for cleanup
-  protected override async onAfterRun(): Promise<void> {
-    this.logger.debug("Tasks CLI shutting down...");
-    // Close database connections, save state, etc.
+    // Optional: Set lifecycle hooks
+    this.setHooks({
+      onBeforeRun: (commandName) => {
+        AppContext.current.logger.debug(`Running command: ${commandName}`);
+        // Initialize database connections, load config, etc.
+      },
+      onAfterRun: (commandName, error) => {
+        if (error) {
+          AppContext.current.logger.error(`Command ${commandName} failed: ${error.message}`);
+        } else {
+          AppContext.current.logger.debug(`Command ${commandName} completed`);
+        }
+        // Close database connections, save state, etc.
+      },
+    });
   }
 }
 
@@ -448,7 +452,7 @@ Update `package.json`:
   },
   "scripts": {
     "start": "bun src/index.ts",
-    "tui": "bun src/index.ts --tui",
+    "tui": "bun src/index.ts --mode opentui",
     "build": "bun build src/index.ts --outdir dist --target bun"
   },
   "dependencies": {
@@ -490,7 +494,7 @@ bun start --verbose add "Debug task" --priority low
 - **Shared Services**: Database and notification services
 - **Command Groups**: Organize commands in TUI sidebar
 - **Full TUI Integration**: Clipboard, immediate execution
-- **Lifecycle Hooks**: `onBeforeRun` and `onAfterRun`
+- **Lifecycle Hooks**: Use `setHooks()` for `onBeforeRun`, `onAfterRun`, and `onError`
 - **Production Patterns**: Error handling, validation, logging
 
 ## Complete Series Summary

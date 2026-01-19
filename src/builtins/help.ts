@@ -1,4 +1,4 @@
-import { Command, type AnyCommand } from "../core/command.ts";
+import { Command, type AnyCommand, type CommandResult } from "../core/command.ts";
 import { generateCommandHelp, generateAppHelp } from "../core/help.ts";
 import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 import type { OptionSchema } from "../types/command.ts";
@@ -42,7 +42,7 @@ export class HelpCommand extends Command<OptionSchema> {
     return false;
   }
 
-  override async execute(): Promise<void> {
+  override async execute(): Promise<CommandResult> {
     let helpText: string;
 
     if (this.parentCommand) {
@@ -66,6 +66,7 @@ export class HelpCommand extends Command<OptionSchema> {
     }
 
     console.log(helpText);
+    return { success: true };
   }
 }
 

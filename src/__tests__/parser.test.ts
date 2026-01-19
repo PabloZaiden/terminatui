@@ -58,14 +58,11 @@ describe("cli/parser helpers", () => {
   });
 
   describe("parseOptionValues", () => {
-    test("coerces values, applies defaults, and reads env", () => {
-      process.env["TEST_VALUE"] = "env-value";
-
+    test("coerces values and applies defaults", () => {
       const schema: OptionSchema = {
         name: { type: "string", description: "Name" },
         count: { type: "number", default: 5, description: "Count" },
         verbose: { type: "boolean", description: "Verbose" },
-        value: { type: "string", env: "TEST_VALUE", description: "Value" },
         level: {
           type: "string",
           enum: ["low", "medium", "high"],
@@ -83,10 +80,7 @@ describe("cli/parser helpers", () => {
       expect(result["name"]).toBe("test");
       expect(result["count"]).toBe(42);
       expect(result["verbose"]).toBe(true);
-      expect(result["value"]).toBe("env-value");
       expect(result["level"]).toBe("medium");
-
-      delete process.env["TEST_VALUE"];
     });
 
     test("throws on invalid enum", () => {

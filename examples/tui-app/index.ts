@@ -29,7 +29,6 @@ class ExampleApp extends TuiApplication {
                 new StatusCommand(),
                 new ConfigCommand(),
             ],
-            enableTui: true,
         });
     }
 }

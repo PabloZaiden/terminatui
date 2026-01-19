@@ -1,4 +1,4 @@
-import { Command, type CommandResult } from "../../../../../src/core/command.ts";
+import { Command } from "../../../../../src/core/command.ts";
 import { UserGetCommand } from "./get.ts";
 import { UserSetCommand } from "./set.ts";
 
@@ -12,12 +12,6 @@ export class UserConfigCommand extends Command {
         new UserGetCommand(),
         new UserSetCommand(),
     ];
-
-    override execute(): CommandResult {
-        console.log("Use 'config user <command>' for user configuration.");
-        console.log("Available: get, set");
-        return { success: true };
-    }
 }
 
 export { UserGetCommand, UserSetCommand };

@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { Command } from "../core/command.ts";
+import { Command, type CommandResult } from "../core/command.ts";
 import type { OptionSchema } from "../types/command.ts";
 
 class TestCommand extends Command<typeof TestCommand.Options> {
@@ -18,7 +18,9 @@ class TestCommand extends Command<typeof TestCommand.Options> {
     Record<string, unknown>
   ]> = [];
 
-  override execute(): void {}
+  override async execute(): Promise<CommandResult> {
+    return { success: true };
+  }
 
   override onConfigChange(
     key: string,

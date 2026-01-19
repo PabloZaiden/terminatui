@@ -1,5 +1,5 @@
 import { AppContext, type AppConfig } from "./context.ts";
-import { type AnyCommand, ConfigValidationError, type CommandResult, type CommandExecutionContext } from "./command.ts";
+import { type AnyCommand, ConfigValidationError, type CommandExecutionContext } from "./command.ts";
 import { CommandRegistry } from "./registry.ts";
 import { ExecutionMode } from "../types/execution.ts";
 import { LogLevel, type LoggerConfig } from "./logger.ts";
@@ -21,7 +21,7 @@ import { KNOWN_COMMANDS, RESERVED_TOP_LEVEL_COMMAND_NAMES } from "./knownCommand
  */
 
 export type TuiModeOptions = "opentui" | "ink";
-export type ModeOptions = TuiModeOptions | "cli" | "default";
+export type SupportedMode = TuiModeOptions | "cli";
 
 export interface GlobalOptions {
   "log-level"?: string;
@@ -106,7 +106,21 @@ export class Application {
    * Default mode used when `--mode=default` is specified.
    * Base Application defaults to `cli`.
    */
-  protected defaultMode: ModeOptions = "cli";
+  protected defaultMode: SupportedMode = "cli";
+
+  /**
+   * Modes supported by this application.
+   * Override in subclasses to expand or restrict supported modes.
+   * 
+   * - To EXPAND modes: Override this getter AND override runFromArgs() to handle the new modes
+   * - To RESTRICT modes: Just override this getter to return fewer modes
+   * 
+   * Base Application only supports CLI mode.
+   */
+  protected get supportedModes(): readonly SupportedMode[] {
+    return ["cli"] as const;
+  }
+
   readonly displayName: string;
   readonly version: string;
   readonly commitHash?: string;
@@ -241,12 +255,16 @@ export class Application {
       const { globalOptions, remainingArgs } = this.parseGlobalOptions(argv);
       this.applyGlobalOptions(globalOptions);
 
-      const mode = globalOptions["mode"] as ModeOptions ?? "default";
-      const resolvedMode = mode === "default" ? this.defaultMode : mode;
+      const mode = globalOptions["mode"] as SupportedMode ?? "default";
+      const resolvedMode = this.validateMode(mode);
 
+      // Base Application only knows how to run CLI mode.
+      // If a subclass expanded supportedModes to include other modes,
+      // it must also override runFromArgs() to handle them.
       if (resolvedMode !== "cli") {
         throw new Error(
-          `Mode '${resolvedMode}' is not supported by Application. Use TuiApplication or set --mode=cli.`
+          `Mode '${resolvedMode}' is declared as supported but not implemented. ` +
+          `Override runFromArgs() to handle this mode.`
         );
       }
 
@@ -382,11 +400,10 @@ export class Application {
 
       // Execute the command with the config
       const ctx: CommandExecutionContext = { signal: new AbortController().signal };
-      const result = await command.execute(config, ctx);
+      const commandResult = await command.execute(config, ctx);
 
       // In CLI mode, handle result output
-      if (mode === ExecutionMode.Cli && result) {
-        const commandResult = result as CommandResult;
+      if (mode === ExecutionMode.Cli) {
         if (commandResult.success) {
           // Output data as JSON to stdout if present
           if (commandResult.data !== undefined) {
@@ -520,6 +537,26 @@ export class Application {
         logger.setMinLevel(level);
       }
     }
+  }
+
+  /**
+   * Validate that the requested mode is supported by this application.
+   * Returns the resolved mode (never "default").
+   * Throws if mode is not supported.
+   */
+  protected validateMode(mode: SupportedMode | "default"): SupportedMode {
+    const resolvedMode: SupportedMode = mode === "default"
+      ? this.defaultMode
+      : mode;
+
+    if (!this.supportedModes.includes(resolvedMode)) {
+      const supported = this.supportedModes.join(", ");
+      throw new Error(
+        `Mode '${resolvedMode}' is not supported. Supported modes: ${supported}`
+      );
+    }
+
+    return resolvedMode;
   }
 
   /**

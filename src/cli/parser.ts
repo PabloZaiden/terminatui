@@ -99,11 +99,6 @@ export function parseOptionValues<T extends OptionSchema>(
   for (const [name, def] of Object.entries(schema)) {
     let value = values[name];
 
-    // Check environment variable
-    if (value === undefined && def.env) {
-      value = process.env[def.env];
-    }
-
     // Apply default
     if (value === undefined && def.default !== undefined) {
       value = def.default;

@@ -7,7 +7,6 @@ export interface OptionDef {
   alias?: string;
   default?: unknown;
   required?: boolean;
-  env?: string;
   enum?: readonly string[];
   min?: number;
   max?: number;
