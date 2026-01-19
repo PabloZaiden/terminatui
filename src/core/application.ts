@@ -21,11 +21,6 @@ import { KNOWN_COMMANDS, RESERVED_TOP_LEVEL_COMMAND_NAMES } from "./knownCommand
  */
 
 export type TuiModeOptions = "opentui" | "ink";
-
-/**
- * Actual execution modes (excludes "default" which is a placeholder).
- * Used for the supportedModes getter.
- */
 export type SupportedMode = TuiModeOptions | "cli";
 
 export interface GlobalOptions {
