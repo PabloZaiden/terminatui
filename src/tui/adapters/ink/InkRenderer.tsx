@@ -25,9 +25,6 @@ function InkKeyboardHandler({
 
     useEffect(() => {
         const cleanup = keyboard.setGlobalHandler((event) => {
-            // Debug: log keyboard events
-            // console.log("Key event:", event.name, "screenHandler:", getScreenKeyHandler() ? "yes" : "no");
-            
             if (event.name === "escape") {
                 dispatchAction({ type: "nav.back" });
                 return true;
