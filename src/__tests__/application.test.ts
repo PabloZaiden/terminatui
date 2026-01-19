@@ -441,4 +441,94 @@ describe("Application", () => {
       expect(AppContext.current.logger.getMinLevel()).toBe(LogLevel.warn);
     });
   });
+
+  describe("mode support", () => {
+    test("only supports cli mode by default", () => {
+      const app = new Application({
+        name: "test-app",
+        version: "1.0.0",
+        commands: [],
+      });
+      // Access protected property via any cast for testing
+      expect((app as any).supportedModes).toEqual(["cli"]);
+    });
+
+    test("throws error for opentui mode", async () => {
+      const cmd = new TestCommand();
+      const app = new Application({
+        name: "test-app",
+        version: "1.0.0",
+        commands: [cmd],
+      });
+      
+      let errorThrown: Error | undefined;
+      app.setHooks({
+        onError: async (error) => {
+          errorThrown = error;
+        },
+      });
+      
+      await app.runFromArgs(["--mode", "opentui", "test"]);
+      expect(errorThrown?.message).toMatch(/not supported.*Supported modes: cli/);
+    });
+
+    test("throws error for ink mode", async () => {
+      const cmd = new TestCommand();
+      const app = new Application({
+        name: "test-app",
+        version: "1.0.0",
+        commands: [cmd],
+      });
+      
+      let errorThrown: Error | undefined;
+      app.setHooks({
+        onError: async (error) => {
+          errorThrown = error;
+        },
+      });
+      
+      await app.runFromArgs(["--mode", "ink", "test"]);
+      expect(errorThrown?.message).toMatch(/not supported.*Supported modes: cli/);
+    });
+
+    test("runs successfully with cli mode", async () => {
+      const cmd = new TestCommand();
+      const app = new Application({
+        name: "test-app",
+        version: "1.0.0",
+        commands: [cmd],
+      });
+      
+      await app.runFromArgs(["--mode", "cli", "test", "--value", "hello"]);
+      expect(cmd.executedWith?.["value"]).toBe("hello");
+    });
+
+    test("runs successfully with default mode (resolves to cli)", async () => {
+      const cmd = new TestCommand();
+      const app = new Application({
+        name: "test-app",
+        version: "1.0.0",
+        commands: [cmd],
+      });
+      
+      await app.runFromArgs(["--mode", "default", "test", "--value", "world"]);
+      expect(cmd.executedWith?.["value"]).toBe("world");
+    });
+
+    test("subclass can override supportedModes", () => {
+      class CustomApp extends Application {
+        protected override get supportedModes() {
+          return ["cli"] as const;
+        }
+      }
+      
+      const app = new CustomApp({
+        name: "test-app",
+        version: "1.0.0",
+        commands: [],
+      });
+      
+      expect((app as any).supportedModes).toEqual(["cli"]);
+    });
+  });
 });

@@ -1,6 +1,6 @@
 import { createRenderer } from "./adapters/factory.ts";
 import { RendererProvider } from "./context/RendererContext.tsx";
-import { Application, type ModeOptions, type ApplicationConfig, type TuiModeOptions } from "../core/application.ts";
+import { Application, type ModeOptions, type ApplicationConfig, type TuiModeOptions, type SupportedMode } from "../core/application.ts";
 import type { AnyCommand } from "../core/command.ts";
 import { TuiRoot } from "./TuiRoot.tsx";
 import { LogLevel } from "../core/logger.ts";
@@ -13,15 +13,21 @@ import { AppContext } from "../core/context.ts";
  * Extended configuration for TUI-enabled applications.
  */
 export interface TuiApplicationConfig extends ApplicationConfig {
-    /** Enable TUI mode (when renderer is opentui/ink/default) */
-    enableTui?: boolean;
+    // No additional config needed - inherits everything from ApplicationConfig
 }
 
 /**
  * Application class with built-in TUI support.
  * 
  * Extends the base Application to provide automatic TUI rendering
- * when running with `--renderer` set to a TUI renderer (or default).
+ * when running with `--mode` set to a TUI mode (opentui or ink).
+ * 
+ * TuiApplication EXPANDS the base Application to support:
+ * - cli (inherited from Application)
+ * - opentui (added by TuiApplication)
+ * - ink (added by TuiApplication)
+ * 
+ * Override `supportedModes` to restrict to specific modes.
  * 
  * @example
  * ```typescript
@@ -31,7 +37,6 @@ export interface TuiApplicationConfig extends ApplicationConfig {
  *       name: "myapp",
  *       version: "1.0.0",
  *       commands: [new RunCommand(), new ConfigCommand()],
- *       enableTui: true,
  *     });
  *   }
  * }
@@ -40,11 +45,18 @@ export interface TuiApplicationConfig extends ApplicationConfig {
  * ```
  */
 export class TuiApplication extends Application {
-    private readonly enableTui: boolean;
-
-    constructor(config: TuiApplicationConfig) {
-        super(config);
-        this.enableTui = config.enableTui ?? true;
+    /**
+     * Modes supported by this TUI application.
+     * 
+     * TuiApplication EXPANDS the base Application to support:
+     * - cli (inherited from Application)
+     * - opentui (added by TuiApplication)
+     * - ink (added by TuiApplication)
+     * 
+     * Override to restrict to specific modes (e.g., only "ink").
+     */
+    protected override get supportedModes(): readonly SupportedMode[] {
+        return ["cli", "opentui", "ink"] as const;
     }
 
     /**
@@ -61,25 +73,16 @@ export class TuiApplication extends Application {
         const { globalOptions } = this.parseGlobalOptions(argv);
 
         const mode = globalOptions["mode"] as ModeOptions ?? "default";
-        const resolvedMode = mode === "default" ? this.defaultMode : mode;
+        const resolvedMode = this.validateMode(mode);
 
         if (resolvedMode === "cli") {
             await super.runFromArgs(argv);
             return;
         }
 
-        if (!this.enableTui) {
-            throw new Error("TUI mode is disabled for this application");
-        }
-
-        if (resolvedMode === "opentui" || resolvedMode === "ink") {
-            this.applyGlobalOptions(globalOptions);
-
-            await this.runTui(resolvedMode);
-            return;
-        }
-
-        throw new Error(`Unknown mode '${resolvedMode}'`);
+        // Mode is guaranteed to be "opentui" or "ink" at this point
+        this.applyGlobalOptions(globalOptions);
+        await this.runTui(resolvedMode);
     }
 
     /**
