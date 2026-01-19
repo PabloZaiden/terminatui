@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { Application } from "../core/application.ts";
-import { Command } from "../core/command.ts";
+import { Command, type CommandResult } from "../core/command.ts";
 import type { OptionSchema, OptionValues, OptionDef } from "../types/command.ts";
 import { AppContext } from "../core/context.ts";
 import { LogLevel } from "../core/logger.ts";
@@ -24,8 +24,9 @@ class TestCommand extends Command<typeof testOptions> {
 
   override async execute(
     opts: OptionValues<typeof testOptions>
-  ): Promise<void> {
+  ): Promise<CommandResult> {
     this.executedWith = opts as Record<string, unknown>;
+    return { success: true };
   }
 }
 
@@ -36,8 +37,9 @@ class TuiCommand extends Command<OptionSchema> {
 
   executed = false;
 
-  override async execute(): Promise<void> {
+  override async execute(): Promise<CommandResult> {
     this.executed = true;
+    return { success: true };
   }
 }
 
@@ -49,7 +51,9 @@ describe("Application", () => {
         readonly description = "tries to override built-in";
         readonly options = {};
 
-        override async execute(): Promise<void> {}
+        override async execute(): Promise<CommandResult> {
+          return { success: true };
+        }
       }
 
       expect(() => {
@@ -65,7 +69,9 @@ describe("Application", () => {
         readonly description = "user help";
         readonly options = {};
 
-        override async execute(): Promise<void> {}
+        override async execute(): Promise<CommandResult> {
+          return { success: true };
+        }
       }
 
       class ParentCommand extends Command<OptionSchema> {
@@ -75,7 +81,9 @@ describe("Application", () => {
 
         override subCommands = [new SubCommand()];
 
-        override async execute(): Promise<void> {}
+        override async execute(): Promise<CommandResult> {
+          return { success: true };
+        }
       }
 
       expect(() => {
@@ -229,7 +237,7 @@ describe("Application", () => {
         readonly description = "A command that throws";
         readonly options = {};
 
-        override async execute(): Promise<void> {
+        override async execute(): Promise<CommandResult> {
           throw new Error("Test error");
         }
       }
@@ -280,8 +288,9 @@ describe("Application", () => {
           };
         }
 
-        override async execute(config: ParsedConfig): Promise<void> {
+        override async execute(config: ParsedConfig): Promise<CommandResult> {
           receivedConfig = config;
+          return { success: true };
         }
       }
 
@@ -307,8 +316,9 @@ describe("Application", () => {
 
         override async execute(
           opts: OptionValues<typeof testOptions>
-        ): Promise<void> {
+        ): Promise<CommandResult> {
           receivedOpts = opts as Record<string, unknown>;
+          return { success: true };
         }
       }
 
@@ -335,8 +345,9 @@ describe("Application", () => {
           throw new Error("Config validation failed");
         }
 
-        override async execute(): Promise<void> {
+        override async execute(): Promise<CommandResult> {
           // Should never be called
+          return { success: true };
         }
       }
 

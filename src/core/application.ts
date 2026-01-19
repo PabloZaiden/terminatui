@@ -1,5 +1,5 @@
 import { AppContext, type AppConfig } from "./context.ts";
-import { type AnyCommand, ConfigValidationError, type CommandResult, type CommandExecutionContext } from "./command.ts";
+import { type AnyCommand, ConfigValidationError, type CommandExecutionContext } from "./command.ts";
 import { CommandRegistry } from "./registry.ts";
 import { ExecutionMode } from "../types/execution.ts";
 import { LogLevel, type LoggerConfig } from "./logger.ts";
@@ -405,11 +405,10 @@ export class Application {
 
       // Execute the command with the config
       const ctx: CommandExecutionContext = { signal: new AbortController().signal };
-      const result = await command.execute(config, ctx);
+      const commandResult = await command.execute(config, ctx);
 
       // In CLI mode, handle result output
-      if (mode === ExecutionMode.Cli && result) {
-        const commandResult = result as CommandResult;
+      if (mode === ExecutionMode.Cli) {
         if (commandResult.success) {
           // Output data as JSON to stdout if present
           if (commandResult.data !== undefined) {

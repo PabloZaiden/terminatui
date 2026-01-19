@@ -1,5 +1,5 @@
 import { test, expect, describe } from "bun:test";
-import { Command } from "../core/command.ts";
+import { Command, type CommandResult } from "../core/command.ts";
 import type { OptionSchema, OptionValues } from "../types/command.ts";
 
 const testOptions = {
@@ -21,7 +21,9 @@ describe("Command (class-based)", () => {
       readonly description = "A test command";
       readonly options = testOptions;
 
-      override async execute(): Promise<void> {}
+      override async execute(): Promise<CommandResult> {
+        return { success: true };
+      }
     }
 
     const cmd = new TestCommand();
@@ -35,7 +37,9 @@ describe("Command (class-based)", () => {
       readonly description = "A test command";
       readonly options = testOptions;
 
-      override async execute(): Promise<void> {}
+      override async execute(): Promise<CommandResult> {
+        return { success: true };
+      }
     }
 
     const cmd = new TestCommand();
@@ -48,7 +52,9 @@ describe("Command (class-based)", () => {
       readonly description = "A subcommand";
       readonly options = {} as const;
 
-      override async execute(): Promise<void> {}
+      override async execute(): Promise<CommandResult> {
+        return { success: true };
+      }
     }
 
     class ParentCommand extends Command<OptionSchema> {
@@ -57,7 +63,9 @@ describe("Command (class-based)", () => {
       readonly options = {} as const;
       override subCommands = [new SubCommand()];
 
-      override async execute(): Promise<void> {}
+      override async execute(): Promise<CommandResult> {
+        return { success: true };
+      }
     }
 
     const cmd = new ParentCommand();
@@ -72,8 +80,9 @@ describe("Command (class-based)", () => {
 
       executedWith: OptionValues<typeof testOptions> | null = null;
 
-      override async execute(opts: OptionValues<typeof testOptions>): Promise<void> {
+      override async execute(opts: OptionValues<typeof testOptions>): Promise<CommandResult> {
         this.executedWith = opts;
+        return { success: true };
       }
     }
 
@@ -94,8 +103,9 @@ describe("Command (class-based)", () => {
         order.push("before");
       }
 
-      override execute(): void {
+      override async execute(): Promise<CommandResult> {
         order.push("execute");
+        return { success: true };
       }
 
       override afterExecute(): void {
@@ -118,7 +128,9 @@ describe("Command (class-based)", () => {
       readonly options = {} as const;
       override readonly tuiHidden = true;
 
-      override async execute(): Promise<void> {}
+      override async execute(): Promise<CommandResult> {
+        return { success: true };
+      }
     }
 
     expect(new HiddenCommand().tuiHidden).toBe(true);

@@ -1,7 +1,7 @@
 import { test, expect, describe, beforeEach, afterEach } from "bun:test";
 import { createVersionCommand } from "../builtins/version.ts";
 import { createHelpCommandForParent, createRootHelpCommand } from "../builtins/help.ts";
-import { Command } from "../core/command.ts";
+import { Command, type CommandResult } from "../core/command.ts";
 import { KNOWN_COMMANDS } from "../core/knownCommands.ts";
 
 describe("Built-in Commands", () => {
@@ -74,7 +74,9 @@ describe("Built-in Commands", () => {
         readonly description = "Run something";
         readonly options = {} as const;
 
-        override async execute(): Promise<void> {}
+        override async execute(): Promise<CommandResult> {
+          return { success: true };
+        }
       }
 
       const cmd = createHelpCommandForParent(new ParentCommand(), "myapp", "1.0.0");

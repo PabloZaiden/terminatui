@@ -1,6 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { TuiApplication } from "../tui/TuiApplication.tsx";
-import { Command } from "../core/command.ts";
+import { Command, type CommandResult } from "../core/command.ts";
 import type { OptionSchema, OptionValues, OptionDef } from "../types/command.ts";
 import type { SupportedMode } from "../core/application.ts";
 
@@ -22,8 +22,9 @@ class TestCommand extends Command<typeof testOptions> {
 
   override async execute(
     opts: OptionValues<typeof testOptions>
-  ): Promise<void> {
+  ): Promise<CommandResult> {
     this.executedWith = opts as Record<string, unknown>;
+    return { success: true };
   }
 }
 

@@ -1,6 +1,6 @@
 import { test, expect, describe } from "bun:test";
 import { CommandRegistry } from "../core/registry.ts";
-import { Command } from "../core/command.ts";
+import { Command, type CommandResult } from "../core/command.ts";
 import type { OptionSchema } from "../types/command.ts";
 
 class SimpleCommand extends Command<OptionSchema> {
@@ -14,7 +14,9 @@ class SimpleCommand extends Command<OptionSchema> {
     this.description = description;
   }
 
-  override async execute(): Promise<void> {}
+  override async execute(): Promise<CommandResult> {
+    return { success: true };
+  }
 }
 
 describe("CommandRegistry", () => {
