@@ -252,7 +252,6 @@ interface OptionDef {
   default?: unknown;
   alias?: string;
   enum?: readonly string[];  // For string type, restrict to values
-  env?: string;              // Environment variable to read from
   min?: number;              // Minimum value (for number type)
   max?: number;              // Maximum value (for number type)
   
