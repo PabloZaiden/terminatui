@@ -275,7 +275,7 @@ bun src/index.ts download https://speed.hetzner.de/100MB.bin --output ./test-dow
 # Should see: "Download cancelled. Cleaned up partial download."
 
 # Run TUI mode
-bun src/index.ts --tui
+bun src/index.ts --mode opentui
 
 # Start download, then press Esc to cancel
 # Same cancellation behavior with cleanup

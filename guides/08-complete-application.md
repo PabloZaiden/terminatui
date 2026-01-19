@@ -16,7 +16,7 @@ tasks add "Write documentation" --priority high
 tasks list --filter pending
 tasks complete abc123
 tasks stats
-tasks --tui  # Interactive mode
+tasks --mode opentui  # Interactive mode
 ```
 
 ## Project Structure
@@ -448,7 +448,7 @@ Update `package.json`:
   },
   "scripts": {
     "start": "bun src/index.ts",
-    "tui": "bun src/index.ts --tui",
+    "tui": "bun src/index.ts --mode opentui",
     "build": "bun build src/index.ts --outdir dist --target bun"
   },
   "dependencies": {

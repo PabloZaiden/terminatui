@@ -379,7 +379,7 @@ import { TuiApplication, Command } from "@pablozaiden/terminatui";
 
 class MyApp extends TuiApplication {
   // Each app decides what "default" means.
-  protected override defaultRenderer = "opentui" as const;
+  protected override defaultMode = "opentui" as const;
 
   constructor() {
     super({
@@ -387,10 +387,34 @@ class MyApp extends TuiApplication {
       displayName: "🚀 My App",  // Human-readable name for TUI header
       version: "1.0.0",
       commands: [new RunCommand(), new ConfigCommand()],
-      enableTui: true, // default: true
     });
   }
 }
+```
+
+### Execution Modes
+
+Execution mode is controlled by the `--mode` flag or the app's configured `defaultMode`:
+
+- **`Application`**: Only supports `cli` mode
+- **`TuiApplication`**: Supports `cli`, `opentui`, and `ink` modes
+
+Subclasses can restrict supported modes by overriding the `supportedModes` getter:
+
+```typescript
+class InkOnlyApp extends TuiApplication {
+  protected override get supportedModes() {
+    return ["ink"] as const;  // Only ink mode allowed
+  }
+  protected override defaultMode = "ink" as const;
+}
+```
+
+```bash
+myapp                           # Uses app default mode
+myapp --mode opentui            # Forces TUI (OpenTUI)
+myapp --mode ink                # Forces TUI (Ink)
+myapp --mode cli run --verbose  # Forces CLI
 ```
 
 Execution mode is controlled only by the selected mode (`--mode`) or the app’s configured default mode.
