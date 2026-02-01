@@ -28,6 +28,17 @@ bun add @pablozaiden/terminatui
 
 ## Quick Start
 
+The easiest way to start building a terminatui app is with the create template:
+
+```bash
+bun create terminatui my-app
+cd my-app
+bun install
+bun run start
+```
+
+For more information, see [create-terminatui](https://github.com/PabloZaiden/create-terminatui).
+
 ### 1. Define a Command
 
 ```typescript
@@ -110,19 +121,6 @@ myapp help
 myapp greet help
 # Shows greet command options
 ```
-
-### Create a New Project
-
-The easiest way to start building a terminatui app is with the create template:
-
-```bash
-bun create terminatui my-app
-cd my-app
-bun install
-bun run start
-```
-
-For more information, see [create-terminatui](https://github.com/PabloZaiden/create-terminatui).
 
 ## Core Concepts
 
