@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 export function Header({ name, version, breadcrumb }: HeaderProps) {
-    const breadcrumbStr = breadcrumb?.length ? ` 3 ${breadcrumb.join(" 3 ")}` : "";
+    const breadcrumbStr = breadcrumb?.length ? ` > ${breadcrumb.join(" > ")}` : "";
 
     return (
         <box flexDirection="column" flexShrink={0}>
