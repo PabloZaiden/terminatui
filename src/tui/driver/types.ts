@@ -25,6 +25,7 @@ export type ConfigRouteParams = {
     values: Record<string, unknown>;
     fieldConfigs: ReturnType<typeof schemaToFieldConfigs>;
     selectedFieldIndex?: number;
+    validationError?: string | null;
 };
 
 export type CommandBrowserRouteParams = {

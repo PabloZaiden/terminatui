@@ -6,6 +6,7 @@ import { RenderConfigScreen } from "../semantic/render.tsx";
 
 import { buildCliCommand } from "../utils/buildCliCommand.ts";
 import { loadPersistedParameters, savePersistedParameters } from "../utils/parameterPersistence.ts";
+import { validateTuiOptions } from "../utils/validateTuiOptions.ts";
 
 import type { OptionDef, OptionSchema } from "../../types/command.ts";
 import type {
@@ -112,6 +113,7 @@ export class ConfigController {
                     values={params.values}
                     cliCommand={cliCommand}
                     selectedFieldIndex={clampedIndex}
+                    validationError={params.validationError}
                     onSelectionChange={(index) => {
                         const maxIndex = params.fieldConfigs.length;
                         const nextIndex = Math.max(0, Math.min(index, maxIndex));
@@ -152,6 +154,30 @@ export class ConfigController {
                         });
                     }}
                     onRun={() => {
+                        const schema = params.command.options as OptionSchema;
+                        const errors = validateTuiOptions(schema, params.values);
+
+                        if (errors.length > 0) {
+                            // Show validation error and stay on config screen
+                            const firstError = errors[0];
+                            this.navigation.replace("config" satisfies TuiRoute, {
+                                ...params,
+                                validationError: firstError?.message ?? "Validation error",
+                            });
+
+                            // Clear error after 3 seconds
+                            setTimeout(() => {
+                                const currentParams = this.navigation.current.params as ConfigRouteParams | undefined;
+                                if (currentParams?.validationError) {
+                                    this.navigation.replace("config" satisfies TuiRoute, {
+                                        ...currentParams,
+                                        validationError: null,
+                                    });
+                                }
+                            }, 3000);
+                            return;
+                        }
+
                         void this.run(params);
                     }}
                 />

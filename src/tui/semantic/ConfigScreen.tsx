@@ -15,6 +15,9 @@ export interface ConfigScreenProps {
 
     onEditField: (fieldId: string) => void;
     onRun: () => void;
+
+    /** Validation error message to display */
+    validationError?: string | null;
 }
 
 export function ConfigScreen(_props: ConfigScreenProps) {

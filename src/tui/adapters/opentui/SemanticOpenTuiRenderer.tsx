@@ -98,7 +98,14 @@ export class SemanticOpenTuiRenderer {
                     }
                 />
                 <box flexDirection="column" paddingTop={1}>
-                    <Label color="mutedText">CLI: {props.cliCommand}</Label>
+                    <box>
+                        <Label color="mutedText">CLI: {props.cliCommand}</Label>
+                    </box>
+                    {props.validationError ? (
+                        <box>
+                            <Label color="error" bold>{props.validationError}</Label>
+                        </box>
+                    ) : null}
                 </box>
             </box>
         );

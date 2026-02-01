@@ -107,6 +107,9 @@ export class SemanticInkRenderer {
                 />
                 <Box flexDirection="column" paddingTop={1}>
                     <Label color="mutedText">CLI: {props.cliCommand}</Label>
+                    {props.validationError ? (
+                        <Label color="error" bold>{props.validationError}</Label>
+                    ) : null}
                 </Box>
             </Box>
         );

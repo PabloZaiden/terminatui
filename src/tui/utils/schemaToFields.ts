@@ -75,6 +75,7 @@ export function schemaToFieldConfigs(schema: OptionSchema): FieldConfig[] {
             label: def.label ?? keyToLabel(key),
             type: optionTypeToFieldType(def),
             options: createFieldOptions(def),
+            required: def.required,
         };
 
         fields.push(fieldConfig);
