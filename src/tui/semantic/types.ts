@@ -125,4 +125,5 @@ export interface FieldConfig {
     label: string;
     type: FieldType;
     options?: FieldOption[];
+    required?: boolean;
 }
