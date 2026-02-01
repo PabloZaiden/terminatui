@@ -132,9 +132,17 @@ export class ConfigController {
                             fieldConfigs: params.fieldConfigs,
 
                             onSubmit: (value: unknown) => {
+                                let newValues = { ...params.values, [fieldId]: value };
+
+                                // Call onConfigChange if defined and merge any returned updates
+                                const updates = params.command.onConfigChange?.(fieldId, value, newValues);
+                                if (updates && typeof updates === "object") {
+                                    newValues = { ...newValues, ...updates };
+                                }
+
                                 this.navigation.replace("config" satisfies TuiRoute, {
                                     ...params,
-                                    values: { ...params.values, [fieldId]: value },
+                                    values: newValues,
                                 });
                                 this.navigation.closeModal();
                             },
