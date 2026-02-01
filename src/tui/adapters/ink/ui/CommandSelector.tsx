@@ -17,7 +17,7 @@ interface CommandSelectorProps {
 }
 
 export function CommandSelector({ commands, selectedIndex, onSelect, breadcrumb }: CommandSelectorProps) {
-    const title = breadcrumb?.length ? `Select Command (${breadcrumb.join(" > ")})` : "Select Command";
+    const title = breadcrumb?.length ? `Select Command (${breadcrumb.join(" → ")})` : "Select Command";
 
     return (
         <Box flexDirection="column" flexGrow={1} >
