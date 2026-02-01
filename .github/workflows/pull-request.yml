@@ -7,7 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    environment: PR
 
     steps:
       - name: Checkout repository
