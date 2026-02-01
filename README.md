@@ -39,6 +39,10 @@ bun run start
 
 For more information, see [create-terminatui](https://github.com/PabloZaiden/create-terminatui).
 
+### Manual Setup
+
+If you prefer to set up your project manually or want to integrate terminatui into an existing project, follow the steps below.
+
 ### 1. Define a Command
 
 ```typescript
