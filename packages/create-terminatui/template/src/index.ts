@@ -3,12 +3,14 @@
 import { TuiApplication } from "@pablozaiden/terminatui";
 import { GreetCommand } from "./commands/greet.ts";
 
-class MyApp extends TuiApplication {
+export class MyApp extends TuiApplication {
+    static appName = "myapp";
+
     protected override defaultMode = "opentui" as const;
 
     constructor() {
         super({
-            name: "myapp",
+            name: MyApp.appName,
             displayName: "My TUI App",
             version: "0.1.0",
             commands: [new GreetCommand()],

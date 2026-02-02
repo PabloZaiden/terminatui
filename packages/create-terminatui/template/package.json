@@ -6,7 +6,8 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "build": "bunx tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "compile": "bun run build; export workspace_dir=$(pwd); (cd /tmp; bun $workspace_dir/src/build.ts)"
   },
   "dependencies": {
     "@pablozaiden/terminatui": "latest"

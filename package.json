@@ -8,7 +8,8 @@
   "scripts": {
     "build": "bun run --filter '*' build",
     "test": "bun run --filter '*' test",
-    "example": "bun run examples/tui-app/index.ts"
+    "example": "bun run examples/tui-app/index.ts",
+    "example:compile": "export workspace_dir=$(pwd); (cd /tmp; bun $workspace_dir/examples/tui-app/build.ts)"
   },
   "dependencies": {
     "@pablozaiden/terminatui": "workspace:*"
