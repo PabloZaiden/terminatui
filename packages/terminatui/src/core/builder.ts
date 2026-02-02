@@ -22,7 +22,8 @@ export async function buildBinary(
         | 'bun-windows-x64'
         | undefined;
 
-    const outfile = target?.startsWith('bun-windows') ? `${outDir}/${binaryName}.exe` : `${outDir}/${binaryName}`;
+    const isWindowsBinary = target?.startsWith('bun-windows') || (!target && os.platform() === 'win32');
+    const outfile = isWindowsBinary ? `${outDir}/${binaryName}.exe` : `${outDir}/${binaryName}`;
     console.info('Building binary...');
     if (target) {
         console.info(`Target: ${target}`);
