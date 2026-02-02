@@ -44,8 +44,8 @@ export async function buildBinary(
 
     if (!result.success) {
         console.error('Build failed:');
-        for (const _log of result.logs) {
-            console.error(_log);
+        for (const log of result.logs) {
+            console.error(log);
         }
         process.exit(1);
     }
