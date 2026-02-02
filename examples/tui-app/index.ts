@@ -14,6 +14,7 @@
 
 import { TuiApplication } from "@pablozaiden/terminatui";
 import { ConfigCommand } from "./commands/config/index.ts";
+import { DummyCommand } from "./commands/dummy.ts";
 import { GreetCommand } from "./commands/greet.ts";
 import { MathCommand } from "./commands/math.ts";
 import { StatusCommand } from "./commands/status.ts";
@@ -28,6 +29,7 @@ class ExampleApp extends TuiApplication {
                 new MathCommand(),
                 new StatusCommand(),
                 new ConfigCommand(),
+                new DummyCommand(),
             ],
         });
     }

@@ -341,9 +341,6 @@ export class Application {
       return;
     }
 
-    // Determine execution mode
-    const mode = this.detectExecutionMode(command, flagArgs);
-
     // Parse options
     const schema = command.options ?? {};
     const parseArgsConfig = schemaToParseArgsOptions(schema);
@@ -364,13 +361,13 @@ export class Application {
     let options;
     try {
       options = parseOptionValues(schema, parsedValues);
-     } catch (err) {
-       // Enum validation error from parseOptionValues
-       AppContext.current.logger.error(`Error: ${(err as Error).message}\n`);
-       await this.printHelpForCommand(command, commandPath);
-       process.exitCode = 1;
-       return;
-     }
+    } catch (err) {
+      // Enum validation error from parseOptionValues
+      AppContext.current.logger.error(`Error: ${(err as Error).message}\n`);
+      await this.printHelpForCommand(command, commandPath);
+      process.exitCode = 1;
+      return;
+    }
 
 
     // Validate options (required, min/max, etc.)
@@ -409,17 +406,14 @@ export class Application {
       const ctx: CommandExecutionContext = { signal: new AbortController().signal };
       const commandResult = await command.execute(config, ctx);
 
-      // In CLI mode, handle result output
-      if (mode === ExecutionMode.Cli) {
-        if (commandResult.success) {
-          // Output data as JSON to stdout if present
-          if (commandResult.data !== undefined) {
-            console.log(JSON.stringify(commandResult.data, null, 2));
-          }
-        } else {
-          // Set exit code for failures
-          process.exitCode = 1;
+      if (commandResult.success) {
+        // Output data as JSON to stdout if present
+        if (commandResult.data !== undefined) {
+          console.log(JSON.stringify(commandResult.data, null, 2));
         }
+      } else {
+        // Set exit code for failures
+        process.exitCode = 1;
       }
     } catch (e) {
       error = e as Error;
@@ -480,19 +474,6 @@ export class Application {
   }
 
   /**
-   * Detect the execution mode based on command and args.
-   */
-  private detectExecutionMode(command: AnyCommand, args: string[]): ExecutionMode {
-    // If no args and command supports TUI, use TUI mode
-    if (args.length === 0 && command.supportsTui()) {
-      return ExecutionMode.Tui;
-    }
-
-    // Otherwise use CLI mode
-    return ExecutionMode.Cli;
-  }
-
-  /**
    * Parse global options from argv.
    * Returns the parsed global options and remaining args.
    */
@@ -514,7 +495,7 @@ export class Application {
     const rawGlobalOptions = parseOptionValues(GLOBAL_OPTIONS_SCHEMA, result.values) as GlobalOptions;
 
     const globalOptions: GlobalOptions = { ...rawGlobalOptions };
-    
+
     const remainingArgs: string[] = [];
     for (const token of result.tokens ?? []) {
       if (token.kind === "positional") {
