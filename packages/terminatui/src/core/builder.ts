@@ -55,7 +55,8 @@ export async function buildBinary(
     fs.mkdirSync(finalOutDir, { recursive: true });
 
     console.info('Copying built file to dist directory...');
-    const finalBinaryPath = `${finalOutDir}/${target ? `${binaryName}-${target.replace('bun-', '')}` : binaryName}`;
+    const finalBinaryBaseName = target ? `${binaryName}-${target.replace('bun-', '')}` : binaryName;
+    const finalBinaryPath = `${finalOutDir}/${finalBinaryBaseName}${isWindowsBinary ? '.exe' : ''}`;
     fs.copyFileSync(outfile, finalBinaryPath);
 
     console.info('Cleaning up temporary files...');
