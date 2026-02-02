@@ -21,6 +21,7 @@ export class HelpCommand extends Command<OptionSchema> {
   private allCommands: AnyCommand[] = [];
   private appName: string;
   private appVersion: string;
+  private commandPath: string[] = [];
 
   constructor(config: {
     parentCommand?: AnyCommand;
@@ -36,6 +37,14 @@ export class HelpCommand extends Command<OptionSchema> {
   }
 
   /**
+   * Set the command path for this help command.
+   * Called by the Application before executing help.
+   */
+  setCommandPath(path: string[]): void {
+    this.commandPath = path;
+  }
+
+  /**
    * Help command is CLI-only (auto-injected for CLI use, not shown in TUI).
    */
   override supportsTui(): boolean {
@@ -45,11 +54,15 @@ export class HelpCommand extends Command<OptionSchema> {
   override async execute(): Promise<CommandResult> {
     let helpText: string;
 
+    // Get the parent command path (exclude "help" from the end if present)
+    const parentPath = this.commandPath.filter(p => p !== KNOWN_COMMANDS.help);
+
     if (this.parentCommand) {
       // Show help for the parent command
       helpText = generateCommandHelp(this.parentCommand, {
         appName: this.appName,
         version: this.appVersion,
+        commandPath: parentPath,
         globalOptionsSchema: GLOBAL_OPTIONS_SCHEMA,
       });
     } else {

@@ -1,7 +1,6 @@
 import { AppContext, type AppConfig } from "./context.ts";
 import { Command, type AnyCommand, ConfigValidationError, type CommandExecutionContext } from "./command.ts";
 import { CommandRegistry } from "./registry.ts";
-import { ExecutionMode } from "../types/execution.ts";
 import { LogLevel, type LoggerConfig } from "./logger.ts";
 import {
   extractCommandChain,
@@ -341,6 +340,11 @@ export class Application {
       return;
     }
 
+    // If this is a help command being executed directly, set its command path
+    if ('setCommandPath' in command && typeof command.setCommandPath === 'function') {
+      (command as { setCommandPath: (path: string[]) => void }).setCommandPath(commandPath);
+    }
+
     // Parse options
     const schema = command.options ?? {};
     const parseArgsConfig = schemaToParseArgsOptions(schema);
@@ -448,6 +452,11 @@ export class Application {
     const helpCommand = command.subCommands?.find((sub) => sub.name === KNOWN_COMMANDS.help);
     if (!helpCommand) {
       throw new Error(`Help command not injected for '${resolvedCommandPath.join(" ")}'`);
+    }
+
+    // Set the command path on the help command so it can generate correct usage
+    if ('setCommandPath' in helpCommand && typeof helpCommand.setCommandPath === 'function') {
+      (helpCommand as { setCommandPath: (path: string[]) => void }).setCommandPath(resolvedCommandPath);
     }
 
     await this.executeCommand(helpCommand, [], [...resolvedCommandPath, KNOWN_COMMANDS.help]);

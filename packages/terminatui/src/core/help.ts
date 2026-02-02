@@ -1,6 +1,15 @@
 import { type AnyCommand } from "./command.ts";
 import type { OptionDef } from "../types/command.ts";
 import { colors } from "../cli/output/colors.ts";
+import { KNOWN_COMMANDS } from "./knownCommands.ts";
+
+/**
+ * Check if command has "real" subcommands (excluding auto-injected help).
+ */
+function hasRealSubCommands(command: AnyCommand): boolean {
+  if (!command.subCommands?.length) return false;
+  return command.subCommands.some(sub => sub.name !== KNOWN_COMMANDS.help);
+}
 
 /**
  * Options for generating help text.
@@ -112,7 +121,7 @@ export function formatExamples(command: AnyCommand): string {
  * @returns Formatted help text
  */
 export function generateCommandHelp(command: AnyCommand, options: HelpOptions = {}): string {
-  const { appName = "cli", version } = options;
+  const { appName = "cli", version, commandPath = [] } = options;
   const sections: string[] = [];
 
   // Header with version
@@ -164,8 +173,14 @@ export function generateCommandHelp(command: AnyCommand, options: HelpOptions = 
 
   // Help hint
   if (command.hasSubCommands()) {
+    // Build the full command path for the hint
+    const fullPath = [appName, ...commandPath];
+    // Add command name if not already in path
+    if (commandPath.length === 0 || commandPath[commandPath.length - 1] !== command.name) {
+      fullPath.push(command.name);
+    }
     sections.push(
-      `\n${colors.dim(`Run '${appName} ${command.name} <command> help' for more information on a command.`)}`
+      `\n${colors.dim(`Run '${fullPath.join(" ")} <command> help' for more information on a command.`)}`
     );
   }
 
