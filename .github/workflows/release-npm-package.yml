@@ -1,4 +1,4 @@
-name: Release NPM Package
+name: Release NPM Packages
 
 on:
   release:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   publish:
-    name: Publish Package
+    name: Publish Packages
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,30 +57,67 @@ jobs:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Set package version
+      - name: Set terminatui package version
         run: |
           VERSION="${{ steps.get_tag.outputs.version }}"
-          jq --arg version "$VERSION" '.version = $version' package.json > package.json.tmp && mv package.json.tmp package.json
+          jq --arg version "$VERSION" '.version = $version' packages/terminatui/package.json > tmp && mv tmp packages/terminatui/package.json
 
-      - name: Verify package version
+      - name: Set create-terminatui package version
+        run: |
+          VERSION="${{ steps.get_tag.outputs.version }}"
+          jq --arg version "$VERSION" '.version = $version' packages/create-terminatui/package.json > tmp && mv tmp packages/create-terminatui/package.json
+
+      - name: Update template terminatui dependency version
+        run: |
+          VERSION="${{ steps.get_tag.outputs.version }}"
+          jq --arg version "^$VERSION" '.dependencies["@pablozaiden/terminatui"] = $version' packages/create-terminatui/template/package.json > tmp && mv tmp packages/create-terminatui/template/package.json
+
+      - name: Verify package versions
         run: |
           EXPECTED_VERSION="${{ steps.get_tag.outputs.version }}"
-          ACTUAL_VERSION=$(jq -r '.version' package.json)
-          if [ "$EXPECTED_VERSION" != "$ACTUAL_VERSION" ]; then
-            echo "Error: Version mismatch. Expected $EXPECTED_VERSION, got $ACTUAL_VERSION"
+          
+          TERMINATUI_VERSION=$(jq -r '.version' packages/terminatui/package.json)
+          if [ "$EXPECTED_VERSION" != "$TERMINATUI_VERSION" ]; then
+            echo "Error: terminatui version mismatch. Expected $EXPECTED_VERSION, got $TERMINATUI_VERSION"
             exit 1
           fi
-          echo "Version verified: $ACTUAL_VERSION"
+          echo "terminatui version verified: $TERMINATUI_VERSION"
+          
+          CREATE_VERSION=$(jq -r '.version' packages/create-terminatui/package.json)
+          if [ "$EXPECTED_VERSION" != "$CREATE_VERSION" ]; then
+            echo "Error: create-terminatui version mismatch. Expected $EXPECTED_VERSION, got $CREATE_VERSION"
+            exit 1
+          fi
+          echo "create-terminatui version verified: $CREATE_VERSION"
+          
+          TEMPLATE_DEP=$(jq -r '.dependencies["@pablozaiden/terminatui"]' packages/create-terminatui/template/package.json)
+          EXPECTED_DEP="^$EXPECTED_VERSION"
+          if [ "$EXPECTED_DEP" != "$TEMPLATE_DEP" ]; then
+            echo "Error: template dependency mismatch. Expected $EXPECTED_DEP, got $TEMPLATE_DEP"
+            exit 1
+          fi
+          echo "template dependency verified: $TEMPLATE_DEP"
 
       - name: Install dependencies
         run: bun install
-      - name: Build package
+
+      - name: Build packages
         run: bun run build
 
-      - name: Publish Package
+      - name: Publish terminatui package
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            npm publish --no-build --tag unstable
+            npm publish --no-build --tag unstable --provenance --access public
           else
-            npm publish --no-build
+            npm publish --no-build --provenance --access public
           fi
+        working-directory: packages/terminatui
+
+      - name: Publish create-terminatui package
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            npm publish --no-build --tag unstable --provenance --access public
+          else
+            npm publish --no-build --provenance --access public
+          fi
+        working-directory: packages/create-terminatui

@@ -37,7 +37,7 @@ bun install
 bun run start
 ```
 
-For more information, see [create-terminatui](https://github.com/PabloZaiden/create-terminatui).
+For more information, see [create-terminatui](./packages/create-terminatui).
 
 ### Manual Setup
 

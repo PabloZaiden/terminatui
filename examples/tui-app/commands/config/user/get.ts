@@ -1,6 +1,4 @@
-import { Command, type CommandResult } from "../../../../../src/core/command";
-import { AppContext } from "../../../../../src/core/context";
-import type { OptionSchema, OptionValues } from "../../../../../src/types/command";
+import { Command, type CommandResult, AppContext, type OptionSchema, type OptionValues } from "@pablozaiden/terminatui";
 
 const options = {
     key: {

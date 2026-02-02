@@ -6,6 +6,7 @@ Step-by-step tutorials for building CLI applications with the terminatui framewo
 
 | # | Guide | Level | Topics |
 |---|-------|-------|--------|
+| 0 | [Getting Started](00-getting-started.md) | Start Here | Quick start options, `bun create` |
 | 1 | [Hello World](01-hello-world.md) | Super Simple | Basic Command, Application |
 | 2 | [Adding Options](02-adding-options.md) | Super Simple | Option types, defaults, aliases |
 | 3 | [Multiple Commands](03-multiple-commands.md) | Basic | Multiple commands, project structure |
@@ -17,8 +18,13 @@ Step-by-step tutorials for building CLI applications with the terminatui framewo
 
 ## Learning Path
 
+### Quick Start
+Start with [Guide 0: Getting Started](00-getting-started.md) to choose your path:
+- **Fast track**: Use `bun create terminatui` to get a working app immediately
+- **Learn step by step**: Follow the manual guides starting from Guide 1
+
 ### Beginners
-Start with guides 1-2 to understand the basics of commands and options.
+After getting started, work through guides 1-2 to understand the basics of commands and options.
 
 ### Intermediate
 Continue with guides 3-4 to learn about organizing larger applications.
@@ -27,6 +33,19 @@ Continue with guides 3-4 to learn about organizing larger applications.
 Work through guides 5-8 to master TUI features, validation, and production patterns.
 
 ## Quick Start
+
+The fastest way to get started:
+
+```bash
+bun create terminatui my-app
+cd my-app
+bun install
+bun run start
+```
+
+See [Guide 0: Getting Started](00-getting-started.md) for more options, or continue below for a minimal manual setup.
+
+### Manual Setup
 
 ```bash
 # Create a new project
@@ -60,11 +79,7 @@ class MyCLI extends Application {
   }
 }
 
-// Recommended: let Terminatui read `Bun.argv.slice(2)`
 await new MyCLI().run();
-
-// For tests or programmatic invocation:
-// await new MyCLI().runFromArgs(["hello", "--name", "Developer"]);
 EOF
 
 # Run it

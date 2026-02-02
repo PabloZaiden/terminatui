@@ -1,0 +1,27 @@
+{
+  "name": "create-terminatui",
+  "version": "0.0.0-development",
+  "description": "Create template for TerminaTUI CLI/TUI applications",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PabloZaiden/terminatui.git",
+    "directory": "packages/create-terminatui"
+  },
+  "type": "module",
+  "bin": {
+    "create-terminatui": "bin/create-terminatui.js"
+  },
+  "files": [
+    "bin/create-terminatui.js",
+    "template/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "bun build src/create-terminatui.ts --outdir bin --target bun",
+    "test": "bun run build && bun run test:create && bun run test:template",
+    "test:create": "bun run bin/create-terminatui.js /tmp/terminatui-test-app",
+    "test:template": "cd /tmp/terminatui-test-app && bun install && bun run build && bun run start --mode cli greet --name Test --loud",
+    "test:template:tui": "cd /tmp/terminatui-test-app && bun run start",
+    "cleanup": "rm -rf /tmp/terminatui-test-app"
+  }
+}
