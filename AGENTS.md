@@ -8,6 +8,18 @@
 - Never use `import("...")` dynamic imports. Always use static imports (unless absolutely necessary).
 - Always use TypeScript conventions over JavaScript conventions. For example, use the `private` keyword for private class members instead of the `#` prefix (ES private fields).
 
+## Project Structure
+
+This is a monorepo with Bun workspaces. The packages are:
+
+- `packages/terminatui` - The main framework package (`@pablozaiden/terminatui`)
+- `packages/create-terminatui` - The create template package (`create-terminatui`)
+
+Both packages are released with the same version number. When a release is created, the CI/CD workflow:
+1. Sets both packages to the release version
+2. Updates the template's dependency on terminatui to match the release version
+3. Publishes both packages to npm
+
 ## Workflow
 
 - Always make sure you have all your goals written down in a document and agreed upon before starting to code.

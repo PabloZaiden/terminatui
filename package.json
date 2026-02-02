@@ -1,38 +1,21 @@
 {
-  "name": "@pablozaiden/terminatui",
-  "version": "0.0.0-development",
-  "description": "Terminal UI and Command Line Application Framework",
-  "repository": {
-    "url": "https://github.com/PabloZaiden/terminatui"
-  },
-  "type": "module",
-  "files": [
-    "src/**/*"
+  "name": "terminatui-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
   ],
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
-    }
-  },
+  "type": "module",
   "scripts": {
-    "build": "bunx tsc --noEmit",
-    "test": "bun test",
+    "build": "bun run --filter '*' build",
+    "test": "bun run --filter '*' test",
     "example": "bun run examples/tui-app/index.ts"
   },
   "dependencies": {
-    "@opentui/react": "0.1.75",
-    "ink": "6.6.0",
-    "ink-select-input": "6.2.0",
-    "ink-text-input": "6.0.0",
-    "tslog": "4.10.2"
+    "@pablozaiden/terminatui": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/react": "^19",
-    "typescript": "5.9.3"
-  },
-  "peerDependencies": {
     "typescript": "5.9.3"
   }
 }

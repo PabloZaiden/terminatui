@@ -5,7 +5,7 @@ ignore
 
 *.log
 
-# dependencies (bun install)
+# dependencies
 node_modules
 
 # output
@@ -13,19 +13,16 @@ out
 dist
 *.tgz
 
-# create-terminatui build output
-packages/create-terminatui/bin
-
-# code coverage
+# coverage
 coverage
 *.lcov
 
 # logs
 logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# dotenv environment variable files
+# dotenv
 .env
 .env.development.local
 .env.test.local
@@ -37,8 +34,8 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .cache
 *.tsbuildinfo
 
-# IntelliJ based IDEs
+# IDE
 .idea
 
-# Finder (MacOS) folder config
+# macOS
 .DS_Store

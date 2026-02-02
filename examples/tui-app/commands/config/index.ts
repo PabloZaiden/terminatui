@@ -1,6 +1,6 @@
 import { UserConfigCommand } from "./user/index.ts";
 import { AppConfigCommand } from "./app/index.ts";
-import { Command } from "../../../../src/core/command.ts";
+import { Command } from "@pablozaiden/terminatui";
 
 export class ConfigCommand extends Command {
     readonly name = "config";

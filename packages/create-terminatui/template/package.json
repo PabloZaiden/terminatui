@@ -1,0 +1,22 @@
+{
+  "name": "my-terminatui-app",
+  "version": "0.1.0",
+  "description": "A TerminaTUI application",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "build": "bunx tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@pablozaiden/terminatui": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19",
+    "typescript": "5.9.3"
+  },
+  "peerDependencies": {
+    "typescript": "5.9.3"
+  }
+}

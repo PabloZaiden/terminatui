@@ -1,4 +1,4 @@
-import { Command } from "../../../../../src/core/command.ts";
+import { Command } from "@pablozaiden/terminatui";
 import { AppGetCommand } from "./get.ts";
 import { AppSetCommand } from "./set.ts";
 
