@@ -58,8 +58,11 @@ export interface ApplicationConfig {
   version: string;
   /** Optional commit hash for version display (shows "(dev)" if not set) */
   commitHash?: string;
-  /** Commands to register */
-  commands: AnyCommand[];
+  /** 
+   * Commands to register. 
+   * Can be omitted and registered later via `registerCommands()`.
+   */
+  commands?: AnyCommand[];
   /** Default command when no args provided (by name) */
   defaultCommand?: string;
   /** Logger configuration */
@@ -88,12 +91,32 @@ export interface ApplicationHooks {
  * 
  * @example
  * ```typescript
+ * // Option 1: Pass commands in constructor (original API, still works)
  * const app = new Application({
  *   name: "myapp",
  *   version: "1.0.0",
  *   commands: [new RunCommand(), new CheckCommand()],
  *   defaultCommand: "version",
  * });
+ * 
+ * await app.run();
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Option 2: Register commands dynamically after construction
+ * const app = new Application({
+ *   name: "myapp",
+ *   version: "1.0.0",
+ * });
+ * 
+ * // Access context before registering commands
+ * app.context.setService("db", await connectToDb());
+ * 
+ * // Register commands that may depend on context
+ * app.registerCommands([
+ *   new DynamicCommand(app.context),
+ * ]);
  * 
  * await app.run();
  * ```
@@ -127,6 +150,7 @@ export class Application {
 
   private readonly defaultCommandName?: string;
   private hooks: ApplicationHooks = {};
+  private commandsRegistered = false;
 
   constructor(config: ApplicationConfig) {
     this.name = config.name;
@@ -146,15 +170,57 @@ export class Application {
 
     context.logger.silly(`Application initialized: ${this.name} v${this.version}`);
 
-    // Create registry and register commands
+    // Create registry
     this.registry = new CommandRegistry();
-    this.registerCommands(config.commands);
+    
+    // If commands were provided in config (even empty array), register them now
+    // This maintains backward compatibility - passing commands: [] still registers built-ins
+    if (config.commands !== undefined) {
+      this.registerCommands(config.commands);
+    }
   }
 
   /**
-   * Register commands and inject help subcommands.
+   * Register commands with the application.
+   * 
+   * This method can be called after construction to register commands dynamically.
+   * This is useful when commands depend on context or other runtime information.
+   * 
+   * @param commands Array of commands to register
+   * @throws If commands have already been registered
+   * 
+   * @example
+   * ```typescript
+   * const app = new Application({
+   *   name: "myapp",
+   *   version: "1.0.0",
+   * });
+   * 
+   * // Access context to set up services
+   * app.context.setService("db", await connectToDb());
+   * 
+   * // Register commands that depend on context
+   * app.registerCommands([
+   *   new DbQueryCommand(),
+   *   new DbMigrateCommand(),
+   * ]);
+   * 
+   * await app.run();
+   * ```
    */
-  private registerCommands(commands: AnyCommand[]): void {
+  registerCommands(commands: AnyCommand[]): void {
+    if (this.commandsRegistered) {
+      throw new Error("Commands have already been registered. registerCommands() can only be called once.");
+    }
+    
+    this.commandsRegistered = true;
+    this.doRegisterCommands(commands);
+  }
+
+  /**
+   * Internal method to register commands and inject help subcommands.
+   */
+  private doRegisterCommands(commands: AnyCommand[]): void {
     this.assertNoReservedCommands(commands);
 
     // Register version command at top level
@@ -244,6 +310,13 @@ export class Application {
    * Useful for tests or manual programmatic invocation.
    */
   async runFromArgs(argv: string[]): Promise<void> {
+    // Ensure commands have been registered before running
+    if (!this.commandsRegistered) {
+      throw new Error(
+        "No commands registered. Call registerCommands() before run(), or provide commands in the constructor config."
+      );
+    }
+
     // configure logger
     AppContext.current.logger.onLogEvent((event) => {
       process.stderr.write(event.message + "\n");

@@ -9,6 +9,9 @@ export class MyApp extends TuiApplication {
     protected override defaultMode = "opentui" as const;
 
     constructor() {
+        // Pass commands in the constructor for simple cases.
+        // For dynamic registration (e.g., after async initialization),
+        // omit `commands` here and call `this.registerCommands([...])` later.
         super({
             name: MyApp.appName,
             displayName: "My TUI App",

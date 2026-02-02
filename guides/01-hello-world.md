@@ -96,6 +96,9 @@ bun src/index.ts greet help
 - The `execute()` method handles the logic
 - `Application` ties everything together
 
+> **Note**: Commands can also be registered after construction using `app.registerCommands([...])`.
+> This is useful when commands depend on async initialization. See the main README for details.
+
 ## Next Steps
 
 → [Guide 2: Adding Options](02-adding-options.md)

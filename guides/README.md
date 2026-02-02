@@ -86,6 +86,10 @@ EOF
 bun src/index.ts hello --name "Developer"
 ```
 
+> **Tip**: Commands can also be registered after construction using `app.registerCommands([...])`. 
+> This is useful when commands depend on async initialization or runtime configuration.
+> See the main README for details.
+
 ## Prerequisites
 
 - [Bun](https://bun.sh)
