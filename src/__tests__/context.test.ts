@@ -1,5 +1,8 @@
 import { describe, test, expect, afterEach } from "bun:test";
 import { AppContext, type AppConfig } from "../core/context.ts";
+import { existsSync, rmdirSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
 
 describe("AppContext", () => {
   afterEach(() => {
@@ -67,6 +70,54 @@ describe("AppContext", () => {
       expect(ctx.hasService("myService")).toBe(false);
       ctx.setService("myService", {});
       expect(ctx.hasService("myService")).toBe(true);
+    });
+  });
+
+  describe("getConfigDir", () => {
+    test("returns path based on app name", () => {
+      const config: AppConfig = { name: "test-app-config", version: "1.0.0" };
+      const ctx = new AppContext(config);
+      const configDir = ctx.getConfigDir();
+      
+      // Should be ~/.test-app-config
+      expect(configDir).toContain(".test-app-config");
+      expect(configDir.startsWith(homedir())).toBe(true);
+    });
+
+    test("creates directory if it does not exist", () => {
+      const uniqueName = `test-app-${Date.now()}`;
+      const config: AppConfig = { name: uniqueName, version: "1.0.0" };
+      const ctx = new AppContext(config);
+      
+      const expectedDir = join(homedir(), `.${uniqueName}`);
+      
+      // Ensure it doesn't exist before the test
+      if (existsSync(expectedDir)) {
+        rmdirSync(expectedDir);
+      }
+      
+      const configDir = ctx.getConfigDir();
+      
+      expect(configDir).toBe(expectedDir);
+      expect(existsSync(configDir)).toBe(true);
+      
+      // Cleanup
+      rmdirSync(configDir);
+    });
+
+    test("returns same path on repeated calls", () => {
+      const config: AppConfig = { name: "test-repeated", version: "1.0.0" };
+      const ctx = new AppContext(config);
+      
+      const configDir1 = ctx.getConfigDir();
+      const configDir2 = ctx.getConfigDir();
+      
+      expect(configDir1).toBe(configDir2);
+      
+      // Cleanup if created
+      if (existsSync(configDir1)) {
+        rmdirSync(configDir1);
+      }
     });
   });
 });

@@ -1,47 +1,31 @@
-import { homedir } from "os";
 import { join } from "path";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from "fs";
-
-/**
- * Get the directory path for storing app configuration.
- * Creates the directory if it doesn't exist.
- * 
- * @param appName - The application name
- * @returns The path to the app config directory
- */
-function getAppConfigDir(appName: string): string {
-    const configDir = join(homedir(), `.${appName}`);
-    if (!existsSync(configDir)) {
-        mkdirSync(configDir, { recursive: true });
-    }
-    return configDir;
-}
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from "fs";
+import { AppContext } from "../../core/context.ts";
 
 /**
  * Get the file path for storing command parameters.
  * 
- * @param appName - The application name
  * @param commandName - The command name
  * @returns The path to the parameters file
  */
-function getParametersFilePath(appName: string, commandName: string): string {
-    const configDir = getAppConfigDir(appName);
+function getParametersFilePath(commandName: string): string {
+    const configDir = AppContext.current.getConfigDir();
     return join(configDir, `${commandName}.parameters.json`);
 }
 
 /**
  * Load persisted parameters for a command.
  * 
- * @param appName - The application name
+ * @param _appName - Deprecated, uses AppContext.current.config.name instead
  * @param commandName - The command name
  * @returns The persisted parameters, or an empty object if none exist
  */
 export function loadPersistedParameters(
-    appName: string,
+    _appName: string,
     commandName: string
 ): Record<string, unknown> {
     try {
-        const filePath = getParametersFilePath(appName, commandName);
+        const filePath = getParametersFilePath(commandName);
         if (existsSync(filePath)) {
             const content = readFileSync(filePath, "utf-8");
             return JSON.parse(content) as Record<string, unknown>;
@@ -57,17 +41,17 @@ export function loadPersistedParameters(
 /**
  * Save parameters for a command.
  * 
- * @param appName - The application name
+ * @param _appName - Deprecated, uses AppContext.current.config.name instead
  * @param commandName - The command name
  * @param parameters - The parameters to persist
  */
 export function savePersistedParameters(
-    appName: string,
+    _appName: string,
     commandName: string,
     parameters: Record<string, unknown>
 ): void {
     try {
-        const filePath = getParametersFilePath(appName, commandName);
+        const filePath = getParametersFilePath(commandName);
         writeFileSync(filePath, JSON.stringify(parameters, null, 2), "utf-8");
     } catch (error) {
         // Silently ignore errors
@@ -78,15 +62,15 @@ export function savePersistedParameters(
 /**
  * Clear persisted parameters for a command.
  * 
- * @param appName - The application name
+ * @param _appName - Deprecated, uses AppContext.current.config.name instead
  * @param commandName - The command name
  */
 export function clearPersistedParameters(
-    appName: string,
+    _appName: string,
     commandName: string
 ): void {
     try {
-        const filePath = getParametersFilePath(appName, commandName);
+        const filePath = getParametersFilePath(commandName);
         if (existsSync(filePath)) {
             unlinkSync(filePath);
         }

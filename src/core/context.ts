@@ -1,5 +1,7 @@
 import { type Logger, createLogger, type LoggerConfig, type LogEvent } from "./logger.ts";
-import { appendFileSync } from "fs";
+import { appendFileSync, existsSync, mkdirSync } from "fs";
+import { homedir } from "os";
+import { join } from "path";
 
 /**
  * Application configuration stored in context.
@@ -119,5 +121,32 @@ export class AppContext {
    */
   hasService(name: string): boolean {
     return this.services.has(name);
+  }
+
+  /**
+   * Get the directory path for storing app configuration and data.
+   * Creates the directory if it doesn't exist.
+   * 
+   * The directory is located at `~/.{appName}` where `appName` is the
+   * application name from the config.
+   * 
+   * @returns The path to the app config directory
+   * 
+   * @example
+   * ```typescript
+   * const configDir = AppContext.current.getConfigDir();
+   * // Returns something like "/Users/john/.myapp"
+   * 
+   * // Store a file in the config directory
+   * const filePath = join(configDir, "settings.json");
+   * writeFileSync(filePath, JSON.stringify(data));
+   * ```
+   */
+  getConfigDir(): string {
+    const configDir = join(homedir(), `.${this.config.name}`);
+    if (!existsSync(configDir)) {
+      mkdirSync(configDir, { recursive: true });
+    }
+    return configDir;
   }
 }
