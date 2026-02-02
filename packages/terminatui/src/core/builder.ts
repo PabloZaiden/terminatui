@@ -54,10 +54,11 @@ export async function buildBinary(
     fs.mkdirSync(finalOutDir, { recursive: true });
 
     console.info('Copying built file to dist directory...');
-    fs.copyFileSync(outfile, `${finalOutDir}/${target ? `${binaryName}-${target.replace('bun-', '')}` : binaryName}`);
+    const finalBinaryPath = `${finalOutDir}/${target ? `${binaryName}-${target.replace('bun-', '')}` : binaryName}`;
+    fs.copyFileSync(outfile, finalBinaryPath);
 
     console.info('Cleaning up temporary files...');
     fs.rmSync(outDir, { recursive: true, force: true });
 
-    console.info('Build completed:', outfile);
+    console.info('Build completed:', finalBinaryPath);
 }
