@@ -1,5 +1,5 @@
 import { AppContext, type AppConfig } from "./context.ts";
-import { type AnyCommand, ConfigValidationError, type CommandExecutionContext } from "./command.ts";
+import { Command, type AnyCommand, ConfigValidationError, type CommandExecutionContext } from "./command.ts";
 import { CommandRegistry } from "./registry.ts";
 import { ExecutionMode } from "../types/execution.ts";
 import { LogLevel, type LoggerConfig } from "./logger.ts";
@@ -334,6 +334,13 @@ export class Application {
     flagArgs: string[],
     commandPath: string[]
   ): Promise<void> {
+    // If this is a non-leaf command (has subcommands but no custom execute),
+    // delegate to the help subcommand to show available subcommands
+    if (this.isContainerCommand(command)) {
+      await this.printHelpForCommand(command, commandPath);
+      return;
+    }
+
     // Determine execution mode
     const mode = this.detectExecutionMode(command, flagArgs);
 
@@ -450,6 +457,26 @@ export class Application {
     }
 
     await this.executeCommand(helpCommand, [], [...resolvedCommandPath, KNOWN_COMMANDS.help]);
+  }
+
+  /**
+   * Check if a command is a "container" command - has subcommands but no custom execute logic.
+   * Container commands should delegate to help when invoked directly.
+   */
+  private isContainerCommand(command: AnyCommand): boolean {
+    // Must have subcommands (excluding the injected help command)
+    const realSubCommands = command.subCommands?.filter(
+      (sub) => sub.name !== KNOWN_COMMANDS.help
+    );
+    if (!realSubCommands || realSubCommands.length === 0) {
+      return false;
+    }
+
+    // Check if the command has overridden the execute method.
+    // We do this by checking if it's the base Command.prototype.execute
+    const hasCustomExecute = command.execute !== Command.prototype.execute;
+
+    return !hasCustomExecute;
   }
 
   /**

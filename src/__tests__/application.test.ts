@@ -453,6 +453,106 @@ describe("Application", () => {
     });
   });
 
+  describe("non-leaf commands", () => {
+    test("non-leaf command without execute shows help", async () => {
+      // Create a container command (has subcommands but no execute)
+      class SubCommand extends Command<OptionSchema> {
+        readonly name = "sub";
+        readonly description = "A sub command";
+        readonly options = {};
+
+        override async execute(): Promise<CommandResult> {
+          return { success: true, data: "sub executed" };
+        }
+      }
+
+      class ContainerCommand extends Command<OptionSchema> {
+        readonly name = "container";
+        readonly description = "A container command";
+        readonly options = {};
+        override readonly subCommands = [new SubCommand()];
+        // Note: No execute() override - uses base class which throws
+      }
+
+      const app = new Application({
+        name: "test-app",
+        version: "1.0.0",
+        commands: [new ContainerCommand()],
+      });
+
+      // Running the container command should not throw - it should show help
+      await app.runFromArgs(["container"]);
+      // If we get here without throwing, the test passes
+    });
+
+    test("non-leaf command with custom execute runs execute", async () => {
+      let containerExecuted = false;
+
+      class SubCommand extends Command<OptionSchema> {
+        readonly name = "sub";
+        readonly description = "A sub command";
+        readonly options = {};
+
+        override async execute(): Promise<CommandResult> {
+          return { success: true };
+        }
+      }
+
+      class ContainerWithExecute extends Command<OptionSchema> {
+        readonly name = "container";
+        readonly description = "A container with execute";
+        readonly options = {};
+        override readonly subCommands = [new SubCommand()];
+
+        override async execute(): Promise<CommandResult> {
+          containerExecuted = true;
+          return { success: true };
+        }
+      }
+
+      const app = new Application({
+        name: "test-app",
+        version: "1.0.0",
+        commands: [new ContainerWithExecute()],
+      });
+
+      await app.runFromArgs(["container"]);
+      expect(containerExecuted).toBe(true);
+    });
+
+    test("subcommand of non-leaf command still executes", async () => {
+      let subExecuted = false;
+
+      class SubCommand extends Command<OptionSchema> {
+        readonly name = "sub";
+        readonly description = "A sub command";
+        readonly options = {};
+
+        override async execute(): Promise<CommandResult> {
+          subExecuted = true;
+          return { success: true };
+        }
+      }
+
+      class ContainerCommand extends Command<OptionSchema> {
+        readonly name = "container";
+        readonly description = "A container command";
+        readonly options = {};
+        override readonly subCommands = [new SubCommand()];
+        // No execute() override
+      }
+
+      const app = new Application({
+        name: "test-app",
+        version: "1.0.0",
+        commands: [new ContainerCommand()],
+      });
+
+      await app.runFromArgs(["container", "sub"]);
+      expect(subExecuted).toBe(true);
+    });
+  });
+
   describe("mode support", () => {
     test("only supports cli mode by default", () => {
       const app = new Application({
