@@ -201,6 +201,9 @@ src/
 - Each subcommand has its own options
 - Help is automatically nested (`db help`, `db migrate help`)
 
+> **Tip**: Commands (including parent commands with subcommands) can be registered dynamically
+> using `app.registerCommands([...])` after construction.
+
 ## Next Steps
 
 → [Guide 5: Interactive TUI](05-interactive-tui.md)

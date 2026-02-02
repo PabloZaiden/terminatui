@@ -91,6 +91,9 @@ class MyCLI extends Application {
 await new MyCLI().run();
 ```
 
+> **Tip**: Commands can also be registered after construction using `app.registerCommands([...])`. 
+> This is useful when commands depend on async initialization or runtime configuration.
+
 Run it:
 
 ```bash

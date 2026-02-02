@@ -402,26 +402,39 @@ import { AddCommand } from "./commands/add";
 import { ListCommand } from "./commands/list";
 import { CompleteCommand } from "./commands/complete";
 import { StatsCommand } from "./commands/stats";
+import { Database } from "./services/database";
+import { NotificationService } from "./services/notifications";
 
 class TasksCLI extends TuiApplication {
   constructor() {
+    // Create app without commands - we'll register them after setting up services
     super({
       name: "tasks",
       version: "1.0.0",
       description: "A simple task management CLI",
-      commands: [
-        new AddCommand(),
-        new ListCommand(),
-        new CompleteCommand(),
-        new StatsCommand(),
-      ],
     });
+  }
+  
+  async initialize(): Promise<void> {
+    // Set up shared services in context before commands need them
+    const db = new Database();
+    this.context.setService("db", db);
+    
+    const notifications = new NotificationService(this.context.logger);
+    this.context.setService("notifications", notifications);
+    
+    // Now register commands - they can access services via context
+    this.registerCommands([
+      new AddCommand(),
+      new ListCommand(),
+      new CompleteCommand(),
+      new StatsCommand(),
+    ]);
 
     // Optional: Set lifecycle hooks
     this.setHooks({
       onBeforeRun: (commandName) => {
         AppContext.current.logger.debug(`Running command: ${commandName}`);
-        // Initialize database connections, load config, etc.
       },
       onAfterRun: (commandName, error) => {
         if (error) {
@@ -429,14 +442,19 @@ class TasksCLI extends TuiApplication {
         } else {
           AppContext.current.logger.debug(`Command ${commandName} completed`);
         }
-        // Close database connections, save state, etc.
       },
     });
   }
 }
 
-await new TasksCLI().run();
+const app = new TasksCLI();
+await app.initialize();
+await app.run();
 ```
+
+> **Note**: This example uses dynamic command registration via `registerCommands()`.
+> This pattern is useful when commands need access to services that require initialization.
+> Alternatively, you can pass `commands: [...]` directly in the constructor config for simpler cases.
 
 ## Step 5: Configure Package
 

@@ -156,6 +156,9 @@ src/
 - Handle errors gracefully
 - Use consistent option patterns across commands
 
+> **Tip**: For dynamic command registration (e.g., when commands depend on async services),
+> you can omit `commands` from the config and call `app.registerCommands([...])` after construction.
+
 ## Next Steps
 
 → [Guide 4: Subcommands](04-subcommands.md)

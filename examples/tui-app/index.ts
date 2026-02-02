@@ -21,6 +21,9 @@ import { StatusCommand } from "./commands/status.ts";
 
 class ExampleApp extends TuiApplication {
     constructor() {
+        // Pass commands in the constructor for simple cases.
+        // For dynamic registration (e.g., after async initialization),
+        // omit `commands` here and call `this.registerCommands([...])` later.
         super({
             name: "example",
             version: "1.0.0",

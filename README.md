@@ -200,6 +200,12 @@ The `Application` class manages command registration and execution:
 class Application {
   constructor(config: ApplicationConfig);
 
+  // The application context (available immediately after construction)
+  readonly context: AppContext;
+
+  // Register commands (can be called after construction if commands not in config)
+  registerCommands(commands: Command[]): void;
+
   // Recommended entrypoint (reads `Bun.argv.slice(2)`)
   run(): Promise<void>;
 
@@ -225,7 +231,7 @@ interface ApplicationConfig {
   displayName?: string;   // Human-readable name for TUI header
   commitHash?: string;    // Git commit for version display
   description?: string;
-  commands: Command[];
+  commands?: Command[];   // Optional - can register later via registerCommands()
   defaultCommand?: string;
 }
 ```
@@ -254,6 +260,37 @@ console.log(ctx.config.name, ctx.config.version);
 ctx.setService("myService", myServiceInstance);
 const service = ctx.requireService<MyService>("myService");
 ```
+
+### Dynamic Command Registration
+
+Commands can be registered after construction, allowing for dynamic command creation based on context or async operations:
+
+```typescript
+import { Application } from "@pablozaiden/terminatui";
+
+// Create app without commands
+const app = new Application({
+  name: "myapp",
+  version: "1.0.0",
+});
+
+// Access context to set up services before commands are created
+const db = await connectToDatabase();
+app.context.setService("db", db);
+
+// Register commands that depend on context
+app.registerCommands([
+  new DbQueryCommand(),    // Can access app.context.requireService("db")
+  new DbMigrateCommand(),
+]);
+
+await app.run();
+```
+
+This pattern is useful when:
+- Commands need access to services that require async initialization
+- Command list depends on runtime configuration
+- You need to set up the context before creating commands
 
 ### OptionSchema
 
