@@ -1,15 +1,6 @@
 import { type AnyCommand } from "./command.ts";
 import type { OptionDef } from "../types/command.ts";
 import { colors } from "../cli/output/colors.ts";
-import { KNOWN_COMMANDS } from "./knownCommands.ts";
-
-/**
- * Check if command has "real" subcommands (excluding auto-injected help).
- */
-function hasRealSubCommands(command: AnyCommand): boolean {
-  if (!command.subCommands?.length) return false;
-  return command.subCommands.some(sub => sub.name !== KNOWN_COMMANDS.help);
-}
 
 /**
  * Options for generating help text.
