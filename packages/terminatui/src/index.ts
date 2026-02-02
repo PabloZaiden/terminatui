@@ -6,6 +6,7 @@ export * from "./cli/parser.ts";
 export * from "./cli/output/colors.ts";
 
 export * from "./core/application.ts";
+export * from "./core/builder.ts";
 export * from "./core/command.ts";
 export * from "./core/context.ts";
 export * from "./core/help.ts";
