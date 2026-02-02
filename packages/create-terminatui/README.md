@@ -6,26 +6,12 @@ Create template for [TerminaTUI](https://github.com/PabloZaiden/terminatui) CLI/
 
 ## Usage
 
-### From npm (recommended)
-
 ```bash
 bun create terminatui my-app
 cd my-app
 bun install
 bun run start
 ```
-
-### From GitHub
-
-```bash
-bun create github.com/pablozaiden/terminatui/packages/create-terminatui my-app
-cd my-app
-bun install
-bun run start
-```
-
-> **Note:** The GitHub method includes extra files (publishing workflows, etc.). 
-> Use the npm method for a cleaner experience.
 
 ## What's Included
 
