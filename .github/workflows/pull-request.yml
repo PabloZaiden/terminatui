@@ -14,8 +14,8 @@ jobs:
 
       - name: Install prerequisites
         run: |
-          chmod +x .devcontainer/install-prerequisites.sh
-          ./.devcontainer/install-prerequisites.sh
+          curl -fsSL https://bun.com/install | bash
+
           echo "$HOME/.bun/bin" >> $GITHUB_PATH
           echo "$HOME/.bun/global/bin" >> $GITHUB_PATH
 

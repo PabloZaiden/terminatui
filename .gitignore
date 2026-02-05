@@ -3,6 +3,9 @@ ignore
 .cache
 .artifacts
 
+.planning
+!.planning/.gitkeep
+
 *.log
 
 # dependencies (bun install)
